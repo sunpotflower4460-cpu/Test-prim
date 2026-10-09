@@ -92,7 +92,7 @@ test("menu, keyboard, dash, pause and upgrading are interactive", () => {
   assert.equal(state.getScene(), "paused");
   el("resume").click();
   assert.equal(state.getScene(), "playing");
-  state.addExp(100);
+  state.addExp(33);
   assert.equal(state.getScene(), "upgrade");
   const options = el("upgradeList").children;
   assert.ok(options.length >= 3, "choose from three blessings");
