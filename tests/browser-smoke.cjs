@@ -32,6 +32,17 @@ const targets = [
       await page.locator("#openGameBtn").click();
       await page.locator("#startBtn").click();
       await page.locator("#mobileControls").waitFor({ state: "visible" });
+      const joy = await page.locator("#joystick").boundingBox();
+      assert.ok(joy, "joystick is on screen");
+      await page.mouse.move(joy.x + joy.width / 2, joy.y + joy.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(joy.x + joy.width / 2 + 28, joy.y + joy.height / 2 - 20, { steps: 3 });
+      await page.waitForTimeout(45);
+      const moved = await page.locator("#stickKnob").evaluate(el => el.style.transform);
+      assert.notEqual(moved, "translate(0px, 0px)", "joystick knob follows pointer");
+      await page.mouse.up();
+      const centered = await page.locator("#stickKnob").evaluate(el => el.style.transform);
+      assert.equal(centered, "translate(0px, 0px)", "joystick recenters after release");
       await page.locator("#pauseBtn").click();
       await page.locator("#overlay").waitFor({ state: "visible" });
       await page.locator("#resume").click();
