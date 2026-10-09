@@ -1,6 +1,8 @@
 # LUMINA — 星灯りの庭
 
-**光が眠る、３つの世界。最後の星を、あなたの手で。**
+**最初に「Test prim」の入口画面が表示されます。GPT6 CHAT を押すとゲーム「LUMINA — 星灯りの庭」のタイトル画面へ進みます。**
+
+光が眠る、３つの世界。最後の星を、あなたの手で。
 
 幻想アクションゲーム。スマートフォンのブラウザでそのまま遊べます。インストール、ログイン、課金不要。
 
@@ -9,7 +11,9 @@
 - **GitHub Pages**: https://sunpotflower4460-cpu.github.io/Test-prim/
 - **Pages 未設定でも遊べるプレビュー**: https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html
 
-GitHub Pages 未設定の場合は、リポジトリの Settings → Pages → Build and deployment → Deploy from a branch → main / (root) → Save を一度だけ選択します。その後は更新が自動公開されます。
+**スマホで今すぐ試す場合**は、上記「Pages 未設定でも遊べるプレビュー」を開いてください。githack のサービス側で最初の一回だけ確認画面が表示される場合があります。
+
+**GitHub Pages の恒久公開**：リポジトリの Settings → Pages → Build and deployment → Source を **GitHub Actions** に設定してください。設定すると main への変更で Publish LUMINA ワークフローが公開処理を行います。現在、GitHub Actions のトークンに Pages サイトを新規作成する権限がないため、初回のみリポジトリ管理者の Pages 設定が必要です。
 
 ## ゲーム内容
 
