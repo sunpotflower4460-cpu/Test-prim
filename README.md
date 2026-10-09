@@ -1,35 +1,38 @@
-# LUMINA — 星灯りの庭
+# Test prim — GPT6 CHAT
 
-**最初に「Test prim」の入口画面が表示されます。GPT6 CHAT を押すとゲーム「LUMINA — 星灯りの庭」のタイトル画面へ進みます。**
+**最初は「Test prim」。 「GPT6 CHAT」を押すと、ゲーム「LUMINA — 星灯りの庭」のタイトルが始まります。**
 
-光が眠る、３つの世界。最後の星を、あなたの手で。
+LUMINA は、スマートフォンで遊べる３章の幻想アクションゲームです。アカウント登録、課金、ゲームエンジンのインストールは不要です。
 
-幻想アクションゲーム。スマートフォンのブラウザでそのまま遊べます。インストール、ログイン、課金不要。
+## スマートフォンで遊ぶ
 
-## 🎮 遊ぶ
+- **公開用 URL（GitHub Pages）**: https://sunpotflower4460-cpu.github.io/Test-prim/
+- **設定前に確認するためのプレビュー**: https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html
 
-- **GitHub Pages**: https://sunpotflower4460-cpu.github.io/Test-prim/
-- **Pages 未設定でも遊べるプレビュー**: https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html
+GitHub Pages はリポジトリ作成直後に自動で有効にならない場合があります。初回だけ **Settings → Pages → Build and deployment → Source → GitHub Actions** を選び、保存してください。GitHub Actions の `Publish LUMINA` が公開を行います。
 
-**スマホで今すぐ試す場合**は、上記「Pages 未設定でも遊べるプレビュー」を開いてください。githack のサービス側で最初の一回だけ確認画面が表示される場合があります。
+*プレビューは外部のソースコード配信サービス経由です。最初に確認画面が表示される場合があります。通常利用やホーム画面への追加は GitHub Pages の URL を使ってください。*
 
-**GitHub Pages の恒久公開**：リポジトリの Settings → Pages → Build and deployment → Source を **GitHub Actions** に設定してください。設定すると main への変更で Publish LUMINA ワークフローが公開処理を行います。現在、GitHub Actions のトークンに Pages サイトを新規作成する権限がないため、初回のみリポジトリ管理者の Pages 設定が必要です。
+## 進み方
 
-## ゲーム内容
+1. **Test prim** の画面で **GPT6 CHAT** を押す
+2. **LUMINA — 星灯りの庭** のタイトルから「旅をはじめる」
+3. 「黎明の森」「月影の湖」「星の神殿」を順にめぐる
+4. 各章の守護者を倒し、最後の夜明けを迎える
 
-「黎明の森」「月影の湖」「星の神殿」を旅し、星の力を集めながら敵を浄化。３体の章ボスを倒して夜明けを迎えよう。
+## 操作
 
-- **スマホ**：左のスティックで移動、右の DASH で回避。攻撃は自動。
-- **PC**：WASD・矢印で移動、Space・Shift でダッシュ、P・Esc で一時停止。
-- レベルアップ時は３つの祝福から１つを選びます。12種類のスキルと強化段階。
-- 個性の違う敵、３章とボス戦、オリジナルの光の描画と生成音楽。
-- スマホ縦画面向けUI。ローカル記録。PWA と対応環境でのオフラインキャッシュ。
+- **スマホ**: 左下のスティックで移動、右下の **DASH** で回避。攻撃は自動です
+- **PC**: WASD / 矢印キーで移動、Space / Shift でダッシュ、P / Esc で一時停止
+- 敵が落とす星を集め、レベルアップ時に３つの祝福から１つを選ぶ
+- 12系統の強化、敵の個性、３つのボス、生成音楽、演出、記録保存
+- 対応ブラウザでは PWA としてホーム画面に追加でき、オフラインでも遊べます（初回のオンライン読み込みが必要）
 
-## 技術
+## 実装とテスト
 
-HTML / CSS / Vanilla JavaScript / Canvas 2D / Web Audio / Service Worker。ビルド・外部ゲームエンジン不要。
+HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker。ビルド不要です。
 
-## ローカル起動
+ローカル環境で起動:
 
 ```bash
 python3 -m http.server 8000
@@ -37,4 +40,14 @@ python3 -m http.server 8000
 
 http://localhost:8000 にアクセスしてください。
 
-© 2026 LUMINA · Original game
+テスト（Node.js 22 以降）:
+
+```bash
+node --check game.js
+node --check sw.js
+node --test tests/game.test.cjs
+```
+
+GitHub Actions の `Quality Checks` でも起動、操作、３章のクリアまでチェックします。
+
+© 2026 Test prim · Original interactive game.
