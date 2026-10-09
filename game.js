@@ -292,14 +292,14 @@
       id: game.nextId++, type, x, y, hp: m[0] * scale, maxHp: m[0] * scale,
       speed: m[1] * (1 + game.stage * .13), radius: m[2] + (type === "boss" ? game.stage * 4 : 0),
       damage: m[3] + game.stage * 3, phase: rand(0, TWO), cd: rand(.4, 2.6), hitFx: 0,
-      slow: 0, orbitHit: 0, dashSerial: -1, score: type === "boss" ? 100 : 1
+      slow: 0, orbitHit: 0, dashSerial: -1, windup: 0, score: type === "boss" ? 100 : 1
     };
     if (type === "boss") { e.hp *= 1 + game.stage * .28; e.maxHp = e.hp; e.cd = 1.5; }
     game.enemies.push(e);
     return e;
   }
   function spawnRandom() {
-    if (game.enemies.length > 70) return;
+    if (game.enemies.length >= 55) return;
     const a = rand(0, TWO), r = Math.max(W, H) * .62 + rand(70, 190);
     const x = game.player.x + Math.cos(a) * r, y = game.player.y + Math.sin(a) * r;
     const n = Math.random();
@@ -329,11 +329,11 @@
     e.hitFx = .13;
     if (dmg >= 25 || Math.random() < .3) rise(e.x + rand(-8, 8), e.y - 18, String(Math.ceil(dmg)), "#fff0be");
     if (e.hp <= 0) {
-      game.kills += e.score; game.score += e.score * 8;
+      game.kills += 1; game.score += e.score * 8;
       const color = e.type === "boss" ? "#ffdfb6" : themes[game.stage].orb;
       burst(e.x, e.y, e.type === "boss" ? 55 : 10, color, e.type === "boss" ? 2 : .75);
       ring(e.x, e.y, e.type === "boss" ? 240 : 45, color, e.type === "boss" ? 1.1 : .35);
-      sound("kill");
+      if (e.type === "boss" || game.kills % 3 === 0) sound("kill");
       if (e.type === "boss") {
         for (let i = 0; i < 24; i++) {
           const a = i / 24 * TWO, d = rand(25, 105);
@@ -467,6 +467,7 @@
   function update(dt) {
     const g = game, p = g.player;
     g.time += dt; g.stageTime += dt;
+    // Pause and modal transitions never advance this time budget.
     p.walk += dt * 8;
     p.fireCd -= dt; p.invuln = Math.max(0, p.invuln - dt);
     p.dashCd = Math.max(0, p.dashCd - dt);
@@ -515,23 +516,37 @@
       e.x += ((dx / dist * e.speed * move) + (-dy / dist * weave)) * slowness * dt;
       e.y += ((dy / dist * e.speed * move) + (dx / dist * weave)) * slowness * dt;
       e.cd -= dt;
-      if (e.type === "archer" && e.cd <= 0 && dist < 550) {
+      if (e.type === "archer" && e.cd <= 0 && dist < 550 && g.hostile.length < 115) {
         e.cd = rand(2.1, 3);
         const speed = 170 + g.stage * 25;
         g.hostile.push({ x: e.x, y: e.y, vx: dx / dist * speed, vy: dy / dist * speed, r: 6, life: 4, damage: 12 + g.stage * 3 });
         ring(e.x, e.y, 25, "#ffaad8", .38);
       }
-      if (e.type === "boss" && e.cd <= 0 && dist < 750) {
-        e.cd = Math.max(2, 3.3 - g.stage * .35);
-        const n = 9 + g.stage * 3;
-        for (let j = 0; j < n; j++) {
-          const a = j / n * TWO + clock * .22, speed = 115 + g.stage * 16;
-          g.hostile.push({ x: e.x, y: e.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: 6, life: 4.6, damage: 13 + g.stage * 2 });
+      // Boss strikes have a visible wind-up: the player can read and dodge the attack.
+      if (e.type === "boss" && e.cd <= 0 && e.windup <= 0 && dist < 730) {
+        e.cd = Math.max(2.6, 3.9 - g.stage * .25);
+        e.windup = .88;
+        ring(e.x, e.y, 150, "#ffabbf", .88);
+        tone(190 + g.stage * 30, .24, "triangle", .023, 1.75);
+      }
+      if (e.type === "boss" && e.windup > 0) {
+        e.windup -= dt;
+        if (e.windup <= 0) {
+          const n = 10 + g.stage * 3;
+          const aim = Math.atan2(p.y - e.y, p.x - e.x);
+          // Each guardian varies the ring's angle so repeat attempts stay expressive.
+          const offset = g.stage === 0 ? Math.PI / n : g.stage === 1 ? clock * .27 : aim / 3 + clock * .13;
+          for (let j = 0; j < n && g.hostile.length < 115; j++) {
+            const a = j / n * TWO + offset, speed = 122 + g.stage * 19;
+            g.hostile.push({ x: e.x, y: e.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: 6, life: 4.6, damage: 13 + g.stage * 2 });
+          }
+          ring(e.x, e.y, 125, "#ffd3d0", .45);
+          burst(e.x, e.y, 14, "#ffc2c6", .6);
+          shake = Math.max(shake, 4);
         }
-        ring(e.x, e.y, 125, "#ffabbf", .65);
-        burst(e.x, e.y, 13, "#ffc2c6", .6);
       }
       if (dist < p.r + e.radius - 3) hurtPlayer(e.damage, e.x, e.y);
+      if (e.type !== "boss" && dist > Math.max(W, H) * 2.3) { g.enemies.splice(i, 1); continue; }
       if (p.orbit && e.orbitHit === 0) {
         for (let j = 0; j < p.orbit; j++) {
           const a = clock * 2.25 + j * TWO / p.orbit, r = 64;
@@ -584,7 +599,8 @@
     }
     for (let i = particles.length - 1; i >= 0; i--) {
       const a = particles[i]; a.ttl -= dt; a.x += a.vx * dt; a.y += a.vy * dt;
-      a.vx *= .967; a.vy *= .967;
+      const drag = Math.pow(.967, dt * 60);
+      a.vx *= drag; a.vy *= drag;
       if (a.ttl <= 0) particles.splice(i, 1);
     }
     for (let i = texts.length - 1; i >= 0; i--) {
@@ -596,7 +612,7 @@
       a.r = ease(a.r, a.target, Math.min(1, dt * 7));
       if (a.ttl <= 0) rings.splice(i, 1);
     }
-    shake *= .86;
+    shake *= Math.pow(.86, dt * 60);
     camX = ease(camX, p.x - W / 2, Math.min(1, dt * 5.8));
     camY = ease(camY, p.y - H / 2, Math.min(1, dt * 5.8));
     g.hudCd -= dt;
