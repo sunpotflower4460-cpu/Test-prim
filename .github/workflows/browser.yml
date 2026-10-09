@@ -1,0 +1,29 @@
+name: Browser Experience Checks
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: browser-checks
+  cancel-in-progress: true
+jobs:
+  chromium:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Install headless browser
+        run: |
+          npm install --no-save playwright@1.56.1
+          npx playwright install chromium
+      - name: Start local game server
+        run: |
+          python3 -m http.server 8000 --bind 127.0.0.1 > /tmp/test-prim-http.log 2>&1 &
+          echo $! > /tmp/test-prim-http.pid
+      - name: Verify mobile and desktop interactions
+        run: node tests/browser-smoke.cjs
