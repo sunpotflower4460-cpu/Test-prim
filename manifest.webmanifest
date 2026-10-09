@@ -1,7 +1,7 @@
 {
-  "name": "Test prim — GPT6 CHAT / LUMINA",
+  "name": "Test prim — LUMINA / KASANE",
   "short_name": "Test prim",
-  "description": "Test prim の GPT6 CHAT から、幻想アクションゲーム LUMINA — 星灯りの庭へ。",
+  "description": "Test prim。GPT6 CHAT の LUMINA と、Grok 4.7 Cursor の KASANE。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

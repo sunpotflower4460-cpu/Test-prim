@@ -16,6 +16,7 @@ jobs:
       - name: Syntax checks
         run: |
           node --check game.js
+          node --check sumifu.js
           node --check sw.js
       - name: Game smoke tests
         run: node --test tests/*.test.cjs

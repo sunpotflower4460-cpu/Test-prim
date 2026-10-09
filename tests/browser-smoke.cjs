@@ -57,6 +57,37 @@ const targets = [
       assert.ok(metrics.canvasWidth > 0, "canvas initialized");
       assert.ok(metrics.htmlWidth <= metrics.viewport + 1, "no horizontal overflow");
       assert.ok(metrics.controlsVisible, "mobile controls rendered");
+      await page.locator("#pauseBtn").click();
+      await page.locator("#quit").click();
+      await page.locator("#home").waitFor({ state: "visible" });
+      await page.locator("#returnPortalBtn").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      await page.locator("#openSumifuBtn").click();
+      await page.locator("#sumifu-title").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#sumifu-title h1").innerText(), "KASANE");
+      await page.locator("#sumifuStart").click();
+      await page.locator("#sumifu-controls").waitFor({ state: "visible" });
+      const joy2 = await page.locator("#sumifuJoy").boundingBox();
+      assert.ok(joy2, "kasane joystick is on screen");
+      await page.mouse.move(joy2.x + joy2.width / 2, joy2.y + joy2.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(joy2.x + joy2.width / 2 + 24, joy2.y + joy2.height / 2 - 16, { steps: 3 });
+      await page.waitForTimeout(40);
+      const moved2 = await page.locator("#sumifuKnob").evaluate(el => el.style.transform);
+      assert.notEqual(moved2, "translate(0px, 0px)", "kasane knob follows pointer");
+      await page.mouse.up();
+      const centered2 = await page.locator("#sumifuKnob").evaluate(el => el.style.transform);
+      assert.equal(centered2, "translate(0px, 0px)", "kasane knob recenters");
+      await page.locator("#sumifuPause").click();
+      await page.locator("#sumifu-overlay").waitFor({ state: "visible" });
+      await page.locator("#sumifuResume").click();
+      await page.locator("#sumifu-controls").waitFor({ state: "visible" });
+      const kasane = await page.evaluate(() => ({
+        viewport: window.innerWidth, htmlWidth: document.documentElement.scrollWidth,
+        controlsVisible: getComputedStyle(document.querySelector("#sumifu-controls")).display !== "none"
+      }));
+      assert.ok(kasane.htmlWidth <= kasane.viewport + 1, "no horizontal overflow in kasane");
+      assert.ok(kasane.controlsVisible, "kasane controls rendered");
       assert.deepEqual(errors, [], "no browser script errors");
       console.log("PASS", target.name, JSON.stringify(metrics));
       await context.close();

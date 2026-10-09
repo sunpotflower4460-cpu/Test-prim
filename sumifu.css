@@ -1,0 +1,95 @@
+/* KASANE — 重ね. A paper title page on a dark desk, then an ink arena. */
+#sumifu{position:fixed;inset:0;z-index:40;overflow:hidden;background:#100e0c;color:#f4ecdf;font-family:"Noto Serif JP",serif}
+#sumifu-world{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none;z-index:0}
+.sumifu-grain{position:absolute;inset:0;pointer-events:none;z-index:1;opacity:.14;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 160 160' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.8' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Cpath fill='%23fff' filter='url(%23n)' opacity='.55' d='M0 0h160v160H0z'/%3E%3C/svg%3E");mix-blend-mode:overlay}
+.sumifu-top{position:absolute;z-index:4;top:0;left:0;right:0;padding:calc(env(safe-area-inset-top) + 12px) 16px 8px;pointer-events:none;background:linear-gradient(180deg,rgba(12,9,7,.72),rgba(12,9,7,0))}
+.sumifu-top button{pointer-events:auto}
+.sumifu-toprow{display:flex;align-items:center;justify-content:space-between;gap:10px;min-height:32px}
+.sumifu-chapter{font-size:12px;letter-spacing:.12em;color:#f6efe2;text-shadow:0 1px 8px #000}
+.sumifu-tools{display:flex;gap:8px}
+.sumifu-tool{width:34px;height:32px;border-radius:9px;border:1px solid rgba(244,228,206,.28);background:rgba(20,14,10,.55);color:#f6efe2;font-size:15px}
+.sumifu-status{display:flex;align-items:flex-end;gap:12px;margin-top:8px}
+.sumifu-hpwrap{flex:1;min-width:0}
+.sumifu-statuslabel{display:flex;justify-content:space-between;font:10px Arial,sans-serif;letter-spacing:.08em;color:#f0e6d6;margin-bottom:5px}
+.sumifu-statuslabel strong{font-weight:500;font-size:11px;font-family:"Noto Serif JP",serif}
+.sumifu-bar{height:7px;border-radius:99px;background:rgba(0,0,0,.45);box-shadow:inset 0 0 0 1px rgba(255,236,214,.16);overflow:hidden}
+.sumifu-bar>div{height:100%;width:100%;border-radius:99px;background:linear-gradient(90deg,#9c3a30,#e7c27a)}
+.sumifu-time{width:64px;text-align:right}
+.sumifu-time>span{font:23px/1 "Cormorant Garamond",Georgia,serif;color:#fff6ea}
+.sumifu-hint{margin:6px 0 0;font-size:11px;letter-spacing:.08em;color:#f3e6d2;text-shadow:0 1px 6px #000;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.sumifu-hint-hot{color:#f0d48a}
+.sumifu-inkrow{display:flex;align-items:center;gap:8px;margin-top:8px;font:10px Arial,sans-serif;letter-spacing:.14em;color:#f0e2cc}
+.sumifu-ink{flex:1;height:4px}
+.sumifu-ink>div{background:linear-gradient(90deg,#241c17,#e7c27a);box-shadow:none}
+.sumifu-inkrow>span:last-child{min-width:42px;text-align:right;letter-spacing:.08em;color:#f0d48a;font-family:"Noto Serif JP",serif}
+.sumifu-boss{margin-top:8px;padding:6px 8px 2px;background:rgba(10,8,6,.55);border-radius:8px}
+.sumifu-bosslabel{display:flex;justify-content:space-between;font-size:11px;letter-spacing:.14em;color:#ffd8cc;margin-bottom:6px}
+.sumifu-bosslabel span:last-child{font:8px Arial,sans-serif;letter-spacing:.12em;opacity:.8}
+.sumifu-bossbar{height:6px}
+.sumifu-bossbar>div{background:linear-gradient(90deg,#f0d48a,#9c3a30)}
+.sumifu-controls{position:absolute;z-index:5;left:0;right:0;bottom:0;padding:0 14px calc(env(safe-area-inset-bottom) + 12px);display:flex;justify-content:space-between;align-items:flex-end;pointer-events:none}
+.sumifu-joy{width:132px;height:142px;position:relative;pointer-events:auto;touch-action:none;display:flex;align-items:center;justify-content:center}
+.sumifu-joybase{width:108px;height:108px;border-radius:50%;border:1px solid rgba(232,210,180,.38);background:radial-gradient(circle,rgba(232,206,170,.14),rgba(12,8,6,.2) 68%);display:flex;align-items:center;justify-content:center;box-shadow:inset 0 0 18px rgba(0,0,0,.25)}
+.sumifu-knob{width:54px;height:54px;border-radius:50%;display:grid;place-items:center;background:linear-gradient(160deg,rgba(255,244,230,.72),rgba(156,58,48,.55));border:1px solid rgba(255,236,220,.7);color:#fffaf3;font-size:18px;transform:translate(0px,0px);box-shadow:0 8px 18px rgba(0,0,0,.25)}
+.sumifu-joylabel{position:absolute;bottom:0;font:8px Arial,sans-serif;letter-spacing:.28em;color:#e6d5c0}
+.sumifu-actions{display:grid;grid-template-columns:66px 66px;grid-template-rows:62px 76px;gap:8px;margin-bottom:8px}
+.sumifu-actions button{pointer-events:auto;position:relative;overflow:hidden;border-radius:16px;color:#fff8f1;background:rgba(28,16,12,.72);border:1px solid rgba(240,210,180,.42);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;box-shadow:inset 0 0 0 3px rgba(8,5,4,.28)}
+.sumifu-actions button span{font-size:22px;line-height:1}
+.sumifu-actions button small{font:8px Arial,sans-serif;letter-spacing:.16em;opacity:.8}
+.sumifu-actions button i{position:absolute;inset:0;background:rgba(8,5,4,.62);transform:scaleY(0);transform-origin:bottom;pointer-events:none}
+.sumifu-slash{grid-column:1/3;grid-row:2;border-radius:38px;background:linear-gradient(180deg,rgba(156,58,48,.9),rgba(92,28,24,.9))}
+.sumifu-slash span{font-size:28px;letter-spacing:.2em}
+.sumifu-seal{grid-column:1;grid-row:1}
+.sumifu-dash{grid-column:2;grid-row:1}
+.sumifu-coach{animation:sumifu-coach 1.4s ease-in-out infinite}
+@keyframes sumifu-coach{50%{box-shadow:0 0 0 6px rgba(231,194,122,.18),inset 0 0 0 3px rgba(8,5,4,.28)}}
+.sumifu-title{position:absolute;inset:0;z-index:6;display:flex;align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top) + 18px) 16px calc(env(safe-area-inset-bottom) + 18px);overflow:auto;overscroll-behavior:contain}
+.sumifu-sheet{width:min(420px,100%);background:rgba(244,236,223,.94);color:#241c17;border-radius:2px 3px 2px 3px;box-shadow:0 22px 60px rgba(0,0,0,.42),inset 0 0 0 1px rgba(255,255,255,.35);padding:26px 22px 18px;text-align:center;background-image:linear-gradient(180deg,rgba(255,252,246,.45),rgba(214,196,166,.18)),repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(70,48,28,.035) 4px);transform:rotate(-.35deg)}
+.sumifu-hanko{width:52px;height:52px;margin:-6px auto 8px;border:2px solid #9c3a30;border-radius:50%;color:#9c3a30;display:grid;place-items:center;font-size:15px;letter-spacing:.12em;transform:rotate(-8deg);box-shadow:inset 0 0 0 3px rgba(156,58,48,.28)}
+.sumifu-kicker{margin:0;font:9px Arial,sans-serif;letter-spacing:.28em;color:#9c3a30}
+.sumifu-sheet h1,.sumifu-card h2{font-family:"Cormorant Garamond",Georgia,serif;font-weight:500;color:#1a120e;margin:8px 0 0}
+.sumifu-sheet h1{font-size:clamp(52px,16vw,76px);letter-spacing:.18em;text-indent:.18em;line-height:.9}
+.sumifu-jp{margin:8px 0 0;letter-spacing:.55em;text-indent:.55em;font-size:14px;color:#6d5844}
+.sumifu-rule{height:2px;width:74px;margin:12px auto 0;background:#9c3a30;transform-origin:left;animation:sumifu-draw 3.2s ease infinite}
+@keyframes sumifu-draw{0%{transform:scaleX(0);opacity:0}30%{transform:scaleX(1);opacity:1}72%{opacity:1}100%{opacity:0}}
+.sumifu-lead{margin:14px auto 18px;font-size:13px;line-height:2;letter-spacing:.12em;color:#3a2e26}
+.sumifu-go{width:min(260px,100%);min-height:52px;border-radius:2px;background:#9c3a30;color:#fff8f2;letter-spacing:.32em;text-indent:.32em;font-size:14px;box-shadow:0 8px 20px rgba(156,58,48,.25)}
+.sumifu-go:active{transform:scale(.98)}
+.sumifu-help{margin:14px 0 0;font-size:10px;line-height:1.8;letter-spacing:.06em;color:#6e5b4b}
+.sumifu-record{min-height:18px;margin:10px 0 0;font-size:11px;letter-spacing:.08em;color:#9c3a30}
+.sumifu-titletools{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:12px}
+.sumifu-quiet{background:transparent;color:#5c4a3c;border-bottom:1px solid rgba(90,60,40,.35);padding:8px 8px;font-size:11px;letter-spacing:.08em}
+.sumifu-sign{margin:14px 0 0;font:8px Arial,sans-serif;letter-spacing:.28em;color:rgba(80,58,40,.55)}
+.sumifu-overlay{position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;padding:22px 16px;background:rgba(10,8,6,.62);overflow:auto;overscroll-behavior:contain}
+.sumifu-card{width:min(420px,100%);background:#f4ecdf;color:#241c17;padding:26px 18px 20px;border-radius:2px;box-shadow:0 24px 70px rgba(0,0,0,.45);text-align:center;background-image:repeating-linear-gradient(0deg,transparent,transparent 3px,rgba(70,48,28,.03) 4px)}
+.sumifu-card h2{font-size:clamp(26px,7vw,34px);letter-spacing:.12em;line-height:1.35}
+.sumifu-card .sumifu-lead{margin-bottom:8px}
+.sumifu-card .sumifu-go{margin-top:16px}
+.sumifu-stats{display:flex;justify-content:center;gap:16px;margin:14px 0 4px;font-size:10px;letter-spacing:.08em;color:#6a5646}
+.sumifu-stats strong{display:block;font:28px "Cormorant Garamond",Georgia,serif;color:#9c3a30;font-weight:500;letter-spacing:0}
+.sumifu-brushes{display:flex;flex-direction:column;gap:8px;margin-top:14px}
+.sumifu-brush{width:100%;display:flex;gap:12px;align-items:center;text-align:left;padding:11px 12px;border:1px solid rgba(36,28,23,.16);background:rgba(255,252,247,.55);color:#241c17;border-radius:2px}
+.sumifu-brush:active{background:rgba(156,58,48,.1)}
+.sumifu-brush-mark{width:42px;min-width:42px;height:42px;display:grid;place-items:center;border:1px solid rgba(156,58,48,.45);color:#9c3a30;font-size:18px;background:rgba(255,255,255,.35)}
+.sumifu-brush strong{display:block;font-size:14px;letter-spacing:.08em;font-weight:500}
+.sumifu-brush em{display:block;margin-top:3px;font-style:normal;font-size:11px;line-height:1.6;color:#5e4d40}
+.sumifu-brush small{display:block;margin-top:3px;font:9px Arial,sans-serif;letter-spacing:.06em;color:#9c3a30}
+.sumifu-flash{position:absolute;inset:0;z-index:8;pointer-events:none;background:#f4ecdf;opacity:0;transition:opacity .4s ease}
+@media(max-width:360px){
+  .sumifu-actions{grid-template-columns:58px 58px;grid-template-rows:56px 68px;gap:6px}
+  .sumifu-joy{width:112px;height:126px}
+  .sumifu-joybase{width:96px;height:96px}
+  .sumifu-knob{width:48px;height:48px}
+  .sumifu-sheet{padding:18px 14px 14px}
+  .sumifu-sheet h1{letter-spacing:.12em;text-indent:.12em}
+}
+@media(max-height:700px){
+  .sumifu-top{padding-top:calc(env(safe-area-inset-top) + 6px)}
+  .sumifu-sheet{padding:16px 14px 12px}
+  .sumifu-sheet h1{font-size:46px}
+  .sumifu-lead{margin:8px auto 10px;line-height:1.7}
+  .sumifu-hanko{width:42px;height:42px;font-size:13px}
+  .sumifu-help{margin-top:8px}
+}
+@media(min-width:900px){.sumifu-controls{max-width:760px;left:50%;transform:translateX(-50%);width:100%}}
+@media(prefers-reduced-motion:reduce){.sumifu-rule,.sumifu-coach{animation:none}}
