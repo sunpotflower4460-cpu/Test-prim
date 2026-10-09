@@ -138,3 +138,16 @@ test("all three bosses can be defeated and the ending is reachable", () => {
   state.hurtPlayer(100, 0, 0);
   assert.equal(state.getScene(), "over");
 });
+
+test("launcher return button allows leaving and reentering the game title", () => {
+  const { element: el, state } = setup();
+  assert.equal(state.getScene(), "launcher");
+  el("openGameBtn").click();
+  assert.equal(state.getScene(), "home");
+  el("returnPortalBtn").click();
+  assert.equal(state.getScene(), "launcher");
+  el("openGameBtn").click();
+  assert.equal(state.getScene(), "home");
+  el("startBtn").click();
+  assert.equal(state.getScene(), "playing");
+});
