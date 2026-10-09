@@ -155,7 +155,7 @@
   function freshPlayer() {
     return {
       x: 0, y: 0, r: 16, hp: 100, maxHp: 100, speed: 220, damage: 22, fireRate: .44, fireCd: .1,
-      bolts: 1, orbit: 0, magnet: 106, regen: 0, frost: 0, pulse: 0, nova: 0, novaCd: 5,
+      bolts: 1, orbit: 0, magnet: 135, regen: 0, frost: 0, pulse: 0, nova: 0, novaCd: 5,
       luck: 1, invuln: 0, dashCd: 0, dashTime: 0, dashX: 0, dashY: -1, dashSerial: 0,
       facingX: 0, facingY: -1, walk: 0, perkLevels: {}
     };
@@ -336,7 +336,7 @@
       if (e.type === "boss") {
         for (let i = 0; i < 24; i++) {
           const a = i / 24 * TWO, d = rand(25, 105);
-          game.orbs.push({ x: e.x + Math.cos(a) * d, y: e.y + Math.sin(a) * d, value: 12, r: 6, phase: rand(0, TWO) });
+          game.orbs.push({ x: e.x + Math.cos(a) * d, y: e.y + Math.sin(a) * d, value: 12, r: 6, phase: rand(0, TWO), age: 0 });
         }
         game.bossId = null;
         game.enemies = game.enemies.filter(mob => mob.type !== "boss");
@@ -344,8 +344,8 @@
         return;
       }
       const drop = e.type === "brute" ? 9 : e.type === "archer" ? 7 : 5;
-      game.orbs.push({ x: e.x, y: e.y, value: drop, r: e.type === "brute" ? 6 : 4, phase: rand(0, TWO) });
-      if (Math.random() < .012 && game.player.hp < game.player.maxHp * .7) game.orbs.push({ x: e.x + 14, y: e.y, value: -20, r: 7, phase: 0 });
+      game.orbs.push({ x: e.x, y: e.y, value: drop, r: e.type === "brute" ? 6 : 4, phase: rand(0, TWO), age: 0 });
+      if (Math.random() < .012 && game.player.hp < game.player.maxHp * .7) game.orbs.push({ x: e.x + 14, y: e.y, value: -20, r: 7, phase: 0, age: 0 });
     } else if (Math.random() < .25) burst(x, y, 3, "#c9ffef", .35);
   }
   function hurtPlayer(dmg, x, y) {
@@ -563,10 +563,10 @@
     }
     for (let i = g.orbs.length - 1; i >= 0; i--) {
       const o = g.orbs[i];
-      o.phase += dt * 4;
+      o.phase += dt * 4; o.age = (o.age || 0) + dt;
       const dx = p.x - o.x, dy = p.y - o.y, dist = Math.max(1, Math.hypot(dx, dy));
-      if (dist < p.magnet) {
-        const speed = clamp((p.magnet - dist) * 3.6, 140, 800);
+      if (dist < p.magnet || o.age > 4.5) {
+        const speed = dist < p.magnet ? clamp((p.magnet - dist) * 3.6, 140, 800) : 50 + Math.min(125, (o.age - 4.5) * 18);
         o.x += dx / dist * speed * dt;
         o.y += dy / dist * speed * dt;
       }
