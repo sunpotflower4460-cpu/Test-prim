@@ -1153,24 +1153,6 @@
   }
 
   /* ---------- UI の配線 ---------- */
-  // Grok 4.7 Cursor の入口（作品が届くまでのご案内）
-  const grokBtn = $("openGrokBtn");
-  const launcherNotice = $("launcherNotice");
-  if (grokBtn && launcherNotice) {
-    const closeNotice = () => { launcherNotice.classList.add("hidden"); launcherNotice.innerHTML = ""; };
-    grokBtn.addEventListener("click", () => {
-      SFX.tap();
-      launcherNotice.innerHTML = "<div class=\"card\"><div class=\"card-kicker\">GROK 4.7 CURSOR</div><h2>準備中</h2>" +
-        "<p>Grok 4.7 Cursor の作品は、まだ この リポジトリに 入っていません。<br>" +
-        "作品が とどいたら、この 入口から あそべるように なります。</p>" +
-        "<button type=\"button\" class=\"secondary\" id=\"launcherNoticeClose\">とじる</button></div>";
-      launcherNotice.classList.remove("hidden");
-      const close = $("launcherNoticeClose");
-      if (close) close.addEventListener("click", closeNotice);
-    });
-    launcherNotice.addEventListener("click", event => { if (event.target === launcherNotice) closeNotice(); });
-  }
-
   $("openCodeBtn").addEventListener("click", () => { SFX.tap(); enterCode(); });
   $("codeReturnBtn").addEventListener("click", () => { SFX.tap(); exitCode(); });
   $("codeStartBtn").addEventListener("click", () => { SFX.tap(); refreshGrid(); showScreen("select"); });
@@ -1213,6 +1195,7 @@
   // 玄人コードが開いている間は、LUMINA 側のキー操作に渡さない
   window.addEventListener("keydown", event => {
     if (!isActive()) return;
+    if (document.body.classList.contains("sumifu-open")) return;
     const key = (event.key || "").toLowerCase();
     event.stopImmediatePropagation();
     if (key === "escape") {

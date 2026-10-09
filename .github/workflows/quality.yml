@@ -16,6 +16,7 @@ jobs:
       - name: Syntax checks
         run: |
           node --check game.js
+          node --check sumifu.js
           node --check code-sim.js
           node --check code.js
           node --check sw.js

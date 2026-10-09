@@ -57,17 +57,50 @@ const targets = [
       assert.ok(metrics.canvasWidth > 0, "canvas initialized");
       assert.ok(metrics.htmlWidth <= metrics.viewport + 1, "no horizontal overflow");
       assert.ok(metrics.controlsVisible, "mobile controls rendered");
-
-      // 入口の順番: GPT6 CHAT → Grok 4.7 Cursor → 玄人コード。読み直してランチャーから入る。
-      await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
+      await page.locator("#pauseBtn").click();
+      await page.locator("#quit").click();
+      await page.locator("#home").waitFor({ state: "visible" });
+      await page.locator("#returnPortalBtn").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(entryLabels, ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード"], "launcher lists the three entries in order");
-      await page.locator("#openGrokBtn").click();
-      await page.locator("#launcherNotice .card").waitFor({ state: "visible" });
-      assert.match(await page.locator("#launcherNotice h2").innerText(), /準備中/);
-      await page.locator("#launcherNoticeClose").click();
-      await page.locator("#launcherNotice").waitFor({ state: "hidden" });
+      const launcherFit = await page.evaluate(() => ({
+        viewport: window.innerWidth,
+        htmlWidth: document.documentElement.scrollWidth,
+        htmlHeight: document.documentElement.scrollHeight,
+        clientHeight: document.documentElement.clientHeight
+      }));
+      assert.ok(launcherFit.htmlWidth <= launcherFit.viewport + 1, "launcher has no horizontal overflow");
+      await page.locator("#openSumifuBtn").click();
+      await page.locator("#sumifu-title").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#sumifu-title h1").innerText(), "KASANE");
+      await page.locator("#sumifuStart").click();
+      await page.locator("#sumifu-controls").waitFor({ state: "visible" });
+      const joy2 = await page.locator("#sumifuJoy").boundingBox();
+      assert.ok(joy2, "kasane joystick is on screen");
+      await page.mouse.move(joy2.x + joy2.width / 2, joy2.y + joy2.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(joy2.x + joy2.width / 2 + 24, joy2.y + joy2.height / 2 - 16, { steps: 3 });
+      await page.waitForTimeout(40);
+      const moved2 = await page.locator("#sumifuKnob").evaluate(el => el.style.transform);
+      assert.notEqual(moved2, "translate(0px, 0px)", "kasane knob follows pointer");
+      await page.mouse.up();
+      const centered2 = await page.locator("#sumifuKnob").evaluate(el => el.style.transform);
+      assert.equal(centered2, "translate(0px, 0px)", "kasane knob recenters");
+      await page.locator("#sumifuPause").click();
+      await page.locator("#sumifu-overlay").waitFor({ state: "visible" });
+      await page.locator("#sumifuResume").click();
+      await page.locator("#sumifu-controls").waitFor({ state: "visible" });
+      const kasane = await page.evaluate(() => ({
+        viewport: window.innerWidth, htmlWidth: document.documentElement.scrollWidth,
+        controlsVisible: getComputedStyle(document.querySelector("#sumifu-controls")).display !== "none"
+      }));
+      assert.ok(kasane.htmlWidth <= kasane.viewport + 1, "no horizontal overflow in kasane");
+      assert.ok(kasane.controlsVisible, "kasane controls rendered");
+      await page.locator("#sumifuPause").click();
+      await page.locator("#sumifuQuit").click();
+      await page.locator("#sumifuReturn").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
       await page.locator("#openCodeBtn").click();
       await page.locator("#codeTitle").waitFor({ state: "visible" });
       assert.equal(await page.locator(".code-logo").innerText(), "RELAY//");

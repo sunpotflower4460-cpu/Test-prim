@@ -4,14 +4,15 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — AIの作品を遊び比べる。GPT6 CHAT の LUMINA と、玄人コード（自作ツール）の RELAY をスマホで遊べます。">
+  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE、玄人コードの RELAY。AIごとのゲームを、遊びながら比べる。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <title>Test prim | AI EXPERIMENTS</title>
+  <title>Test prim</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="sumifu.css">
   <link rel="stylesheet" href="code.css">
 </head>
 <body>
@@ -62,27 +63,27 @@
       <p class="launcher-index">THE EXPERIMENT GALLERY</p>
       <h1 class="launcher-title">Test <em>prim</em></h1>
       <div class="launcher-divider"><span></span> ✦ <span></span></div>
-      <p class="launcher-copy">ひとつの扉から、まだ知らない世界へ。</p>
+      <p class="launcher-copy">遊びたいAIの、扉を選ぶ。</p>
       <div class="launcher-entries">
         <button id="openGameBtn" class="launcher-button" type="button" aria-label="GPT6 CHAT のゲームを開く">
           <span class="launcher-button-symbol">✦</span>
-          <span class="launcher-button-label"><small>ENTER EXPERIENCE · 001</small><strong>GPT6 CHAT</strong></span>
+          <span class="launcher-button-label"><small>LUMINA · 星灯りの庭</small><strong>GPT6 CHAT</strong></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </button>
-        <button id="openGrokBtn" class="launcher-button launcher-button-grok" type="button" aria-label="Grok 4.7 Cursor のゲームを開く（準備中）">
-          <span class="launcher-button-symbol">◈</span>
-          <span class="launcher-button-label"><small>ENTER EXPERIENCE · 002</small><strong>Grok 4.7 Cursor</strong><em>COMING SOON</em></span>
+        <button id="openSumifuBtn" class="launcher-button launcher-button-grok" type="button" aria-label="Grok 4.7 Cursor のゲームを開く">
+          <span class="launcher-button-symbol">筆</span>
+          <span class="launcher-button-label"><small>KASANE · 重ね</small><strong>Grok 4.7 Cursor</strong></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </button>
         <button id="openCodeBtn" class="launcher-button launcher-button-code" type="button" aria-label="玄人コード（自作ツール）のゲーム、RELAY ひかりの手順を開く">
           <span class="launcher-button-symbol">▚</span>
-          <span class="launcher-button-label"><small>SELF-MADE TOOL · 003</small><strong>玄人コード</strong><em>（自作ツール）</em></span>
+          <span class="launcher-button-label"><small>RELAY · ひかりの手順</small><strong>玄人コード</strong><em>（自作ツール）</em></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </button>
       </div>
-      <p class="launcher-sub">TAP TO DISCOVER THE WORLD INSIDE</p>
+      <p class="launcher-sub">TAP A DOOR · PLAY THE WORLD INSIDE</p>
     </div>
-    <div class="launcher-bottom"><span>TEST PRIM</span><span>03 EXPERIMENTS</span><span>2026</span></div>
+    <div class="launcher-bottom"><span>TEST PRIM</span><span>03 / 03</span><span>2026</span></div>
   </section>
 
   <div id="launcherNotice" class="launcher-notice hidden" aria-live="polite"></div>
@@ -169,7 +170,76 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="flash" class="flash" aria-hidden="true"></div>
 
+  <section id="sumifu" class="hidden" aria-label="KASANE 重ね" aria-hidden="true">
+    <canvas id="sumifu-world" aria-hidden="true"></canvas>
+    <div class="sumifu-grain" aria-hidden="true"></div>
+
+    <header id="sumifu-top" class="sumifu-top hidden">
+      <div class="sumifu-toprow">
+        <div id="sumifuChapter" class="sumifu-chapter">第一夜 · 薄墨の間</div>
+        <div class="sumifu-tools">
+          <button id="sumifuSound" class="sumifu-tool" type="button" aria-label="音の切り替え">♫</button>
+          <button id="sumifuPause" class="sumifu-tool" type="button" aria-label="一時停止">Ⅱ</button>
+        </div>
+      </div>
+      <div class="sumifu-status">
+        <div class="sumifu-hpwrap">
+          <div class="sumifu-statuslabel"><span>生命</span><strong id="sumifuHpLabel">100 / 100</strong></div>
+          <div class="sumifu-bar"><div id="sumifuHp"></div></div>
+        </div>
+          <div class="sumifu-time"><span id="sumifuTime">00:00</span></div>
+      </div>
+      <div class="sumifu-inkrow"><span>墨</span><div class="sumifu-bar sumifu-ink"><div id="sumifuInk"></div></div><span id="sumifuCombo"></span></div>
+      <p id="sumifuHint" class="sumifu-hint">斬る</p>
+      <div id="sumifuBoss" class="sumifu-boss hidden">
+        <div class="sumifu-bosslabel"><span id="sumifuBossName">にじむ表紙</span><span>夜の主</span></div>
+        <div class="sumifu-bar sumifu-bossbar"><div id="sumifuBossFill"></div></div>
+      </div>
+    </header>
+
+    <div id="sumifu-controls" class="sumifu-controls hidden" aria-label="タッチ操作">
+      <div id="sumifuJoy" class="sumifu-joy" aria-label="移動用スティック">
+        <div class="sumifu-joybase"><div id="sumifuKnob" class="sumifu-knob">筆</div></div>
+        <div class="sumifu-joylabel">MOVE</div>
+      </div>
+      <div class="sumifu-actions">
+        <button id="sumifuSeal" class="sumifu-seal" type="button" aria-label="封ずる">
+          <span>封</span><small>SEAL</small><i id="sumifuSealFill"></i>
+        </button>
+        <button id="sumifuDash" class="sumifu-dash" type="button" aria-label="ダッシュ">
+          <span>閃</span><small>DASH</small><i id="sumifuDashFill"></i>
+        </button>
+        <button id="sumifuSlash" class="sumifu-slash" type="button" aria-label="斬る">
+          <span>斬</span><small>SLASH</small><i id="sumifuSlashFill"></i>
+        </button>
+      </div>
+    </div>
+
+    <section id="sumifu-title" class="sumifu-title hidden">
+      <div class="sumifu-sheet">
+        <div class="sumifu-hanko" aria-hidden="true">墨</div>
+        <p class="sumifu-kicker">GROK 4.7 CURSOR</p>
+        <h1>KASANE</h1>
+        <p class="sumifu-jp">重ね</p>
+        <div class="sumifu-rule" aria-hidden="true"></div>
+        <p class="sumifu-lead">ほどけた夜を、<br>もう一度、重ねる。</p>
+        <button id="sumifuStart" class="sumifu-go" type="button">筆を取る</button>
+        <p class="sumifu-help">移動して斬る · 筆跡を結ぶ · 攻めを受ける<br>PCは WASD · J斬る · K封ずる · Space閃く</p>
+        <p id="sumifuRecord" class="sumifu-record"></p>
+        <div class="sumifu-titletools">
+          <button id="sumifuTitleSound" class="sumifu-quiet" type="button">音を消す</button>
+          <button id="sumifuReturn" class="sumifu-quiet" type="button">‹ Test prim に戻る</button>
+        </div>
+        <p class="sumifu-sign">INK ON NIGHT PAPER</p>
+      </div>
+    </section>
+
+    <section id="sumifu-overlay" class="sumifu-overlay hidden" aria-live="polite"></section>
+    <div id="sumifu-flash" class="sumifu-flash" aria-hidden="true"></div>
+  </section>
+
   <script src="game.js" defer></script>
+  <script src="sumifu.js" defer></script>
   <script src="code-sim.js" defer></script>
   <script src="code.js" defer></script>
 </body>
