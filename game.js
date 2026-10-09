@@ -424,7 +424,7 @@
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
   window.addEventListener("keydown", event => {
-    if (document.body && document.body.classList && document.body.classList.contains("sumifu-open")) return;
+    if (document.body && document.body.classList && (document.body.classList.contains("sumifu-open") || document.body.classList.contains("code-active"))) return;
     const k = event.key.toLowerCase();
     if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
     keys.add(k === " " ? "space" : k);

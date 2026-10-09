@@ -11,6 +11,7 @@
 > **公開中の作品**
 > - GPT6 CHAT — LUMINA（星灯りの庭）
 > - Grok 4.7 Cursor — KASANE（重ね）
+> - 玄人コード（自作ツール）— RELAY（ひかりの手順）
 
 ---
 
@@ -85,17 +86,50 @@
 
 ---
 
+## ▚ 玄人コード（自作ツール）作品 | RELAY — ひかりの手順
+
+**命令ブロックをくみたてて、ちいさなユニットを出口へみちびく。**
+
+盤面のユニットに命令をあたえて、コアとスイッチをあつめ、出口をひらくプログラミングパズルです。あな・とげ・みはりが待ちうける15ステージを、最短のブロック数（パー）でぬけましょう。
+
+- **15ステージ収録**：チュートリアルから、みはりのリズム読み、入れ子の繰り返しまで段階的に
+- **命令は6種類**：前進 / 跳ぶ / 左折 / 右折 / 待つ / 繰り返し（入れ子は3段まで）
+- **★評価**：パー以内でクリアすると★3。ブロックをへらす工夫がスコアにつながる
+- **アイソメ描画**：Canvas 2Dで描く立体の盤面、ホログラム風の演出
+- **音**：Web Audioで合成する効果音（タイトルで切り替え可能）
+- **記録の保存**：ステージごとの★をブラウザ内に保存し、つづきから遊べる
+
+### ▶ ゲームを開く
+
+**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+
+ゲームを開く → **「玄人コード」** を選ぶ → **RELAY** のタイトル画面 → **「ステージを えらぶ」**。
+
+### あそびかた
+
+| ブロック | はたらき |
+| --- | --- |
+| ▶ 前進 | むいているほうへ1マスすすむ |
+| ⤒ 跳ぶ | となりのあな・とげをとびこえて2マスすすむ |
+| ↺ ↻ 左折・右折 | その場でむきをかえる |
+| ◷ 待つ | 1命令ぶんその場でまつ（みはりのタイミング調整） |
+| ⟳ ■ 繰り返し・終わり | あいだの命令をn回くりかえす（入れ子3段まで） |
+
+コアとスイッチをぜんぶあつめると出口がひらきます。あな・とげ・みはりにふれたらこしょう。⟳の行をタップすると回数をかえられます。
+
+---
+
 ## Test primで見ていきたいこと
 
 AIの違いを、単純な点数だけでなく、遊んだときの体験として比べていきます。
 
 **ゲームとしての面白さ / 操作の気持ちよさ / アートと演出 / 音の表現 / 独自性 / スマホでの遊びやすさ / 安定性と完成度**
 
-制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品は、GPT6 CHATのLUMINAと、Grok 4.7 CursorのKASANEです。**
+制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品は、GPT6 CHATのLUMINAと、Grok 4.7 CursorのKASANEと、玄人コードのRELAYです。**
 
 ## 開発・実行
 
-このリポジトリはブラウザゲームの静的サイトです。LUMINA と KASANE は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
+このリポジトリはブラウザゲームの静的サイトです。LUMINA と KASANE と RELAY は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
 
 ローカル起動：
 
@@ -110,12 +144,13 @@ python3 -m http.server 8000
 ```bash
 node --check game.js
 node --check sumifu.js
+node --check code-sim.js
+node --check code.js
 node --check sw.js
-node --test tests/game.test.cjs
-node --test tests/sumifu.test.cjs
+node --test tests/*.test.cjs
 ```
 
-GitHub Actions の **Quality Checks** が構文・操作・３章の通し進行を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
+GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
 
 ---
 

@@ -1679,6 +1679,7 @@
   $("sumifuPause").addEventListener("click", pause);
   window.addEventListener("keydown", event => {
     if (scene === "closed") return;
+    if (document.body && document.body.classList && document.body.classList.contains("code-active")) return;
     const k = event.key.toLowerCase();
     if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
     keys.add(k === " " ? "space" : k);
