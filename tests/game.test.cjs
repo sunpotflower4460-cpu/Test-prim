@@ -77,6 +77,8 @@ function setup() {
 
 test("menu, keyboard, dash, pause and upgrading are interactive", () => {
   const { element: el, events, state, tick } = setup();
+  assert.equal(state.getScene(), "launcher");
+  el("openGameBtn").click();
   assert.equal(state.getScene(), "home");
   el("startBtn").click();
   assert.equal(state.getScene(), "playing");
@@ -102,6 +104,8 @@ test("menu, keyboard, dash, pause and upgrading are interactive", () => {
 
 test("all three bosses can be defeated and the ending is reachable", () => {
   const { element: el, state, tick, localData } = setup();
+  assert.equal(state.getScene(), "launcher");
+  el("openGameBtn").click();
   el("startBtn").click();
   const player = state.getGame().player;
   player.maxHp = 999999; player.hp = 999999;
