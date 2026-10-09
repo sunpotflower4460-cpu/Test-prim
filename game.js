@@ -365,8 +365,8 @@
     if (p.dashCd > 0 || p.dashTime > 0) return;
     let dx = stick.x, dy = stick.y;
     if (Math.abs(dx) + Math.abs(dy) < .15) {
-      dx = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0);
-      dy = (keys.has("ArrowDown") || keys.has("s") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("w") ? 1 : 0);
+      dx = (keys.has("arrowright") || keys.has("d") ? 1 : 0) - (keys.has("arrowleft") || keys.has("a") ? 1 : 0);
+      dy = (keys.has("arrowdown") || keys.has("s") ? 1 : 0) - (keys.has("arrowup") || keys.has("w") ? 1 : 0);
     }
     const d = Math.hypot(dx, dy);
     p.dashX = d > .12 ? dx / d : p.facingX;
@@ -383,8 +383,8 @@
   }
   function readMove() {
     let dx = stick.x, dy = stick.y;
-    const keyboardX = (keys.has("ArrowRight") || keys.has("d") ? 1 : 0) - (keys.has("ArrowLeft") || keys.has("a") ? 1 : 0);
-    const keyboardY = (keys.has("ArrowDown") || keys.has("s") ? 1 : 0) - (keys.has("ArrowUp") || keys.has("w") ? 1 : 0);
+    const keyboardX = (keys.has("arrowright") || keys.has("d") ? 1 : 0) - (keys.has("arrowleft") || keys.has("a") ? 1 : 0);
+    const keyboardY = (keys.has("arrowdown") || keys.has("s") ? 1 : 0) - (keys.has("arrowup") || keys.has("w") ? 1 : 0);
     if (keyboardX || keyboardY) { dx = keyboardX; dy = keyboardY; }
     const len = Math.hypot(dx, dy);
     if (len > 1) { dx /= len; dy /= len; }
