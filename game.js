@@ -419,6 +419,7 @@
   }
   ui.dash.addEventListener("pointerdown", event => { event.preventDefault(); dash(); });
   $("openGameBtn").addEventListener("click", () => { setScene("home"); showToast("星灯りの庭へ"); });
+  $("returnPortalBtn").addEventListener("click", () => { game = null; setScene("launcher"); });
   $("startBtn").addEventListener("click", startRun);
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
