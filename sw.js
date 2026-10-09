@@ -1,7 +1,7 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-lumina-v2";
-const ASSETS = ["./", "./index.html", "./style.css", "./game.js", "./icon.svg", "./manifest.webmanifest"];
+const CACHE = "test-prim-lumina-v3";
+const ASSETS = ["./index.html", "./style.css", "./game.js", "./icon.svg", "./manifest.webmanifest"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
