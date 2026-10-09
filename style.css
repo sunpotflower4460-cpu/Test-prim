@@ -68,3 +68,8 @@ h1{font:500 clamp(53px,17vw,81px)/1 "Cormorant Garamond",Georgia,serif;letter-sp
 }
 .return-portal:active{background:rgba(123,192,178,.2);border-color:rgba(201,237,223,.55)}
 @media(hover:hover){.return-portal:hover{background:rgba(123,192,178,.15);border-color:rgba(201,237,223,.5)}}
+
+/* Menus remain scrollable on compact touchscreens; gameplay canvas keeps gesture capture. */
+.screen,.card,.upgrade-list{touch-action:pan-y;overscroll-behavior:contain}
+.joystick-zone,.dash-btn,#world{touch-action:none}
+@media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-bottom{left:22px;right:22px}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}
