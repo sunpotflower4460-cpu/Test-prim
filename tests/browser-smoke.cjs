@@ -57,6 +57,59 @@ const targets = [
       assert.ok(metrics.canvasWidth > 0, "canvas initialized");
       assert.ok(metrics.htmlWidth <= metrics.viewport + 1, "no horizontal overflow");
       assert.ok(metrics.controlsVisible, "mobile controls rendered");
+
+      // 入口の順番: GPT6 CHAT → Grok 4.7 Cursor → 玄人コード。読み直してランチャーから入る。
+      await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
+      assert.deepEqual(entryLabels, ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード"], "launcher lists the three entries in order");
+      await page.locator("#openGrokBtn").click();
+      await page.locator("#launcherNotice .card").waitFor({ state: "visible" });
+      assert.match(await page.locator("#launcherNotice h2").innerText(), /準備中/);
+      await page.locator("#launcherNoticeClose").click();
+      await page.locator("#launcherNotice").waitFor({ state: "hidden" });
+      await page.locator("#openCodeBtn").click();
+      await page.locator("#codeTitle").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".code-logo").innerText(), "RELAY//");
+      await page.locator("#codeStartBtn").click();
+      await page.locator("#codeSelect").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#codeStageGrid .code-stage").count(), 15, "fifteen stages listed");
+      await page.locator("#codeStageGrid .code-stage").first().click();
+      await page.locator("#codePlay").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#codeStageNo").innerText(), "STAGE 01");
+      const relayCanvas = await page.locator("#codeWorld").evaluate(el => ({
+        width: el.width, height: el.height, hidden: el.classList.contains("hidden"),
+        active: document.body.classList.contains("code-active")
+      }));
+      assert.ok(relayCanvas.width > 0 && relayCanvas.height > 0, "relay canvas sized");
+      assert.ok(!relayCanvas.hidden && relayCanvas.active, "relay canvas is live over the launcher");
+      await page.locator('.code-key[data-act="fwd"]').click();
+      await page.locator('.code-key[data-act="fwd"]').click();
+      assert.equal(await page.locator("#codeProgramCount").innerText(), "2 / 8");
+      await page.locator("#codeRunBtn").click();
+      await page.locator("#codeOverlay .code-card").waitFor({ state: "visible", timeout: 8000 });
+      assert.match(await page.locator("#codeOverlay .code-card h2").innerText(), /STAGE 01/);
+      const relayStars = await page.evaluate(() => JSON.parse(localStorage.getItem("relay-progress-v1") || "{}").stars || null);
+      assert.equal(relayStars && relayStars["1"], 3, "clearing stage 01 stores three stars");
+      await page.locator("#codeOverlay .code-card .sub").last().click();
+      await page.locator("#codeSelect").waitFor({ state: "visible" });
+      assert.ok(await page.locator("#codeStageGrid .code-stage").first().innerText(), "first stage is listed again");
+      await page.locator("#codeSelectBack").click();
+      await page.locator("#codeTitle").waitFor({ state: "visible" });
+      await page.locator("#codeReturnBtn").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      assert.ok(await page.locator("#openGameBtn").isVisible(), "launcher entries remain usable");
+      assert.ok(!(await page.locator("#codeTitle").isVisible()), "relay title is hidden after leaving the game");
+
+      // RELAY を出たあとも LUMINA の操作（ポーズ）がつづけられる。
+      await page.locator("#openGameBtn").click();
+      await page.locator("#startBtn").click();
+      await page.locator("#mobileControls").waitFor({ state: "visible" });
+      await page.locator("#pauseBtn").click();
+      await page.locator("#overlay").waitFor({ state: "visible" });
+      await page.locator("#resume").click();
+      await page.locator("#mobileControls").waitFor({ state: "visible" });
+
       assert.deepEqual(errors, [], "no browser script errors");
       console.log("PASS", target.name, JSON.stringify(metrics));
       await context.close();

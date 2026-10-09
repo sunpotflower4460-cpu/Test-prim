@@ -4,17 +4,19 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — GPT6 CHAT を押して LUMINA 星灯りの庭へ。スマホで遊べる3章構成の幻想アクションゲーム。">
+  <meta name="description" content="Test prim — AIの作品を遊び比べる。GPT6 CHAT の LUMINA と、玄人コード（自作ツール）の RELAY をスマホで遊べます。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
   <link rel="manifest" href="manifest.webmanifest">
   <link rel="icon" href="icon.svg" type="image/svg+xml">
-  <title>Test prim | GPT6 CHAT</title>
+  <title>Test prim | AI EXPERIMENTS</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="code.css">
 </head>
 <body>
   <canvas id="world" aria-label="星灯りの庭 ゲーム画面"></canvas>
+  <canvas id="codeWorld" class="hidden" aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
@@ -57,19 +59,33 @@
         <div class="launcher-ring launcher-ring-two"></div>
         <div class="launcher-core">✳</div>
       </div>
-      <p class="launcher-index">EXPERIMENT NO. 001</p>
+      <p class="launcher-index">THE EXPERIMENT GALLERY</p>
       <h1 class="launcher-title">Test <em>prim</em></h1>
       <div class="launcher-divider"><span></span> ✦ <span></span></div>
       <p class="launcher-copy">ひとつの扉から、まだ知らない世界へ。</p>
-      <button id="openGameBtn" class="launcher-button" type="button" aria-label="GPT6 CHAT のゲームを開く">
-        <span class="launcher-button-symbol">✦</span>
-        <span class="launcher-button-label"><small>ENTER EXPERIENCE</small><strong>GPT6 CHAT</strong></span>
-        <span class="launcher-button-arrow" aria-hidden="true">↗</span>
-      </button>
+      <div class="launcher-entries">
+        <button id="openGameBtn" class="launcher-button" type="button" aria-label="GPT6 CHAT のゲームを開く">
+          <span class="launcher-button-symbol">✦</span>
+          <span class="launcher-button-label"><small>ENTER EXPERIENCE · 001</small><strong>GPT6 CHAT</strong></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button id="openGrokBtn" class="launcher-button launcher-button-grok" type="button" aria-label="Grok 4.7 Cursor のゲームを開く（準備中）">
+          <span class="launcher-button-symbol">◈</span>
+          <span class="launcher-button-label"><small>ENTER EXPERIENCE · 002</small><strong>Grok 4.7 Cursor</strong><em>COMING SOON</em></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </button>
+        <button id="openCodeBtn" class="launcher-button launcher-button-code" type="button" aria-label="玄人コード（自作ツール）のゲーム、RELAY ひかりの手順を開く">
+          <span class="launcher-button-symbol">▚</span>
+          <span class="launcher-button-label"><small>SELF-MADE TOOL · 003</small><strong>玄人コード</strong><em>（自作ツール）</em></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </button>
+      </div>
       <p class="launcher-sub">TAP TO DISCOVER THE WORLD INSIDE</p>
     </div>
-    <div class="launcher-bottom"><span>TEST PRIM</span><span>01 / 01</span><span>2026</span></div>
+    <div class="launcher-bottom"><span>TEST PRIM</span><span>03 EXPERIMENTS</span><span>2026</span></div>
   </section>
+
+  <div id="launcherNotice" class="launcher-notice hidden" aria-live="polite"></div>
 
   <main id="home" class="screen hidden">
     <div class="home-content">
@@ -88,9 +104,73 @@
   </main>
 
   <section id="overlay" class="screen hidden" aria-live="polite"></section>
+
+  <!-- 玄人コード（自作ツール） — RELAY ひかりの手順 -->
+  <section id="codeTitle" class="code-screen hidden" aria-label="RELAY タイトル画面">
+    <div class="code-shell">
+      <button type="button" id="codeReturnBtn" class="code-return">‹ Test prim にもどる</button>
+      <p class="code-eyebrow">KODOU CODE / RELAY PROTOCOL</p>
+      <div class="code-logo">RELAY<span>//</span></div>
+      <p class="code-jp">ひかりの手順</p>
+      <p class="code-lead">命令ブロックを くみたてて、<br>ちいさなユニットを 出口へ みちびく。<br>あなも とげも みはりも、<br>ぜんぶ コードで かいくぐろう。</p>
+      <button id="codeStartBtn" class="code-primary" type="button"><span>ステージを えらぶ</span><b>↗</b></button>
+      <p id="codeProgressLine" class="code-progress">★ 0 / 45</p>
+    </div>
+  </section>
+
+  <section id="codeSelect" class="code-screen hidden" aria-label="ステージ選択">
+    <div class="code-shell">
+      <header class="code-topline">
+        <button id="codeSelectBack" class="code-icon-btn" type="button" aria-label="タイトルへもどる">‹</button>
+        <div class="code-topline-title">STAGE SELECT</div>
+        <button id="codeSoundBtn" class="code-icon-btn" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div id="codeStageGrid" class="code-stage-grid"></div>
+      <p class="code-tip">★ は パー（最短の目安）以内で クリアすると ふえる<br>ステージは じゅんばんに かいほう</p>
+    </div>
+  </section>
+
+  <section id="codePlay" class="code-screen code-play hidden" aria-label="RELAY プレイ画面">
+    <header class="code-hud">
+      <button id="codePlayBack" class="code-icon-btn" type="button" aria-label="ステージ選択へ">‹</button>
+      <div class="code-hud-center"><span id="codeStageNo">STAGE 01</span><strong id="codeStageName">はじめの一行</strong></div>
+      <button id="codeHelpBtn" class="code-icon-btn" type="button" aria-label="あそびかた">?</button>
+    </header>
+    <p id="codeHint" class="code-hint"></p>
+    <div class="code-meters"><span id="codeMeterGoals"></span><span id="codeMeterSteps"></span><span id="codeMeterPar"></span></div>
+    <div class="code-panel">
+      <div class="code-program-head">
+        <span>PROGRAM <b id="codeProgramCount">0 / 8</b></span>
+        <button id="codeClearBtn" class="code-mini" type="button">クリア</button>
+      </div>
+      <div class="code-program-wrap">
+        <ol id="codeProgram" class="code-program"></ol>
+        <p id="codeProgramEmpty" class="code-program-empty">したの ボタンで 命令を くみたてよう</p>
+      </div>
+      <div id="codePalette" class="code-palette">
+        <button class="code-key" type="button" data-act="fwd" aria-label="前進"><i>▶</i><span>前進</span></button>
+        <button class="code-key" type="button" data-act="jump" aria-label="跳ぶ"><i>⤒</i><span>跳ぶ</span></button>
+        <button class="code-key" type="button" data-act="left" aria-label="左折"><i>↺</i><span>左折</span></button>
+        <button class="code-key" type="button" data-act="right" aria-label="右折"><i>↻</i><span>右折</span></button>
+        <button class="code-key" type="button" data-act="wait" aria-label="待つ"><i>◷</i><span>待つ</span></button>
+        <button id="codeRepBtn" class="code-key key-rep" type="button" data-act="rep" aria-label="繰り返し"><i>⟳</i><span>繰り返し</span></button>
+        <button id="codeEndBtn" class="code-key key-end" type="button" data-act="end" aria-label="繰り返しの終わり"><i>■</i><span>終わり</span></button>
+        <button id="codeUndoBtn" class="code-key" type="button" data-act="undo" aria-label="もどす"><i>⌫</i><span>もどす</span></button>
+      </div>
+      <div class="code-runbar">
+        <button id="codeRunBtn" class="code-run" type="button">▶ 実行</button>
+        <button id="codeSpeedBtn" class="code-speed" type="button">×1</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="codeOverlay" class="code-overlay hidden"></div>
+  <div id="codeToast" class="code-toast" role="status" aria-live="polite"></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <div id="flash" class="flash" aria-hidden="true"></div>
 
   <script src="game.js" defer></script>
+  <script src="code-sim.js" defer></script>
+  <script src="code.js" defer></script>
 </body>
 </html>

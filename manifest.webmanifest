@@ -1,7 +1,7 @@
 {
-  "name": "Test prim — GPT6 CHAT / LUMINA",
+  "name": "Test prim — AI EXPERIMENTS",
   "short_name": "Test prim",
-  "description": "Test prim の GPT6 CHAT から、幻想アクションゲーム LUMINA — 星灯りの庭へ。",
+  "description": "Test prim の実験ギャラリー。GPT6 CHAT の幻想アクション LUMINA と、玄人コード（自作ツール）のパズル RELAY — ひかりの手順を遊べます。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

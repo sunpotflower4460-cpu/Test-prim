@@ -47,8 +47,19 @@ h1{font:500 clamp(53px,17vw,81px)/1 "Cormorant Garamond",Georgia,serif;letter-sp
 .launcher-button-label strong{font:600 20px Arial,sans-serif;letter-spacing:.17em;color:#fffaf0}
 .launcher-button-arrow{font:27px Georgia,serif;color:#eddfb5}
 .launcher-sub{font:9px Arial,sans-serif;color:#91b3b9;letter-spacing:.18em;margin:19px 0 0}
+.launcher-entries{display:flex;flex-direction:column;align-items:center;gap:12px}
+.launcher-button-code{border-color:rgba(150,214,255,.5);background:linear-gradient(115deg,rgba(122,215,255,.14),rgba(110,242,168,.08));box-shadow:0 11px 43px rgba(74,180,226,.09),inset 0 0 0 4px rgba(8,28,43,.43)}
+.launcher-button-code:active{background:rgba(122,215,255,.24)}
+.launcher-button-code .launcher-button-symbol{font-size:27px;color:#ccf2ff;text-shadow:0 0 21px #7ad7ff}
+.launcher-button-code .launcher-button-arrow{color:#a9e8d0}
+.launcher-button-label em{font-style:normal;font-size:10px;letter-spacing:.12em;color:#9fc0cf}
+.launcher-button-grok{border-color:rgba(228,204,163,.5);background:linear-gradient(115deg,rgba(236,220,171,.14),rgba(173,238,221,.07))}
+.launcher-button-grok:active{background:rgba(236,220,171,.22)}
+.launcher-button-grok .launcher-button-symbol{color:#fdf0d2;text-shadow:0 0 19px #ead3a4}
+.launcher-button-grok .launcher-button-label em{color:#c8bc9c;letter-spacing:.24em}
+.launcher-notice{position:fixed;inset:0;z-index:13;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:rgba(3,12,27,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 .launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
-@media(max-height:720px){.launcher-sigil{height:120px;width:120px;margin:5px 0}.launcher-core{font-size:55px}.launcher-index{margin:5px 0 7px}.launcher-divider{margin:12px 0}.launcher-copy{margin-bottom:16px}.launcher-button{height:70px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 22px)}}
+@media(max-height:720px){.launcher-sigil{height:120px;width:120px;margin:5px 0}.launcher-core{font-size:55px}.launcher-index{margin:5px 0 7px}.launcher-divider{margin:12px 0}.launcher-copy{margin-bottom:16px}.launcher-button{height:70px}.launcher-entries{gap:9px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 22px)}}
 @media(prefers-reduced-motion:reduce){.launcher-ring-one,.launcher-ring-two,.launcher-core{animation:none}}
 
 /* Quiet return path from the game title to the Test prim hub */
