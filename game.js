@@ -657,33 +657,68 @@
     }
   }
   function terrain() {
-    const t = themes[game.stage], cell = 132;
+    const t = themes[game.stage], stage = game.stage, cell = stage === 1 ? 152 : 132;
     const left = Math.floor(camX / cell) - 1, right = Math.ceil((camX + W) / cell) + 1;
     const top = Math.floor(camY / cell) - 1, bottom = Math.ceil((camY + H) / cell) + 1;
-    ctx.strokeStyle = game.stage === 2 ? "rgba(235,188,191,.052)" : "rgba(147,219,205,.06)";
+    ctx.save();
+    ctx.strokeStyle = stage === 2 ? "rgba(236,185,192,.052)" : stage === 1 ? "rgba(167,190,243,.033)" : "rgba(147,219,205,.05)";
     ctx.lineWidth = 1;
-    for (let x = left; x <= right; x++) {
-      ctx.beginPath(); ctx.moveTo(x * cell, camY - 160); ctx.lineTo(x * cell, camY + H + 160); ctx.stroke();
-    }
-    for (let y = top; y <= bottom; y++) {
-      ctx.beginPath(); ctx.moveTo(camX - 160, y * cell); ctx.lineTo(camX + W + 160, y * cell); ctx.stroke();
+    if (stage === 2) {
+      // Ancient stone seams: subtly offset diagonal lattice.
+      for (let x = left - 1; x <= right + 1; x++) {
+        ctx.beginPath(); ctx.moveTo(x * cell, camY - 170); ctx.lineTo(x * cell + H * .24, camY + H + 170); ctx.stroke();
+      }
+      for (let y = top - 1; y <= bottom + 1; y++) {
+        ctx.beginPath(); ctx.moveTo(camX - 150, y * cell); ctx.lineTo(camX + W + 170, y * cell); ctx.stroke();
+      }
+    } else if (stage === 0) {
+      for (let x = left; x <= right; x++) {
+        ctx.beginPath(); ctx.moveTo(x * cell, camY - 160); ctx.lineTo(x * cell, camY + H + 160); ctx.stroke();
+      }
+      for (let y = top; y <= bottom; y++) {
+        ctx.beginPath(); ctx.moveTo(camX - 160, y * cell); ctx.lineTo(camX + W + 160, y * cell); ctx.stroke();
+      }
     }
     for (let x = left; x <= right; x++) for (let y = top; y <= bottom; y++) {
       const seed = hash(x, y);
-      if (seed < .43) continue;
-      const fx = x * cell + hash(x + 19, y + 4) * 100 + 14;
-      const fy = y * cell + hash(x + 4, y + 81) * 100 + 14;
-      const size = 2 + seed * 3;
-      ctx.globalAlpha = .11 + seed * .12;
+      if (seed < .3) continue;
+      const fx = x * cell + hash(x + 19, y + 4) * (cell - 32) + 16;
+      const fy = y * cell + hash(x + 4, y + 81) * (cell - 32) + 16;
+      const size = 2.5 + seed * 3.2, drift = Math.sin(clock * .7 + seed * 15);
+      ctx.globalAlpha = .10 + seed * .15;
       ctx.strokeStyle = t.accent; ctx.fillStyle = t.accent; ctx.lineWidth = .9;
-      ctx.beginPath(); ctx.arc(fx, fy, size * 2.5, 0, TWO); ctx.stroke();
-      for (let j = 0; j < 4; j++) {
-        const a = j * Math.PI / 2 + clock * .035;
-        ctx.beginPath(); ctx.ellipse(fx + Math.cos(a) * size * 2, fy + Math.sin(a) * size * 2, size * 1.1, size * .44, a, 0, TWO); ctx.fill();
+      if (stage === 0) {
+        // Glowing wildflowers in the dawn forest.
+        ctx.beginPath(); ctx.arc(fx, fy, size * 2.3, 0, TWO); ctx.stroke();
+        for (let j = 0; j < 5; j++) {
+          const a = j * TWO / 5 + clock * .027;
+          ctx.beginPath(); ctx.ellipse(fx + Math.cos(a) * size * 1.7, fy + Math.sin(a) * size * 1.7, size * .9, size * .36, a, 0, TWO); ctx.fill();
+        }
+        ctx.beginPath(); ctx.arc(fx, fy, 1.1, 0, TWO); ctx.fill();
+      } else if (stage === 1) {
+        // Lake ripples, drifting gently with an independent phase per tile.
+        for (let j = 0; j < 3; j++) {
+          const radius = 8 + j * 10 + (drift + 1) * 3;
+          ctx.globalAlpha = (.08 + seed * .12) * (1 - j * .22);
+          ctx.beginPath(); ctx.ellipse(fx, fy, radius * 1.55, radius * .52, .12, 0, TWO); ctx.stroke();
+        }
+        ctx.globalAlpha = .3 + drift * .12;
+        ctx.beginPath(); ctx.arc(fx + 6, fy - 2, 1.3, 0, TWO); ctx.fill();
+      } else {
+        // The star temple's geometric sigils, each at its own rotation.
+        const a0 = hash(x + 2, y - 7) * TWO;
+        for (let j = 0; j < 6; j++) {
+          const a = a0 + j * TWO / 6;
+          const b = a0 + (j + 1) * TWO / 6;
+          ctx.beginPath(); ctx.moveTo(fx + Math.cos(a) * size * 3.1, fy + Math.sin(a) * size * 3.1);
+          ctx.lineTo(fx + Math.cos(b) * size * 3.1, fy + Math.sin(b) * size * 3.1); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.moveTo(fx, fy - size * 1.7); ctx.lineTo(fx + size * 1.3, fy + size);
+        ctx.lineTo(fx - size * 1.3, fy + size); ctx.closePath(); ctx.stroke();
+        ctx.beginPath(); ctx.arc(fx, fy, 1.6, 0, TWO); ctx.fill();
       }
-      ctx.beginPath(); ctx.arc(fx, fy, 1.1, 0, TWO); ctx.fill();
     }
-    ctx.globalAlpha = 1;
+    ctx.restore();
   }
   function orbShape(x, y, r, color, spin = 0) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(spin);
@@ -763,6 +798,16 @@
     ctx.bezierCurveTo(-r * .95, r * 1.08, -r * 1.1, -r * .7, 0, -r * 1.14);
     ctx.fill();
     ctx.shadowBlur = 0;
+    if (isBoss && e.windup > 0) {
+      const progress = clamp(1 - e.windup / .88, 0, 1);
+      ctx.save();
+      ctx.rotate(-Math.sin(clock * .6) * .09);
+      ctx.strokeStyle = "rgba(255,221,191,.95)";
+      ctx.lineWidth = 3.3;
+      ctx.shadowColor = "#ffbdc1"; ctx.shadowBlur = 17;
+      ctx.beginPath(); ctx.arc(0, 0, r + 19 + progress * 6, -Math.PI / 2, -Math.PI / 2 + TWO * progress); ctx.stroke();
+      ctx.restore();
+    }
     ctx.fillStyle = isBoss ? "#42243b" : "#173145";
     ctx.beginPath();
     ctx.ellipse(-r * .3, 0, r * .1 + 1, r * .2 + 1, -.2, 0, TWO);
