@@ -162,7 +162,7 @@
     },
     {
       id: 10, name: "みはり", en: "SENTRY",
-      hint: "みはりは 1命令ごとに 1マス うごく。⏳ 待つ で すれちがおう",
+      hint: "みはりは 1命令ごとに 1マス うごく。◷ 待つ で すれちがおう",
       par: 14, slots: 20,
       rows: [
         "#######",
@@ -179,7 +179,7 @@
     },
     {
       id: 11, name: "ふたつの みはり", en: "TWIN SENTRIES",
-      hint: "同じラインを 2回 よこぎる。みはりの リズムを 読もう",
+      hint: "みはりは ふたつ。2本の ラインを リズムよく よこぎろう",
       par: 15, slots: 22,
       rows: [
         "#######",
@@ -191,7 +191,10 @@
         "#######"
       ],
       start: { x: 1, y: 1, dir: 2 },
-      patrols: [{ path: [[1, 3], [2, 3], [3, 3], [4, 3], [5, 3]] }],
+      patrols: [
+        { path: [[1, 3], [2, 3], [3, 3], [4, 3], [5, 3]] },
+        { path: [[5, 2], [4, 2], [3, 2], [2, 2], [1, 2]], at: 0, dir: 1 }
+      ],
       solution: ["wait", "fwd", "fwd", "fwd", "fwd", "left", "fwd", "fwd", "fwd", "fwd", "left", "fwd", "fwd", "fwd", "fwd"]
     },
     {
@@ -212,7 +215,7 @@
     },
     {
       id: 13, name: "きけんなこうじ", en: "DANGER SITE",
-      hint: "とげと あなの あいだを、跳躍で リズムよく",
+      hint: "あなの あいだを、跳躍で リズムよく",
       par: 11, slots: 20,
       rows: [
         "#########",
@@ -225,7 +228,7 @@
       ],
       start: { x: 1, y: 1, dir: 1 },
       patrols: [],
-      solution: ["fwd", "jump", "jump", "right", "fwd", "fwd", "fwd", "fwd", "right", "fwd", "fwd", "fwd", "fwd", "fwd"]
+      solution: ["fwd", "jump", "jump", "right", "rep4", "fwd", "end", "right", "rep5", "fwd", "end"]
     },
     {
       id: 14, name: "みはりのおく", en: "BEYOND THE WATCH",
@@ -333,7 +336,9 @@
         const token = tokens[i];
         if (token.t === "rep") {
           const close = matchEnd(tokens, i);
-          for (let n = 0; n < token.n; n++) walk(i + 1, close, loops + 1);
+          for (let n = 0; n < token.n; n++) {
+            if (!walk(i + 1, close, loops + 1)) return false;
+          }
           i = close;
         } else if (token.t !== "end") {
           if (steps.length >= MAX_STEPS) return false;
@@ -479,7 +484,7 @@
 
   // テストや模範解答の検証に使う一括実行。
   function runProgram(level, program) {
-    const tokens = program.map(tokenOf).filter(Boolean);
+    const tokens = program.map(tokenOf);
     const check = validate(tokens);
     if (!check.ok) return { status: "invalid", reason: check.error, index: check.index, ticks: 0, run: null, tokens };
     const plan = expand(tokens);

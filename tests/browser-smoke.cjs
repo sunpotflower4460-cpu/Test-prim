@@ -124,9 +124,47 @@ const targets = [
       assert.match(await page.locator("#codeOverlay .code-card h2").innerText(), /STAGE 01/);
       const relayStars = await page.evaluate(() => JSON.parse(localStorage.getItem("relay-progress-v1") || "{}").stars || null);
       assert.equal(relayStars && relayStars["1"], 3, "clearing stage 01 stores three stars");
+      // Escape closes the clear card and returns to stage select without leaving the card behind.
+      await page.keyboard.press("Escape");
+      await page.locator("#codeSelect").waitFor({ state: "visible" });
+      await page.locator("#codeOverlay .code-card").waitFor({ state: "hidden" });
+      assert.ok(await page.locator("#codeStageGrid .code-stage").first().innerText(), "first stage is listed again");
+      // Clearing again and leaving through the card's own button still works.
+      await page.locator("#codeStageGrid .code-stage").first().click();
+      await page.locator('.code-key[data-act="fwd"]').click();
+      await page.locator('.code-key[data-act="fwd"]').click();
+      await page.locator("#codeRunBtn").click();
+      await page.locator("#codeOverlay .code-card").waitFor({ state: "visible", timeout: 8000 });
       await page.locator("#codeOverlay .code-card .sub").last().click();
       await page.locator("#codeSelect").waitFor({ state: "visible" });
-      assert.ok(await page.locator("#codeStageGrid .code-stage").first().innerText(), "first stage is listed again");
+      // 長いプログラムを実行したとき、いま実行している行がリストの見える位置へ追従する。
+      await page.locator("#codeStageGrid .code-stage").first().click();
+      for (let i = 0; i < 8; i++) await page.locator('.code-key[data-act="wait"]').click();
+      const follow = page.evaluate(() => new Promise(resolve => {
+        const started = performance.now();
+        const check = () => {
+          const rows = Array.from(document.querySelectorAll("#codeProgram li"));
+          const index = rows.findIndex(row => row.classList.contains("now"));
+          if (index === 3) {
+            const wrap = document.querySelector(".code-program-wrap");
+            const wrapRect = wrap.getBoundingClientRect();
+            const rowRect = rows[index].getBoundingClientRect();
+            resolve({ scrollTop: wrap.scrollTop, center: rowRect.top - wrapRect.top + rowRect.height / 2, height: wrapRect.height });
+          } else if (performance.now() - started > 9000) {
+            resolve({ timeout: true });
+          } else {
+            requestAnimationFrame(check);
+          }
+        };
+        check();
+      }));
+      await page.locator("#codeRunBtn").click();
+      const followState = await follow;
+      assert.ok(followState && !followState.timeout, "the fourth command ran while the list was scrollable");
+      assert.ok(followState.scrollTop > 0, "a long program scrolls the command list");
+      assert.ok(Math.abs(followState.center - followState.height / 2) <= 16, "the running row stays near the middle of the list");
+      await page.keyboard.press("Escape");
+      await page.locator("#codeSelect").waitFor({ state: "visible" });
       await page.locator("#codeSelectBack").click();
       await page.locator("#codeTitle").waitFor({ state: "visible" });
       await page.locator("#codeReturnBtn").click();

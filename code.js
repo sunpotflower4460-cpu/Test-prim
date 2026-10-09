@@ -380,7 +380,8 @@
   function scrollProgramTo(row) {
     const wrap = document.querySelector(".code-program-wrap");
     if (!wrap || !row) return;
-    const target = row.offsetTop - wrap.clientHeight / 2 + row.clientHeight / 2;
+    const innerTop = row.offsetTop - wrap.offsetTop - wrap.clientTop;
+    const target = innerTop - wrap.clientHeight / 2 + row.clientHeight / 2;
     wrap.scrollTop = clamp(target, 0, Math.max(0, wrap.scrollHeight - wrap.clientHeight));
   }
   function markNow(index) {
@@ -1030,16 +1031,18 @@
 
   function patrolStates() {
     return run.patrols.map((patrol, index) => {
-      const from = sim.patrolCell(patrol);
-      const target = anim.beat && anim.beat.patrolTo[index] ? anim.beat.patrolTo[index] : from;
-      const p = anim.beat ? ease(clamp((anim.t - .42) / .58, 0, 1)) : 1;
+      // beat 中は「移動前 → 移動後」を補間する。run 側の位置は移動後なので、始点は beat から取る
+      const beat = anim.beat;
+      const from = beat && beat.patrolFrom[index] ? beat.patrolFrom[index] : sim.patrolCell(patrol);
+      const target = beat && beat.patrolTo[index] ? beat.patrolTo[index] : from;
+      const p = beat ? ease(clamp((anim.t - .42) / .58, 0, 1)) : 1;
       const x = from.x + (target.x - from.x) * p;
       const y = from.y + (target.y - from.y) * p;
       let angle = patrol.angle || 0;
       const dx = target.x - from.x, dy = target.y - from.y;
       if (dx || dy) {
         const want = Math.atan2((dx + dy) * TILE_H / 2, (dx - dy) * TILE_W / 2);
-        angle = lerpAngle(angle, want, anim.beat ? .06 : .2);
+        angle = lerpAngle(angle, want, beat ? .06 : .2);
       }
       patrol.angle = angle;
       return { x, y, angle };
@@ -1200,6 +1203,7 @@
     event.stopImmediatePropagation();
     if (key === "escape") {
       event.preventDefault();
+      hideOverlay();
       if (mode === "play") { stopRun(true); refreshGrid(); showScreen("select"); }
       else if (mode === "select") { refreshTitle(); showScreen("title"); }
       else exitCode();

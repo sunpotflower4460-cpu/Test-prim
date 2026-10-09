@@ -40,6 +40,16 @@ test("stage data is consistent: geometry, objectives and patrol routes", () => {
   }
 });
 
+test("the twin sentries stage fields two patrols as its name promises", () => {
+  const level = sim.LEVELS.find(lv => lv.id === 11);
+  assert.equal(level.patrols.length, 2, "stage 11 has two sentries");
+  for (const patrol of level.patrols) {
+    for (const [x, y] of patrol.path) {
+      assert.equal(level.grid.tiles[y][x], ".", "sentry walks free floor");
+    }
+  }
+});
+
 test("a stage without an exit cannot be cleared but never crashes", () => {
   const level = makeLevel(["####", "#..#", "#..#", "####"], { x: 1, y: 1, dir: 2 });
   const run = sim.createRun(level);
@@ -124,6 +134,15 @@ test("stars follow par: within par is three, par plus three is two", () => {
   assert.equal(sim.starsFor(level, 6), 2);
   assert.equal(sim.starsFor(level, 8), 2);
   assert.equal(sim.starsFor(level, 9), 1);
+});
+
+test("runProgram rejects unknown commands instead of dropping them silently", () => {
+  const level = sim.LEVELS[0];
+  const result = sim.runProgram(level, ["fwd", "nope", "fwd"]);
+  assert.equal(result.status, "invalid");
+  assert.equal(result.reason, "unknown");
+  assert.equal(result.index, 1);
+  assert.equal(result.ticks, 0, "nothing runs on an invalid program");
 });
 
 test("spikes and pits end the run with their own reason", () => {
