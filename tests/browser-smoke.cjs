@@ -37,8 +37,7 @@ const targets = [
       await page.locator("#resume").click();
       await page.locator("#mobileControls").waitFor({ state: "visible" });
       await page.locator("#dashBtn").dispatchEvent("pointerdown", { pointerId: 1, pointerType: "touch" });
-      await page.waitForTimeout(100);
-      assert.ok(await page.locator("#dashBtn").evaluate(el => el.classList.contains("recharging")), "DASH should enter cooldown");
+      await page.waitForFunction(() => document.querySelector("#dashBtn").classList.contains("recharging"), null, { timeout: 2000 });
       const metrics = await page.evaluate(() => ({
         viewport: window.innerWidth, htmlWidth: document.documentElement.scrollWidth,
         canvasWidth: document.querySelector("canvas").width,
