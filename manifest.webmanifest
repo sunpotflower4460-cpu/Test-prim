@@ -1,7 +1,7 @@
 {
-  "name": "LUMINA — 星灯りの庭",
-  "short_name": "LUMINA",
-  "description": "3つの幻想世界を旅する、星のアクションゲーム",
+  "name": "Test prim — GPT6 CHAT / LUMINA",
+  "short_name": "Test prim",
+  "description": "Test prim の GPT6 CHAT から、幻想アクションゲーム LUMINA — 星灯りの庭へ。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
