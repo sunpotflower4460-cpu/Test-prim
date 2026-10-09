@@ -50,3 +50,21 @@ h1{font:500 clamp(53px,17vw,81px)/1 "Cormorant Garamond",Georgia,serif;letter-sp
 .launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
 @media(max-height:720px){.launcher-sigil{height:120px;width:120px;margin:5px 0}.launcher-core{font-size:55px}.launcher-index{margin:5px 0 7px}.launcher-divider{margin:12px 0}.launcher-copy{margin-bottom:16px}.launcher-button{height:70px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 22px)}}
 @media(prefers-reduced-motion:reduce){.launcher-ring-one,.launcher-ring-two,.launcher-core{animation:none}}
+
+/* Quiet return path from the game title to the Test prim hub */
+.return-portal{
+  position:fixed;
+  z-index:3;
+  top:calc(env(safe-area-inset-top) + 18px);
+  left:18px;
+  padding:10px 13px;
+  border:1px solid rgba(190,225,214,.24);
+  border-radius:9px;
+  background:rgba(7,24,40,.48);
+  color:rgba(214,235,229,.87);
+  font:11px/1.2 Arial,sans-serif;
+  letter-spacing:.055em;
+  transition:background .16s,border-color .16s;
+}
+.return-portal:active{background:rgba(123,192,178,.2);border-color:rgba(201,237,223,.55)}
+@media(hover:hover){.return-portal:hover{background:rgba(123,192,178,.15);border-color:rgba(201,237,223,.5)}}
