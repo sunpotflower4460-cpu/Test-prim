@@ -489,7 +489,10 @@
       p.novaCd += Math.max(3.9, 8.2 - p.nova);
       ring(p.x, p.y, 260, "#ffe5a7", .64);
       burst(p.x, p.y, 28, "#ffedae", .8);
-      for (const e of g.enemies) if (distance(e, p) < 260) hurtEnemy(e, 22 + p.nova * 22);
+      for (const e of g.enemies) if (distance(e, p) < 260) {
+        hurtEnemy(e, 22 + p.nova * 22);
+        if (scene !== "playing") return;
+      }
     }
     if (!g.bossSpawned && g.stageTime < 60) {
       g.spawnCd -= dt;
@@ -546,6 +549,7 @@
         }
       }
       if (dist < p.r + e.radius - 3) hurtPlayer(e.damage, e.x, e.y);
+      if (scene !== "playing") return;
       if (e.type !== "boss" && dist > Math.max(W, H) * 2.3) { g.enemies.splice(i, 1); continue; }
       if (p.orbit && e.orbitHit === 0) {
         for (let j = 0; j < p.orbit; j++) {
@@ -554,6 +558,7 @@
           if ((e.x - ox) ** 2 + (e.y - oy) ** 2 < (e.radius + 12) ** 2) {
             e.orbitHit = .45;
             hurtEnemy(e, 13 + p.damage * .42, ox, oy);
+            if (scene !== "playing") return;
             break;
           }
         }
@@ -568,6 +573,7 @@
         if (e.hp <= 0) continue;
         if ((e.x - s.x) ** 2 + (e.y - s.y) ** 2 < (e.radius + s.r) ** 2) {
           hurtEnemy(e, s.damage, s.x, s.y);
+          if (scene !== "playing") return;
           if (s.slow) e.slow = 1.2 + .65 * s.slow;
           hit = true; break;
         }
@@ -578,6 +584,7 @@
       const s = g.hostile[i]; s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
       if ((p.x - s.x) ** 2 + (p.y - s.y) ** 2 < (p.r + s.r) ** 2) {
         hurtPlayer(s.damage, s.x, s.y); g.hostile.splice(i, 1);
+        if (scene !== "playing") return;
       } else if (s.life <= 0) g.hostile.splice(i, 1);
     }
     for (let i = g.orbs.length - 1; i >= 0; i--) {
@@ -595,6 +602,7 @@
         if (Math.random() < .13) sound("pick");
         burst(o.x, o.y, 3, o.value < 0 ? "#ffa5b2" : themes[g.stage].orb, .2);
         g.orbs.splice(i, 1);
+        if (scene !== "playing") return;
       }
     }
     for (let i = particles.length - 1; i >= 0; i--) {
@@ -867,6 +875,23 @@
     if (g.bossSpawned) {
       ctx.fillStyle = "rgba(226,128,164," + (.045 + .03 * Math.sin(clock * 2)) + ")";
       ctx.fillRect(0, 0, W, H);
+      // When the guardian is beyond the visible play area, keep direction legible.
+      const boss = g.enemies.find(e => e.id === g.bossId && e.hp > 0);
+      if (boss) {
+        const bx = boss.x - camX, by = boss.y - camY;
+        const top = Math.min(176, H * .25), bottom = H - Math.min(171, H * .24);
+        if (bx < 38 || bx > W - 38 || by < top || by > bottom) {
+          const ax = clamp(bx, 40, W - 40), ay = clamp(by, top, bottom);
+          const angle = Math.atan2(by - H * .5, bx - W * .5);
+          ctx.save(); ctx.translate(ax, ay); ctx.rotate(angle);
+          ctx.globalAlpha = .82 + .18 * Math.sin(clock * 4);
+          ctx.shadowColor = "#ff8fae"; ctx.shadowBlur = 14;
+          ctx.fillStyle = "#ffe2cc";
+          ctx.beginPath(); ctx.moveTo(15, 0); ctx.lineTo(-8, -9); ctx.lineTo(-4, 0); ctx.lineTo(-8, 9); ctx.closePath(); ctx.fill();
+          ctx.shadowBlur = 0;
+          ctx.restore();
+        }
+      }
     }
   }
   function drawHome() {
