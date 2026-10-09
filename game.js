@@ -4,7 +4,7 @@
   const ctx = canvas.getContext("2d", { alpha: false });
   const $ = id => document.getElementById(id);
   const ui = {
-    home: $("home"), overlay: $("overlay"), top: $("topbar"), controls: $("mobileControls"),
+    launcher: $("launcher"), home: $("home"), overlay: $("overlay"), top: $("topbar"), controls: $("mobileControls"),
     hp: $("hpFill"), hpLabel: $("hpLabel"), xp: $("xpFill"), level: $("levelLabel"),
     time: $("timeLabel"), hint: $("stageHint"), kills: $("killLabel"), chapter: $("chapterLabel"),
     bossbar: $("bossbar"), bossFill: $("bossFill"), bossName: $("bossName"),
@@ -49,7 +49,7 @@
   const texts = [];
   const rings = [];
   const motes = Array.from({ length: 72 }, () => ({ x: Math.random(), y: Math.random(), s: rand(.5, 2.1), t: rand(0, TWO), z: rand(.2, 1) }));
-  let W = 390, H = 800, DPR = 1, scene = "home", game = null, last = 0, clock = 0;
+  let W = 390, H = 800, DPR = 1, scene = "launcher", game = null, last = 0, clock = 0;
   let camX = 0, camY = 0, shake = 0, toastTimeout = null;
   let audio = null, musicAt = 0, beat = 0;
   let reducedMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -141,9 +141,10 @@
   function haptic(ms = 15) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (_) {} } }
   function setScene(value) {
     scene = value;
+    ui.launcher.classList.toggle("hidden", value !== "launcher");
     ui.home.classList.toggle("hidden", value !== "home");
-    ui.overlay.classList.toggle("hidden", value === "home" || value === "playing");
-    ui.top.classList.toggle("hidden", value === "home");
+    ui.overlay.classList.toggle("hidden", value === "home" || value === "launcher" || value === "playing");
+    ui.top.classList.toggle("hidden", value === "home" || value === "launcher");
     ui.controls.classList.toggle("hidden", value !== "playing");
     if (value !== "playing") resetStick();
   }
@@ -417,6 +418,7 @@
     $("joystick").addEventListener(type, event => { if (stick.id === event.pointerId) resetStick(); });
   }
   ui.dash.addEventListener("pointerdown", event => { event.preventDefault(); dash(); });
+  $("openGameBtn").addEventListener("click", () => { setScene("home"); showToast("星灯りの庭へ"); });
   $("startBtn").addEventListener("click", startRun);
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
@@ -428,7 +430,8 @@
     if ((k === "escape" || k === "p") && !event.repeat) {
       if (scene === "playing") pause(); else if (scene === "paused") $("resume").click();
     }
-    if (k === "enter" && scene === "home") startRun();
+    if (k === "enter" && scene === "launcher") { setScene("home"); }
+    else if (k === "enter" && scene === "home") startRun();
   }, { passive: false });
   window.addEventListener("keyup", event => keys.delete(event.key.toLowerCase() === " " ? "space" : event.key.toLowerCase()));
   window.addEventListener("blur", () => { keys.clear(); resetStick(); if (scene === "playing") pause(); });
