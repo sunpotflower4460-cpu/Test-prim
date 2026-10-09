@@ -32,7 +32,7 @@
 
 ゲームを開く → **「GPT6 CHAT」** を選ぶ → **LUMINA** のタイトル画面 → **「旅をはじめる」**。
 
-> GitHub Pagesでの正式配信には、最初にリポジトリの **Settings → Pages → Source: GitHub Actions** の有効化が必要です。配信できていない場合は [コードプレビュー](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html) で確認できます（プレビューは外部サービス経由）。
+> GitHub Pagesでの正式配信は、初回だけリポジトリの **Settings → Pages → Build and deployment → Deploy from a branch → main / (root) → Save** を選ぶと有効になります。以降は `main` の変更が自動反映されます。設定前は [コードプレビュー](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html) を利用できます（プレビューは外部サービス経由）。
 
 ### 操作方法
 
@@ -76,7 +76,7 @@ node --check sw.js
 node --test tests/game.test.cjs
 ```
 
-GitHub Actions の **Quality Checks** が構文・操作・３章の通し進行を検証します。GitHub Pages は初期設定が完了すると **Publish LUMINA** で配信します。
+GitHub Actions の **Quality Checks** が構文・操作・３章の通し進行を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
 
 ---
 
