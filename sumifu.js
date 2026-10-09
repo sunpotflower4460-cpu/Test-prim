@@ -53,7 +53,7 @@
     ink: $("sumifuInk"), time: $("sumifuTime"), hint: $("sumifuHint"), combo: $("sumifuCombo"),
     boss: $("sumifuBoss"), bossName: $("sumifuBossName"), bossFill: $("sumifuBossFill"),
     sound: $("sumifuSound"), titleSound: $("sumifuTitleSound"), record: $("sumifuRecord"),
-    knob: $("sumifuKnob"), slashBtn: $("sumifuSlash"),
+    knob: $("sumifuKnob"), slashBtn: $("sumifuSlash"), slashFill: $("sumifuSlashFill"),
     sealFill: $("sumifuSealFill"), dashFill: $("sumifuDashFill"), sealBtn: $("sumifuSeal"), dashBtn: $("sumifuDash")
   };
 
@@ -79,6 +79,7 @@
 
   function T() { return THEMES[game ? game.stage : 0]; }
   function prad() { return 34 * view.scale; }
+  function spritePad() { return 50 * view.scale; }
   function rad(e) { return e.baseR * view.scale; }
   function srange() { return game.player.slashRange * view.scale; }
   function clockText(t) {
@@ -86,33 +87,80 @@
     return String(Math.floor(s / 60)).padStart(2, "0") + ":" + String(s % 60).padStart(2, "0");
   }
 
+  function measuredChrome() {
+    const battle = game && scene !== "title" && scene !== "closed";
+    if (!battle) return { hud: 8, foot: 8, margin: 12 };
+    let hud = 0, foot = 0;
+    const boss = ui.boss;
+    const hidden = !!(boss && boss.classList && boss.classList.contains("hidden"));
+    try {
+      if (hidden) boss.classList.remove("hidden");
+      if (ui.top && ui.top.offsetHeight) hud = ui.top.offsetHeight + 14;
+      if (ui.controls && ui.controls.offsetHeight) foot = ui.controls.offsetHeight + 8;
+    } finally {
+      if (hidden && boss) boss.classList.add("hidden");
+    }
+    if (!(hud > 48)) hud = H < 640 ? 176 : 188;
+    if (!(foot > 48)) foot = H < 640 ? 142 : 172;
+    if (H - hud - foot < 200) {
+      const gutter = Math.max(148, Math.min(188, W * 0.18));
+      if (H - hud - 8 >= 150) return { hud, foot: 8, margin: gutter };
+      return { hud: Math.max(72, Math.min(hud, H * 0.34)), foot: 8, margin: gutter };
+    }
+    return { hud, foot, margin: Math.max(12, Math.min(36, W * 0.03)) };
+  }
+  function remapWorld(prev) {
+    const sx = paper.w / prev.w, sy = paper.h / prev.h, sm = (sx + sy) / 2;
+    const map = obj => {
+      obj.x = paper.x + (obj.x - prev.x) * sx;
+      obj.y = paper.y + (obj.y - prev.y) * sy;
+    };
+    map(game.player);
+    for (let i = 0; i < game.enemies.length; i++) {
+      const e = game.enemies[i];
+      map(e);
+      e.aimX = paper.x + (e.aimX - prev.x) * sx;
+      e.aimY = paper.y + (e.aimY - prev.y) * sy;
+      const next = clampInto(rad(e), e.x, e.y);
+      e.x = next[0];
+      e.y = next[1];
+    }
+    for (let i = 0; i < game.shots.length; i++) {
+      const s = game.shots[i];
+      map(s);
+      s.vx *= sx;
+      s.vy *= sy;
+    }
+    for (let i = 0; i < game.seals.length; i++) { map(game.seals[i]); game.seals[i].r *= sm; }
+    for (let i = 0; i < game.strokes.length; i++) { map(game.strokes[i]); game.strokes[i].range *= sm; }
+    for (let i = 0; i < game.trails.length; i++) game.trails[i].points.forEach(map);
+    game.decals.forEach(map);
+    game.particles.forEach(map);
+    game.texts.forEach(map);
+    game.bleed *= sm;
+    clampPlayer();
+  }
   function layout() {
-    W = Math.max(280, window.innerWidth || 390);
-    H = Math.max(420, window.innerHeight || 800);
+    W = Math.max(200, window.innerWidth || 390);
+    H = Math.max(200, window.innerHeight || 800);
     DPR = Math.min((window.devicePixelRatio || 1), 2);
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);
     canvas.style.width = W + "px";
     canvas.style.height = H + "px";
-    const battle = game && scene !== "title" && scene !== "closed";
-    const hud = battle ? (H < 680 ? 126 : 158) : 8;
-    const foot = battle ? (H < 680 ? 124 : 156) : 8;
-    const margin = Math.max(12, W * 0.045);
-    const availW = Math.max(120, W - margin * 2);
-    const availH = Math.max(120, H - hud - foot);
-    let pw = Math.min(availW, 560);
-    let ph = Math.min(availH, pw * 1.36);
-    pw = Math.min(pw, Math.max(160, ph / 1.08));
-    const prev = game && paper.w > 2 ? { x: (game.player.x - paper.x) / paper.w, y: (game.player.y - paper.y) / paper.h } : null;
+    const space = measuredChrome();
+    const availW = Math.max(120, W - space.margin * 2);
+    const availH = Math.max(120, H - space.hud - space.foot);
+    let pw = Math.min(availW, 920);
+    let ph = Math.min(availH, pw * 1.2);
+    if (ph < pw * 0.95) pw = Math.min(availW, Math.max(pw, ph * 1.65));
+    const prev = game && paper.w > 2 ? { x: paper.x, y: paper.y, w: paper.w, h: paper.h } : null;
     paper.w = pw;
     paper.h = ph;
     paper.x = (W - pw) / 2;
-    paper.y = hud + Math.max(0, (availH - ph) / 2);
-    view.scale = clamp(pw / 400, 0.78, 1.22);
-    if (prev && game) {
-      game.player.x = paper.x + clamp(prev.x, 0.08, 0.92) * pw;
-      game.player.y = paper.y + clamp(prev.y, 0.08, 0.92) * ph;
-    }
+    paper.y = space.hud + Math.max(0, (availH - ph) / 2);
+    view.scale = clamp(pw / 420, 0.7, 1.15);
+    if (prev && game) remapWorld(prev);
   }
 
   function buildFibers() {
@@ -128,7 +176,7 @@
       facing: -Math.PI / 2, slashCd: 0, slashCdMax: 0.36, slashTime: 0, slashDur: 0.2,
       slashAngle: -Math.PI / 2, slashRange: 86, slashArc: 1.8, slashHit: new Set(),
       sealCd: 0, sealCdMax: 4.1, sealR: 56,
-      dashCd: 0, dashTime: 0, dashX: 0, dashY: -1, invuln: 0,
+      dashCd: 0, dashCdMax: 2.05, dashTime: 0, dashX: 0, dashY: -1, invuln: 0,
       combo: 0, comboT: 0, trailLife: 0.72, trailPower: 1, parryWin: 0.2, parryHeal: 0,
       levels: {}, bleedT: 0, walk: 0
     };
@@ -209,9 +257,10 @@
       ui.hint.textContent = hintText();
       ui.hint.classList.remove("sumifu-hint-hot");
     }
-    ui.combo.textContent = p.combo > 1 ? ("結 " + p.combo) : "";
-    ui.slashBtn.classList.toggle("sumifu-coach", !game.didSlash);
-    ui.dashFill.style.transform = "scaleY(" + clamp(p.dashCd / 2.05, 0, 1) + ")";
+    ui.combo.textContent = p.combo > 1 ? ("連 " + p.combo) : "";
+    ui.slashBtn.classList.toggle("sumifu-coach", !game.didSlash && p.slashCd <= 0);
+    if (ui.slashFill) ui.slashFill.style.transform = "scaleY(" + clamp(p.slashCd / p.slashCdMax, 0, 1) + ")";
+    ui.dashFill.style.transform = "scaleY(" + clamp(p.dashCd / p.dashCdMax, 0, 1) + ")";
     ui.sealFill.style.transform = "scaleY(" + clamp(p.sealCd / p.sealCdMax, 0, 1) + ")";
     ui.dashBtn.classList.toggle("recharging", p.dashCd > 0.08);
     ui.sealBtn.classList.toggle("recharging", p.sealCd > 0.08);
@@ -328,7 +377,7 @@
   }
   function clampPlayer() {
     const p = game.player;
-    const next = clampInto(prad(), p.x, p.y);
+    const next = clampInto(spritePad(), p.x, p.y);
     p.x = next[0];
     p.y = next[1];
   }
@@ -429,6 +478,7 @@
     game.settled = true;
     saved.best = Math.max(saved.best, game.stage + 1);
     persist();
+    ui.boss.classList.add("hidden");
     card("INK DRIES", "墨が、先に乾いた。", "筆は、まだ手元にある。", '<div class="sumifu-stats"><span><strong>' + (game.stage + 1) + '</strong>夜</span><span><strong>' + game.kills + '</strong>打ち込み</span><span><strong>' + game.parries + '</strong>受け</span></div><button class="sumifu-go" id="sumifuRetry" type="button">もう一筆</button><br><button class="sumifu-quiet" id="sumifuToTitle" type="button">題名に戻る</button>');
     bind("sumifuRetry", startRun);
     bind("sumifuToTitle", backTitle);
@@ -441,6 +491,7 @@
     saved.best = 3;
     saved.wins += 1;
     persist();
+    ui.boss.classList.add("hidden");
     card("THE NIGHT IS BOUND", "夜は、綴じられた。", "紙のうえに、あなたの筆だけが残る。", '<div class="sumifu-stats"><span><strong>' + game.kills + '</strong>打ち込み</span><span><strong>' + game.parries + '</strong>受け</span><span><strong>' + clockText(game.time) + '</strong>時間</span></div><button class="sumifu-go" id="sumifuRetry" type="button">新しい紙へ</button><br><button class="sumifu-quiet" id="sumifuToTitle" type="button">題名に戻る</button>');
     bind("sumifuRetry", startRun);
     bind("sumifuToTitle", backTitle);
@@ -500,6 +551,7 @@
     game.shots = [];
     const e = spawnEnemy("boss", paper.x + paper.w * 0.5, paper.y + paper.h * 0.3);
     game.boss = e;
+    for (let i = 0; i < game.trails.length; i++) game.trails[i].hits.add(e.id);
     ui.boss.classList.remove("hidden");
     ui.bossName.textContent = T().boss;
     toast(T().boss);
@@ -608,9 +660,10 @@
       p.combo += 1;
       p.comboT = 1.65;
       game.bestCombo = Math.max(game.bestCombo, p.combo);
+      const bossBefore = game.bossSpawned;
       if (canParry(e)) parry(e);
       else hurtEnemy(e, p.damage);
-      if (scene !== "playing") return;
+      if (scene !== "playing" || game.bossSpawned !== bossBefore) return;
     }
     for (let i = 0; i < game.shots.length; i++) {
       const s = game.shots[i];
@@ -635,8 +688,9 @@
       const radius = 74 * view.scale;
       for (let k = 0; k < game.enemies.length; k++) {
         const e = game.enemies[k];
+        const bossBefore = game.bossSpawned;
         if (e.hp > 0 && Math.hypot(e.x - mx, e.y - my) < radius + rad(e)) hurtEnemy(e, game.player.damage * 0.85 + 6);
-        if (scene !== "playing") return;
+        if (scene !== "playing" || game.bossSpawned !== bossBefore) return;
       }
       burst(mx, my, 16, T().gold, 1);
       game.player.combo += 1;
@@ -692,7 +746,7 @@
     p.dashX = mx / len;
     p.dashY = my / len;
     p.dashTime = 0.16;
-    p.dashCd = 2.05;
+    p.dashCd = p.dashCdMax;
     p.invuln = Math.max(p.invuln, 0.2);
     p.facing = Math.atan2(p.dashY, p.dashX);
     game.trails.push({ points: [{ x: p.x, y: p.y }], life: p.trailLife, max: p.trailLife, hits: new Set(), power: p.trailPower });
@@ -988,8 +1042,9 @@
         if (e.hp <= 0 || tr.hits.has(e.id)) continue;
         if (nearPoly(tr.points, e.x, e.y, rad(e) + 6)) {
           tr.hits.add(e.id);
+          const bossBefore = game.bossSpawned;
           hurtEnemy(e, 8 * tr.power);
-          if (scene !== "playing") return;
+          if (scene !== "playing" || game.bossSpawned !== bossBefore) return;
         }
       }
     }
@@ -1002,8 +1057,9 @@
         s.t = 0;
         for (let k = 0; k < game.enemies.length; k++) {
           const e = game.enemies[k];
+          const bossBefore = game.bossSpawned;
           if (e.hp > 0 && Math.hypot(e.x - s.x, e.y - s.y) < s.r + rad(e)) hurtEnemy(e, p.damage * 1.3);
-          if (scene !== "playing") return;
+          if (scene !== "playing" || game.bossSpawned !== bossBefore) return;
         }
         burst(s.x, s.y, 20, T().accent, 1);
         sound("boom");
@@ -1253,11 +1309,19 @@
     }
     ctx.globalAlpha = 1;
     if (game.bleed > 0) {
-      ctx.fillStyle = "rgba(0,0,0,.34)";
-      ctx.fillRect(paper.x, paper.y, paper.w, game.bleed);
-      ctx.fillRect(paper.x, paper.y + paper.h - game.bleed, paper.w, game.bleed);
-      ctx.fillRect(paper.x, paper.y, game.bleed, paper.h);
-      ctx.fillRect(paper.x + paper.w - game.bleed, paper.y, game.bleed, paper.h);
+      const b = game.bleed;
+      ctx.save();
+      ctx.fillStyle = t.accent;
+      ctx.globalAlpha = 0.24;
+      ctx.fillRect(paper.x, paper.y, paper.w, b);
+      ctx.fillRect(paper.x, paper.y + paper.h - b, paper.w, b);
+      ctx.fillRect(paper.x, paper.y, b, paper.h);
+      ctx.fillRect(paper.x + paper.w - b, paper.y, b, paper.h);
+      ctx.globalAlpha = 0.85;
+      ctx.strokeStyle = t.gold;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(paper.x + b, paper.y + b, Math.max(1, paper.w - b * 2), Math.max(1, paper.h - b * 2));
+      ctx.restore();
     }
     for (let i = 0; i < game.decals.length; i++) {
       const d = game.decals[i];
@@ -1304,13 +1368,19 @@
     ctx.save();
     ctx.translate(p.x, p.y);
     ctx.rotate(p.facing);
-    ctx.globalAlpha = 0.1;
+    ctx.globalAlpha = 0.16;
     ctx.fillStyle = p.combo >= 5 ? t.gold : t.ink;
     ctx.beginPath();
     ctx.moveTo(0, 0);
     ctx.arc(0, 0, srange(), -p.slashArc / 2, p.slashArc / 2);
     ctx.closePath();
     ctx.fill();
+    ctx.globalAlpha = 0.7;
+    ctx.strokeStyle = p.combo >= 5 ? t.gold : t.ink;
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.arc(0, 0, srange(), -p.slashArc / 2, p.slashArc / 2);
+    ctx.stroke();
     ctx.globalAlpha = 1;
     ctx.fillStyle = t.accent;
     ctx.beginPath();
@@ -1347,8 +1417,16 @@
     ctx.strokeRect(paper.x + 7, paper.y + 7, paper.w - 14, paper.h - 14);
     ctx.globalAlpha = 1;
     drawCorners();
-    const blink = p.invuln > 0 && Math.floor(clock * 16) % 2 === 0;
-    drawFox(p.x, p.y, p.facing, { scale: view.scale * 1.55, walk: Math.hypot(p.vx, p.vy) > 12 || p.dashTime > 0, phase: 0.4, fox: t.fox, ink: t.ink, accent: t.accent, alpha: blink ? 0.45 : 1 });
+    drawFox(p.x, p.y, p.facing, { scale: view.scale * 1.55, walk: Math.hypot(p.vx, p.vy) > 12 || p.dashTime > 0, phase: 0.4, fox: t.fox, ink: t.ink, accent: t.accent, alpha: 1 });
+    if (p.invuln > 0) {
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 38 * view.scale, 0, TAU);
+      ctx.strokeStyle = t.accent;
+      ctx.globalAlpha = 0.35 + 0.45 * (0.5 + 0.5 * Math.sin(clock * 28));
+      ctx.lineWidth = 2.2;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+    }
     ctx.restore();
     if (p.hp < p.maxHp * 0.32) {
       const vg = ctx.createRadialGradient(W / 2, H / 2, H * 0.2, W / 2, H / 2, H * 0.72);
@@ -1452,7 +1530,7 @@
   function drawEnemy(e) {
     const t = T();
     const r = rad(e);
-    const color = e.hitFx > 0 ? "#fffaf2" : t.ink;
+    const color = e.hitFx > 0 ? t.accent : t.ink;
     ctx.save();
     ctx.translate(e.x, e.y);
     if (e.type === "boss") {
@@ -1518,7 +1596,7 @@
     if (scene !== "closed") {
       let step = dt;
       if (freeze > 0) { freeze = Math.max(0, freeze - dt); step = 0; }
-      if (game && scene !== "playing") updateFx(dt);
+      if (game && scene !== "playing" && scene !== "paused") updateFx(dt);
       if (scene === "playing" && game && step > 0) update(step);
       updateMotes(dt);
       draw();
@@ -1530,12 +1608,18 @@
     stick.x = 0; stick.y = 0; stick.id = null;
     ui.knob.style.transform = "translate(0px, 0px)";
   }
+  function stickThrow() {
+    const base = ui.knob && ui.knob.parentElement;
+    if (base && base.offsetWidth && ui.knob.offsetWidth) return Math.max(16, (base.offsetWidth - ui.knob.offsetWidth) / 2);
+    return 28;
+  }
   function moveStick(event) {
     const x = event.clientX - stick.cx, y = event.clientY - stick.cy;
     const len = Math.hypot(x, y);
-    const d = Math.min(40, len);
-    stick.x = len ? x / len * Math.min(1, len / 40) : 0;
-    stick.y = len ? y / len * Math.min(1, len / 40) : 0;
+    const reach = stickThrow();
+    const d = Math.min(reach, len);
+    stick.x = len ? x / len * Math.min(1, len / reach) : 0;
+    stick.y = len ? y / len * Math.min(1, len / reach) : 0;
     ui.knob.style.transform = "translate(" + (len ? x / len * d : 0) + "px," + (len ? y / len * d : 0) + "px)";
   }
   function pointerPoint(event) {
@@ -1570,6 +1654,7 @@
   press(ui.slashBtn, slash);
   press(ui.sealBtn, seal);
   press(ui.dashBtn, dash);
+  ui.root.addEventListener("contextmenu", event => { if (event.preventDefault) event.preventDefault(); });
   canvas.addEventListener("pointerdown", event => {
     if (scene !== "playing" || !game || event.pointerType === "touch") return;
     const pt = pointerPoint(event);
@@ -1597,7 +1682,10 @@
     const k = event.key.toLowerCase();
     if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
     keys.add(k === " " ? "space" : k);
-    if (event.repeat) return;
+    if (event.repeat) {
+      if (scene === "playing" && (k === "j" || k === "z")) slash();
+      return;
+    }
     if (k === "m") toggleSound();
     if (scene === "title" && k === "enter") startRun();
     else if (scene === "playing") {
