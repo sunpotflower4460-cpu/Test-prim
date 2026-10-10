@@ -267,7 +267,8 @@ const targets = [
           const d = ctx.getImageData(Math.round(x * canvas.width), Math.round(y * canvas.height), 1, 1).data;
           return [d[0], d[1], d[2]];
         };
-        const points = [[0.2, 0.25], [0.5, 0.45], [0.8, 0.65], [0.5, 0.8]].map(p => at(p[0], p[1]));
+        // Sample the four outer corners, away from the gameplay rings and hit effects.
+        const points = [[0.08, 0.12], [0.92, 0.12], [0.08, 0.88], [0.92, 0.88]].map(p => at(p[0], p[1]));
         return { points, flash: window.__sync.getFlash() };
       });
       const unique = new Set(arena.points.map(p => p.join(",")));
