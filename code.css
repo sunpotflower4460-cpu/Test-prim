@@ -140,6 +140,20 @@ body:not(.code-active) .code-screen{display:none}
   .code-hint,.code-meters{max-width:660px;left:50%;transform:translateX(-50%)}
   .code-program-wrap{max-height:min(24vh,190px)}
 }
+@media(max-height:520px) and (orientation:landscape){
+  .code-panel{top:calc(env(safe-area-inset-top) + 8px);right:0;left:auto;bottom:0;width:min(440px,58vw);transform:none;border-radius:14px 0 0 0;overflow-y:auto;max-height:none}
+  .code-hud{left:0;right:min(440px,58vw);width:auto;max-width:none;transform:none}
+  .code-hint,.code-meters{left:0;right:auto;width:calc(100% - min(440px,58vw));max-width:none;transform:none}
+  .code-hint{top:calc(env(safe-area-inset-top) + 58px)}
+  .code-meters{top:calc(env(safe-area-inset-top) + 78px);flex-wrap:wrap;row-gap:4px}
+  .code-program-wrap{max-height:64px}
+  .code-key{height:38px}
+  .code-run,.code-speed{height:40px}
+  .code-shell{padding-top:8px;padding-bottom:10px}
+  .code-logo{font-size:34px}
+  .code-lead{margin:8px 0 10px;line-height:1.55}
+  .code-primary{min-height:44px}
+}
 @media(prefers-reduced-motion:reduce){.code-toast{transition:none}.code-shake{animation:none}}
 
 /* Short landscape viewports need space for both the board and the editor. */

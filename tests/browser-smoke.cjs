@@ -384,6 +384,7 @@ const targets = [
       await page.locator('#title [data-action="start"]').click();
       await page.locator("#routeList .route-card").first().click();
       await page.locator('#dialog [data-action="close"]').click();
+      await page.waitForTimeout(600); // Let the play view's entrance transition finish before measuring the canvas.
       const ship = await page.locator("#field").evaluate(el => {
         const r = el.getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 620);
         const x = (r.width - 1000 * s) / 2, y = (r.height - 620 * s) / 2;
@@ -394,7 +395,7 @@ const targets = [
       await page.mouse.move(ship.x + 310 * ship.scale, ship.y, {steps: 8});
       await page.mouse.up();
       await page.locator('#modal:not([hidden])').waitFor({state:"visible",timeout:8000});
-      assert.equal(await page.locator("#dialogTitle").innerText(), "灯りが、届いた。");
+      assert.equal(await page.locator("#dialogTitle").innerText(), "灯りが、届いた。", `${target.name}: ${await page.locator("#dialogTitle").innerText()} (${await page.locator("#shardCount").innerText()})`);
       assert.equal(await page.locator(".dialog-stat b").first().innerText(), "3 / 3", "the first route collects every shard");
       await page.locator('#dialog [data-action="map"]').click();
       assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 12/);

@@ -97,7 +97,7 @@ body.code-active #sumifu{display:none!important}
   .launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 24px)}
 }
 .launcher-notice{position:fixed;inset:0;z-index:13;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:rgba(3,12,27,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
-.launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
+.launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em;pointer-events:none}
 /* 入口が増えても、最下行の表示と「TAP TO DISCOVER」が重ならないよう 下側に余白を取る。 */
 .launcher-inner{padding-bottom:56px}
 .launcher-button-label em{line-height:1.3}
@@ -156,6 +156,32 @@ body.code-active #flash,body.sync-active #flash{display:none}
   .launcher-sub{font-size:8px;margin:9px 0 0}
   .launcher-inner{padding-bottom:4px}
   .launcher-bottom{font-size:8px;padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}
+}
+@media(orientation:landscape) and (max-height:340px){
+  .launcher-sigil,.launcher-eyebrow,.launcher-index,.launcher-divider,.launcher-sub{display:none}
+  .launcher-title{font-size:32px}
+  .launcher-copy{margin:0 0 6px}
+  .launcher-button{height:48px}
+  .launcher-entries{gap:6px}
+}
+/* 横に広いが縦が足りないとき、タイトルが上下にはみ出して
+   「戻る」が画面の外に固定されてしまう。装飾を畳んで収める。 */
+@media(orientation:landscape) and (max-height:520px){
+  #home{justify-content:flex-start;padding-top:12px}
+  .home-content{transform:none}
+  .title-orbit{height:48px;width:48px;margin:2px 0}
+  .orbit-spark{font-size:22px}
+  #home h1{font-size:40px;margin:2px 0}
+  .divider-star{margin:8px 0}
+  .opening{line-height:1.55;margin-bottom:10px}
+  .primary{min-height:46px}
+  .smallhint{margin-top:6px}
+  .footer-note{display:none}
+}
+@media(orientation:landscape) and (max-height:400px){
+  .title-orbit{display:none}
+  #home{padding-top:6px}
+  .record{margin-top:4px}
 }
 
 /* Quiet return path from the game title to the Test prim hub */

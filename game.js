@@ -433,7 +433,9 @@
     // Space could no longer activate つづける / もう一度 / 強化. Keep recording
     // the key so movement still works, but do not swallow the event.
     const t = event.target;
-    const onControl = t && (t.tagName === "BUTTON" || t.tagName === "INPUT" || t.tagName === "A" || t.isContentEditable);
+    const onControl = t && (t.tagName === "BUTTON" || t.tagName === "INPUT" || t.tagName === "A" || t.isContentEditable || (t.closest && t.closest("button, a, input")));
+    // Enter on a focused door must open only that door. The shortcut below would also open LUMINA.
+    if (onControl && k === "enter" && scene !== "playing") return;
     if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
     keys.add(k === " " ? "space" : k);
     if ((k === "shift" || (k === " " && !onControl)) && !event.repeat) dash();

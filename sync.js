@@ -429,12 +429,28 @@
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const size = Math.min(w, h * 0.78);
-    view.outer = size * 0.47;
-    view.strike = view.outer * 0.56;
+    let size = Math.min(w, h * 0.78);
+    let outer = size * 0.47;
+    let cy = h * 0.52;
+    const play = $("syncPlay");
+    const hud = document.querySelector(".sync-hud");
+    // 縦に足りない画面では、既定の円が上部の計器に隠れる。見えている範囲へ寄せる。
+    if (play && hud && !play.classList.contains("hidden")) {
+      const hudBottom = hud.getBoundingClientRect().bottom;
+      // 外側の飾り円ではなく、実際に叩く輪が計器に隠れるときだけ寄せる。
+      if (hudBottom > 40 && cy - outer * 0.56 < hudBottom + 8) {
+        const top = hudBottom + 8;
+        const room = Math.max(72, h - top - 10);
+        size = Math.min(w * 0.92, room / 0.94);
+        outer = size * 0.47;
+        cy = top + room * 0.5;
+      }
+    }
+    view.outer = outer;
+    view.strike = outer * 0.56;
     view.core = Math.max(26, size * 0.075);
     view.cx = w / 2;
-    view.cy = h * 0.52;
+    view.cy = cy;
   }
 
   /* -------------------------------------------------------------- 音楽 ---- */
@@ -568,6 +584,7 @@
   }
 
   function onKeyDown(event) {
+    if (!document.body.classList.contains("sync-active")) return;
     if (event.repeat) return;
     const keyLane = sim.LANE_KEYS.indexOf(event.code);
     const numberLane = /^Digit([1-6])$/.exec(event.code);
@@ -590,6 +607,7 @@
   }
 
   function onKeyUp(event) {
+    if (!document.body.classList.contains("sync-active")) return;
     const keyLane = sim.LANE_KEYS.indexOf(event.code);
     const numberLane = /^Digit([1-6])$/.exec(event.code);
     let lane = -1;
@@ -1255,6 +1273,7 @@
     startScheduler();
     mode = "play";
     updateHud();
+    resize();
     $("syncChapter").textContent = "第" + CHAPTER_NUMERAL[chapterIndex] + "章 · " + chapter.jp;
     $("syncHint").textContent = chapter.lead;
     setTimeout(() => {
@@ -1307,6 +1326,12 @@
       $("syncBossFill").style.width = (Math.max(0, game.boss.hp / game.boss.maxHp) * 100).toFixed(1) + "%";
     } else {
       boss.classList.add("hidden");
+    }
+    // ボスの欄が出ると計器が伸びる。円が隠れたときだけ配置を取り直す。
+    const hudBottom = boss.parentElement ? boss.parentElement.getBoundingClientRect().bottom : 0;
+    if (Math.abs(hudBottom - (view.hudBottom || 0)) > 2) {
+      view.hudBottom = hudBottom;
+      resize();
     }
   }
 

@@ -1696,13 +1696,15 @@
   $("sumifuPause").addEventListener("click", pause);
   window.addEventListener("keydown", event => {
     if (scene === "closed") return;
-    if (document.body && document.body.classList && document.body.classList.contains("code-active")) return;
+    if (document.body && document.body.classList && (document.body.classList.contains("code-active") || document.body.classList.contains("sync-active"))) return;
     const k = event.key.toLowerCase();
     const target = event.target;
-    const onControl = target && (target.tagName === "BUTTON" || target.tagName === "A" || target.tagName === "INPUT" || target.isContentEditable);
+    const onControl = !!(target && (target.isContentEditable ||
+      (target.closest && target.closest("button, a, input, textarea, select")) ||
+      /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(target.tagName || "")
+    ));
+    if (onControl && scene !== "playing" && (k === "enter" || k === " ")) return;
     if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
-    // Preserve native Enter/Space activation for return, sound, resume and upgrades.
-    if (onControl && (k === "enter" || k === " ")) return;
     keys.add(k === " " ? "space" : k);
     if (event.repeat) {
       if (scene === "playing" && (k === "j" || k === "z")) slash();

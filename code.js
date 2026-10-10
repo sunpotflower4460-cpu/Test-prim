@@ -679,26 +679,29 @@
     const hud = document.querySelector(".code-hud");
     const panel = document.querySelector(".code-panel");
     const meters = document.querySelector(".code-meters");
-    let top = H * .16, bottom = H * .6, boardWidth = W;
+    let top = H * .16, bottom = H * .6, left = W * .03, right = W * .97;
     if (mode === "play") {
-      if (hud) top = hud.getBoundingClientRect().bottom + 34;
-      if (meters) top = Math.max(top, meters.getBoundingClientRect().bottom + 8);
-      if (panel) {
-        const rect = panel.getBoundingClientRect();
-        if (rect.left >= W * .4) { boardWidth = rect.left; bottom = H - 12; }
-        else bottom = rect.top - 12;
+      if (hud) top = hud.getBoundingClientRect().bottom + 8;
+      if (meters && meters.getBoundingClientRect().height) top = Math.max(top, meters.getBoundingClientRect().bottom + 8);
+      if (panel && panel.getBoundingClientRect().height) {
+        const pr = panel.getBoundingClientRect();
+        const beside = pr.left > W * .34 && pr.top < top + 48 && pr.bottom > H * .7;
+        if (beside) { right = pr.left - 8; bottom = H - 8; }
+        else bottom = pr.top - 10;
       }
     }
-    if (!(bottom > top + 120)) { top = H * .16; bottom = H * .62; }
+    if (!(bottom > top + 24)) bottom = top + 24;
     const spanX = (grid.w - 1 + grid.h - 1) * TILE_W / 2 + TILE_W;
     const spanY = (grid.w - 1 + grid.h - 1) * TILE_H / 2 + TILE_H + WALL_H;
-    const zoom = clamp(Math.min((boardWidth * .94) / spanX, ((bottom - top) * .92) / spanY), .42, 1.45);
+    const roomW = Math.max(48, right - left);
+    const roomH = Math.max(48, bottom - top);
+    const zoom = clamp(Math.min((roomW * .92) / spanX, (roomH * .9) / spanY), .12, 1.45);
     const minX = -(grid.h - 1) * TILE_W / 2 - TILE_W / 2;
     const maxX = (grid.w - 1) * TILE_W / 2 + TILE_W / 2;
     const minY = -WALL_H;
     const maxY = (grid.w - 1 + grid.h - 1) * TILE_H / 2 + TILE_H;
     view.zoom = zoom;
-    view.ox = boardWidth / 2 - zoom * (minX + maxX) / 2;
+    view.ox = (left + right) / 2 - zoom * (minX + maxX) / 2;
     view.oy = (top + bottom) / 2 - zoom * ((minY + maxY) / 2 + TILE_H / 2);
   }
 
@@ -1223,12 +1226,16 @@
   // 玄人コードが開いている間は、LUMINA 側のキー操作に渡さない
   window.addEventListener("keydown", event => {
     if (!isActive()) return;
+    if (document.body.classList.contains("sumifu-open") || document.body.classList.contains("sync-active")) return;
     if (event.defaultPrevented) return;
-    if (document.body.classList.contains("sumifu-open")) return;
     const key = (event.key || "").toLowerCase();
     event.stopImmediatePropagation();
     if (key === "escape") {
       event.preventDefault();
+      const overlayOpen = !document.querySelector("#codeOverlay.hidden");
+      const kicker = overlayOpen ? document.querySelector("#codeOverlay .kicker") : null;
+      // あそびかたはステージを離れず閉じる。クリア／こしょうのカードは従来どおりステージ選択へ戻す。
+      if (kicker && kicker.textContent === "HOW TO PLAY") { hideOverlay(); return; }
       hideOverlay();
       if (mode === "play") { stopRun(true); refreshGrid(); showScreen("select"); }
       else if (mode === "select") { refreshTitle(); showScreen("title"); }
