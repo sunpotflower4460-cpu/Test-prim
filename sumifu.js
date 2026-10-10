@@ -244,7 +244,7 @@
     ui.controls.classList.toggle("hidden", next !== "playing");
     const modal = next === "paused" || next === "upgrade" || next === "chapter" || next === "over" || next === "won";
     ui.overlay.classList.toggle("hidden", !modal);
-    if (next !== "playing") resetStick();
+    if (next !== "playing") { keys.clear(); resetStick(); }
   }
   function hintText() {
     if (!game.didSlash) return "J / 斬 で筆を振る";
@@ -1666,6 +1666,7 @@
       if (event.stopPropagation) event.stopPropagation();
       fn();
     });
+    el.addEventListener("click", event => { if (event.detail === 0) fn(); });
   }
   press(ui.slashBtn, slash);
   press(ui.sealBtn, seal);
@@ -1697,7 +1698,11 @@
     if (scene === "closed") return;
     if (document.body && document.body.classList && document.body.classList.contains("code-active")) return;
     const k = event.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
+    const target = event.target;
+    const onControl = target && (target.tagName === "BUTTON" || target.tagName === "A" || target.tagName === "INPUT" || target.isContentEditable);
+    if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
+    // Preserve native Enter/Space activation for return, sound, resume and upgrades.
+    if (onControl && (k === "enter" || k === " ")) return;
     keys.add(k === " " ? "space" : k);
     if (event.repeat) {
       if (scene === "playing" && (k === "j" || k === "z")) slash();

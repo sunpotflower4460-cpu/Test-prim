@@ -121,7 +121,7 @@ body:not(.sync-active) .sync-screen{display:none}
   overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;
 }
 .sync-card{
-  width:min(430px,100%);padding:26px 22px 22px;border:1px solid var(--sync-line);border-radius:14px;
+  width:min(430px,100%);margin:auto;padding:26px 22px 22px;border:1px solid var(--sync-line);border-radius:14px;
   background:linear-gradient(155deg,rgba(12,22,38,.96),rgba(4,9,18,.97));
   box-shadow:0 26px 70px rgba(0,0,0,.6),0 0 80px rgba(142,240,255,.06);position:relative;text-align:center;
 }

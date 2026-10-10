@@ -4,6 +4,7 @@ const { chromium, devices } = require("playwright");
 const targets = [
   { name: "iPhone", viewport: { width: 390, height: 844 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
   { name: "small-phone", viewport: { width: 320, height: 568 }, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
+  { name: "landscape", viewport: { width: 740, height: 375 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true },
   { name: "desktop", viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
 ];
 (async () => {
@@ -24,6 +25,13 @@ const targets = [
       await page.route("https://fonts.gstatic.com/**", route => route.abort());
       await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
       await page.locator("#launcher").waitFor({ state: "visible" });
+      for (const [door, title, back] of [["openSumifuBtn","sumifu-title","sumifuReturn"],["openCodeBtn","codeTitle","codeReturnBtn"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
+        await page.locator("#" + door).press("Enter");
+        await page.locator("#" + title).waitFor({state:"visible"});
+        assert.ok(!(await page.locator("#home").isVisible()), "Enter opens only the selected game");
+        await page.locator("#" + back).press("Enter");
+        await page.locator("#launcher").waitFor({state:"visible"});
+      }
       await page.locator("#openGameBtn").click();
       await page.locator("#home").waitFor({ state: "visible" });
       assert.equal(await page.locator("#home h1").innerText(), "LUMINA");
@@ -65,8 +73,8 @@ const targets = [
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
         entryLabels,
-        ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1"],
-        "launcher lists the four entries in order"
+        ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna"],
+        "launcher lists the six entries in order"
       );
       const launcherFit = await page.evaluate(() => ({
         viewport: window.innerWidth,
@@ -78,6 +86,9 @@ const targets = [
       await page.locator("#openSumifuBtn").click();
       await page.locator("#sumifu-title").waitFor({ state: "visible" });
       assert.equal(await page.locator("#sumifu-title h1").innerText(), "KASANE");
+      await page.locator("#sumifuTitleSound").press("Enter");
+      assert.ok(await page.locator("#sumifu-title").isVisible(), "sound button does not start a run");
+      await page.locator("#sumifuTitleSound").press("Enter");
       await page.locator("#sumifuStart").click();
       await page.locator("#sumifu-controls").waitFor({ state: "visible" });
       const joy2 = await page.locator("#sumifuJoy").boundingBox();
@@ -93,7 +104,7 @@ const targets = [
       assert.equal(centered2, "translate(0px, 0px)", "kasane knob recenters");
       await page.locator("#sumifuPause").click();
       await page.locator("#sumifu-overlay").waitFor({ state: "visible" });
-      await page.locator("#sumifuResume").click();
+      await page.locator("#sumifuResume").press("Space");
       await page.locator("#sumifu-controls").waitFor({ state: "visible" });
       const kasane = await page.evaluate(() => ({
         viewport: window.innerWidth, htmlWidth: document.documentElement.scrollWidth,
@@ -112,7 +123,7 @@ const targets = [
       const layout = await page.evaluate(() => {
         const sub = document.querySelector(".launcher-sub").getBoundingClientRect();
         const bottom = document.querySelector(".launcher-bottom").getBoundingClientRect();
-        const last = document.getElementById("openSyncBtn").getBoundingClientRect();
+        const last = document.getElementById("openSolBtn").getBoundingClientRect();
         return { subBottom: sub.bottom, bottomTop: bottom.top, lastVisible: last.bottom <= window.innerHeight + 1 };
       });
       assert.ok(layout.subBottom <= layout.bottomTop + 1, "launcher footer does not overlap the last entry");
@@ -131,6 +142,14 @@ const targets = [
       await page.locator("#codeStageGrid .code-stage").first().click();
       await page.locator("#codePlay").waitFor({ state: "visible" });
       assert.equal(await page.locator("#codeStageNo").innerText(), "STAGE 01");
+      if (target.name === "landscape") {
+        const room = await page.evaluate(() => ({
+          panel:document.querySelector('.code-panel').getBoundingClientRect().left,
+          meters:document.querySelector('.code-meters').getBoundingClientRect().right,
+          width:innerWidth
+        }));
+        assert.ok(room.panel >= room.width * .4 && room.meters <= room.panel + 1, "the board has its own space beside the editor");
+      }
       const relayCanvas = await page.locator("#codeWorld").evaluate(el => ({
         width: el.width, height: el.height, hidden: el.classList.contains("hidden"),
         active: document.body.classList.contains("code-active")
@@ -160,6 +179,12 @@ const targets = [
       await page.locator("#codeSelect").waitFor({ state: "visible" });
       // 長いプログラムを実行したとき、いま実行している行がリストの見える位置へ追従する。
       await page.locator("#codeStageGrid .code-stage").first().click();
+      await page.locator("#codeRepBtn").press("Enter");
+      await page.locator("#codeProgram li").first().press("Enter");
+      await page.locator("#codeProgram li").first().press("Space");
+      assert.match(await page.locator("#codeProgram li").first().innerText(), /×4/);
+      await page.locator("#codeClearBtn").press("Enter");
+      assert.equal(await page.locator("#codeProgramCount").innerText(), "0 / 8", "Enter clears rather than running the program");
       for (let i = 0; i < 8; i++) await page.locator('.code-key[data-act="wait"]').click();
 
       // 何行目まで実行すればスクロールが起きるかは、画面サイズで変わる。
@@ -229,6 +254,10 @@ const targets = [
       assert.match(await page.locator("#syncTitle .sync-logo").innerText(), /SYNC/);
       await page.locator("#syncStartBtn").click();
       await page.locator("#syncPlay").waitFor({ state: "visible" });
+      await page.locator("#syncHowBtn").click();
+      const helpTop = await page.locator("#syncOverlay .sync-card").evaluate(el => el.getBoundingClientRect().top);
+      assert.ok(helpTop >= 0, "the top of a long explanation remains scrollable into view");
+      await page.locator("#syncOverlay .sync-primary").click();
 
       // 画面が実際に描かれていること。真っ白や単色で塗られていないか。
       const arena = await page.evaluate(() => {
@@ -271,6 +300,19 @@ const targets = [
       await page.locator("#syncOverlay").waitFor({ state: "visible" });
       await page.locator("#syncOverlay .sync-primary").click();
       await page.locator("#syncOverlay").waitFor({ state: "hidden" });
+      if (target.name === "desktop") {
+        for (let chapter = 1; chapter < 5; chapter++) {
+          const result = await page.evaluate(() => window.__sync.autoPlay());
+          assert.ok(result.cleared, "SYNC chapter " + (chapter + 1) + " clears through the controller");
+          if (chapter < 4) {
+            await page.locator("#syncOverlay .sync-primary").click();
+            await page.locator("#syncOverlay .sync-offer").first().click();
+          } else {
+            await page.locator("#syncOverlay h2").filter({hasText:"共鳴 は、届いた"}).waitFor({state:"visible"});
+            assert.equal(await page.evaluate(() => window.__sync.getRecord().clears), 1);
+          }
+        }
+      }
 
       // タイトル → Test prim へ戻る
       await page.evaluate(() => window.__sync.goTitle());
@@ -278,6 +320,87 @@ const targets = [
       await page.locator("#syncReturnBtn").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       assert.ok(!(await page.locator("#syncTitle").isVisible()), "sync title hides after leaving");
+
+      // AFTERTIDE lives on a separate page so the other games' inputs and audio remain isolated.
+      await page.locator("#openSolBtn").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      await page.locator("#start").click();
+      await page.locator('[data-ui="embark"]').click();
+      await page.keyboard.press("Space");
+      await page.waitForFunction(() => document.querySelector("#play").dataset.busy === "false");
+      assert.equal(await page.locator("#play").getAttribute("data-tide"), "1", "Space anchors from the initial keyboard focus");
+      await page.locator("#undo").click();
+      await page.waitForFunction(() => document.querySelector("#play").dataset.busy === "false");
+      const seaFit = await page.evaluate(() => ({
+        width: innerWidth, html: document.documentElement.scrollWidth,
+        panelBottom: document.querySelector(".logbook").getBoundingClientRect().bottom,
+        height: innerHeight, area: document.querySelector("#boardArea").getBoundingClientRect().height
+      }));
+      assert.ok(seaFit.html <= seaFit.width + 1, "aftertide has no horizontal overflow");
+      assert.ok(seaFit.panelBottom <= seaFit.height + 1, "all sailing controls fit");
+      assert.ok(seaFit.area > 120, "the sea retains a usable board area");
+      await page.locator('[data-action="E"]').first().click();
+      await page.waitForFunction(() => document.querySelector("#play").dataset.busy === "false");
+      assert.equal(await page.locator("#turnCount").innerText(), "1");
+      await page.reload();
+      await page.locator("#start").click();
+      assert.equal(await page.locator("#turnCount").innerText(), "1", "reload resumes the boat's position");
+      await page.locator("#undo").click();
+      await page.waitForFunction(() => document.querySelector("#play").dataset.busy === "false");
+      assert.equal(await page.locator("#turnCount").innerText(), "0", "history survives reload");
+      await page.locator("#hint").click();
+      await page.locator('[data-ui="hint-all"]').click();
+      assert.equal(await page.locator(".dpad .hinted").getAttribute("data-action"), "E");
+      const tideRules = require("../sol/sim.js"), seaLevels = require("../sol/levels.js").map(tideRules.parse);
+      const limit = target.name === "desktop" ? 18 : 1;
+      for (let voyage = 0; voyage < limit; voyage++) {
+        const route = tideRules.solve(seaLevels[voyage], undefined, true);
+        for (const action of route) {
+          await page.locator('.dpad [data-action="' + action + '"]').click();
+          await page.waitForFunction(() => document.querySelector("#play").dataset.busy === "false");
+        }
+        await page.locator('.result-stamp.gold').waitFor({ state: "visible" });
+        assert.equal(await page.locator(".result-stats b").first().innerText(), String(route.length));
+        if (voyage + 1 < limit) {
+          await page.locator('[data-ui="next"]').click();
+          if ((voyage + 1) % 6 === 0) await page.locator('[data-ui="embark"]').click();
+        }
+      }
+      if (limit === 18) {
+        await page.locator('[data-ui="next"]').click();
+        await page.locator('[data-ui="result-chart"]').click();
+        assert.match(await page.locator("#chartProgress").innerText(), /54 \/ 54/);
+      } else {
+        await page.locator('[data-ui="result-chart"]').click();
+      }
+      await page.locator("#chartBack").click();
+      await page.locator('.title-top a').click();
+      await page.locator("#launcher").waitFor({state:"visible"});
+
+      // LUNA is the final door. Check its first authored route through a real drag
+      // at every viewport size, including the smallest phone.
+      await page.locator("#openLunaBtn").click();
+      await page.locator("#title").waitFor({state:"visible"});
+      await page.locator('#title [data-action="start"]').click();
+      await page.locator("#routeList .route-card").first().click();
+      await page.locator('#dialog [data-action="close"]').click();
+      const ship = await page.locator("#field").evaluate(el => {
+        const r = el.getBoundingClientRect(), s = Math.min(r.width / 1000, r.height / 620);
+        const x = (r.width - 1000 * s) / 2, y = (r.height - 620 * s) / 2;
+        return { x: r.x + x + 105 * s, y: r.y + y + 310 * s, scale: s };
+      });
+      await page.mouse.move(ship.x, ship.y);
+      await page.mouse.down();
+      await page.mouse.move(ship.x + 310 * ship.scale, ship.y, {steps: 8});
+      await page.mouse.up();
+      await page.locator('#modal:not([hidden])').waitFor({state:"visible",timeout:8000});
+      assert.equal(await page.locator("#dialogTitle").innerText(), "灯りが、届いた。");
+      assert.equal(await page.locator(".dialog-stat b").first().innerText(), "3 / 3", "the first route collects every shard");
+      await page.locator('#dialog [data-action="map"]').click();
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 12/);
+      await page.locator('#map [data-action="title"]').click();
+      await page.locator('#title .back').click();
+      await page.locator("#launcher").waitFor({state:"visible"});
 
       assert.deepEqual(errors, [], "no browser script errors");
       console.log("PASS", target.name, JSON.stringify(metrics));

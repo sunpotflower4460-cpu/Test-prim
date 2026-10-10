@@ -151,3 +151,25 @@ test("launcher return button allows leaving and reentering the game title", () =
   el("startBtn").click();
   assert.equal(state.getScene(), "playing");
 });
+
+test("focused gallery and title buttons own Enter and key repeats cannot restart", () => {
+  const {element:el,events,state}=setup();
+  const press=(target,repeat=false)=>events.keydown({key:'Enter',target:{tagName:'BUTTON',id:target},repeat,preventDefault(){}});
+  for(const id of ['openSumifuBtn','openCodeBtn','openSyncBtn','openSolBtn']){
+    press(id);assert.equal(state.getScene(),'launcher');
+  }
+  el('openGameBtn').click();press('returnPortalBtn');assert.equal(state.getScene(),'home');
+  events.keydown({key:'Enter',repeat:true,preventDefault(){}});assert.equal(state.getScene(),'home');
+});
+
+test("a keyboard-activated dash button works without a pointer event",()=>{
+  const {element:el,state}=setup();el('openGameBtn').click();el('startBtn').click();
+  el('dashBtn').trigger('click',{detail:0});assert.ok(state.getGame().player.dashCd>0);
+});
+
+test("pausing clears movement even if keyup is lost while the menu is open",()=>{
+  const {element:el,events,state,tick}=setup();el('openGameBtn').click();el('startBtn').click();
+  events.keydown({key:'ArrowRight',repeat:false,preventDefault(){}});tick(3);
+  el('pauseBtn').click();el('resume').click();const x=state.getGame().player.x;tick(3);
+  assert.equal(state.getGame().player.x,x);
+});
