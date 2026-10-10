@@ -10,7 +10,7 @@
 
 > **公開中の作品**
 > - GPT6 CHAT — LUMINA（星灯りの庭）
-> - Grok 4.7 Cursor — KASANE（重ね）
+> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）
 > - Minimax M3.1 — SYNC（共鳴）
 > - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
@@ -76,7 +76,7 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 **[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
-ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **KASANE** の題名 → **「筆を取る」**。
+ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **作品一覧** → **KASANE** の題名 → **「筆を取る」**。
 
 ### 操作方法
 
@@ -91,6 +91,41 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 | 音 | 題名の「音」、または ♫ | M |
 
 斬撃の薄い弧が、届く範囲です。敵の足元の線や輪は、次の攻撃の予告です。金色の輪が出ているあいだに斬ると、受けになります。
+
+---
+
+## ✦ Grok 4.7 Cursor作品 | ORIKO — 折光室
+
+**月の光を、花の色に。**
+
+閉園した温室で、鏡と色硝子を置いて月の光を折るパズル。花は光を止めない。壁は止める。金の花は白い月だけを飲み、紅・翠・青の花は、その色だけを待つ。
+
+- **九つの室、三つの翼**：静月、染色、月の息
+- **置くものは四種**：鏡、紅・翠・青の硝子、光を二つに分ける水晶
+- **月の息**：光源の角度が揺れる室では、当たった一瞬では足りない。揺れのあいだ中、届いていること
+- **急がない**：制限時間も、手数の上限もない。戻す、にも制限はない
+- **手紙**：室が灯ると、前の番人からの短い手紙が残る
+- **スマホとPC**：置くものはドラッグ。選んだものを回す、外す、戻す。PCでは矢印と Q / E
+- **記録**：開いた花の数をブラウザ内に保存
+
+### ▶ ゲームを開く
+
+**[折光室をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/oriko/index.html)**
+
+ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **作品一覧** → **折光室** → **「室をひらく」**。
+
+### 操作方法
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 置く | 下の札を盤面へドラッグ | 同左 |
+| 動かす | 置いたものをドラッグ | 選んで矢印キー |
+| 回す | 左 / 右 | Q / E |
+| 外す・戻す | 外す、戻す | Z で戻す |
+| 一時停止 | 右上の Ⅱ | Esc |
+| 音 | 題名の ♫ | 同左 |
+
+右上の三つは、月が息をしている室だけに出ます。三つとも灯る配置を、探してください。
 
 ---
 
@@ -263,6 +298,9 @@ node --check sol/sea.js
 node --check sol/audio.js
 node --check sol/game.js
 node --check luna/luna.js
+node --check oriko/optics.js
+node --check oriko/levels.js
+node --check oriko/game.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```
@@ -295,7 +333,7 @@ python3 tools/wiring-check.py
 重複した id、閉じていないタグ、スタイルが定義されていない class などを照合します。
 スタイルがない class は意図的なフックの場合もあるため、警告のみでフェイルにはしません。
 
-GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
+GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
 
 ---
 

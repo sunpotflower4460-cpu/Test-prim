@@ -1,0 +1,88 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#07110e">
+  <meta name="description" content="ORIKO — 折光室。月の光を鏡と色硝子で折り、眠っている花を起こす温室のパズル。Grok 4.7 Cursor オリジナル作品。">
+  <title>ORIKO — 折光室 | Grok 4.7 Cursor</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="oriko.css">
+  <script src="optics.js" defer></script>
+  <script src="levels.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main id="app" data-view="title">
+    <div class="night" aria-hidden="true"></div>
+    <section id="title" class="view" aria-label="折光室 タイトル">
+      <header class="topline">
+        <a class="back" href="../grok/index.html">‹ <span>作品一覧</span></a>
+        <span class="byline">AN ORIGINAL BY GROK 4.7 CURSOR</span>
+        <button id="titleSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="title-art" aria-hidden="true">
+        <div class="house"><i></i><i></i><i></i></div>
+        <div class="beam"></div>
+        <div class="moon"></div>
+        <div class="bud"></div>
+      </div>
+      <div class="title-copy">
+        <p class="eyebrow">A CLOSED HOUSE FOR THE MOON</p>
+        <h1>ORI<em>KO</em></h1>
+        <p class="jp">折光室</p>
+        <p class="story">月の光を、<br>花の色に。</p>
+        <p class="lead">閉園した温室で、鏡と色硝子を置く。<br>九つの室。急がなくていい。</p>
+      </div>
+      <div class="title-actions">
+        <button id="startBtn" class="primary" type="button"><span>室をひらく</span><b>↗</b></button>
+        <button id="howBtn" class="text" type="button">あそびかた</button>
+        <p id="titleRecord" class="record">まだ、どの花も眠っている。</p>
+      </div>
+      <footer class="title-foot"><span>NO CLOCK</span><span>9 ROOMS · 3 WINGS</span></footer>
+    </section>
+
+    <section id="map" class="view" hidden aria-label="室の一覧">
+      <header class="topline">
+        <button id="mapBack" class="back" type="button">‹ <span>タイトル</span></button>
+        <span class="byline">THE GLASSHOUSE</span>
+        <button id="mapSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="map-intro">
+        <p class="eyebrow">NINE ROOMS</p>
+        <h2>どの室を、<em>起こす。</em></h2>
+        <p id="mapProgress" class="record"></p>
+      </div>
+      <div id="roomList" class="room-list"></div>
+    </section>
+
+    <section id="play" class="view play" hidden aria-label="折光の盤面">
+      <header class="topline play-top">
+        <button id="playBack" class="back" type="button">‹ <span>室の一覧</span></button>
+        <div class="room-heading"><span id="wingName" class="eyebrow"></span><strong id="roomName"></strong></div>
+        <button id="pauseBtn" class="icon" type="button" aria-label="一時停止">Ⅱ</button>
+      </header>
+      <p id="hintLine" class="hint"></p>
+      <div id="boardWrap" class="board-wrap">
+        <canvas id="glass" aria-label="温室。鏡と色硝子を置き、月の光を花まで届ける。"></canvas>
+        <div id="moonPips" class="pips" hidden aria-hidden="true"></div>
+      </div>
+      <div class="tray-wrap">
+        <div id="tray" class="tray" aria-label="置くもの"></div>
+        <div class="tools">
+          <button id="turnLeft" class="tool" type="button" disabled>↺ <span>左</span></button>
+          <button id="turnRight" class="tool" type="button" disabled>↻ <span>右</span></button>
+          <button id="liftBtn" class="tool" type="button" disabled>外す</button>
+          <button id="undoBtn" class="tool" type="button" disabled>戻す</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="modal" class="modal" hidden>
+      <section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript><p class="noscript">この温室を灯すには JavaScript が必要です。<a href="../grok/index.html">作品一覧へ戻る</a></p></noscript>
+  </main>
+</body>
+</html>
