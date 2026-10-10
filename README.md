@@ -162,17 +162,11 @@ AIの違いを、単純な点数だけでなく、遊んだときの体験とし
 
 **ゲームとしての面白さ / 操作の気持ちよさ / アートと演出 / 音の表現 / 独自性 / スマホでの遊びやすさ / 安定性と完成度**
 
-制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品は、GPT6 CHATのLUMINAと、Grok 4.7 CursorのKASANEと、玄人コードのRELAYです。**
+制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品は、GPT6 CHATのLUMINAと、Grok 4.7 CursorのKASANEと、玄人コードのRELAYと、Minimax M3.1のSYNC 共鳴です。**
 
 ## 開発・実行
 
-このリポジトリはブラウザゲームの静的サイトです。LUMINA と KASANE と RELAY は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
-
-制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品はGPT6 CHATのLUMINA、玄人コードのRELAY、Minimax M3.1のSYNC 共鳴です。** 他のAIの作品は追加後に並べて紹介します。
-
-## 開発・実行
-
-このリポジトリはブラウザゲームの静的サイトです。LUMINA・RELAY・SYNC は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
+このリポジトリはブラウザゲームの静的サイトです。LUMINA・KASANE・RELAY・SYNC は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
 
 ローカル起動：
 
@@ -195,8 +189,6 @@ node --check sw.js
 node --test tests/*.test.cjs
 ```
 
-GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
-
 SYNC の譜面とバランスだけを取り出して確認する（外部ライブラリ不要）:
 
 ```bash
@@ -205,7 +197,18 @@ node tools/balance.cjs
 
 各章が「打てる手で通るか」「放置すると必ず負けるか」「静寂区間に音符が混ざっていないか」を機械で回します。譜面の書き間違いは譜面ファイル自体の読み込み時にエラーになるので、音の消えたまま出荷されることはありません。
 
-GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、RELAYの全15ステージ可解性、SYNCの全5章の可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
+日本語のコメントに混ざり込んだ文字がないかを確認するツール:
+
+```bash
+python3 tools/jp-scan.py sync.js sync-sim.js
+python3 tools/jp-vocab.py sync.js sync-sim.js --all-comments
+```
+
+`jp-scan.py` は簡体字と、ラテン文字が CJK に無空白で貼り付いた形を拾います。
+`jp-vocab.py` はそれで拾えない、ハングルや他言語の混入と U+FFFD を見つけます。
+両者を並べて回すと、機械では見つけられない取り違えも見つかります。
+
+GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ可解性、SYNCの全5章の可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
 
 ---
 

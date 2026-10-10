@@ -139,7 +139,7 @@ test("譜面の全トークンが書式どおりに解釈される（黙って�
   });
 });
 
-test("長音符（ホールド）は各章にOTAL least 1 個以上-thumb されている", () => {
+test("長音符（ホールド）は各章に 1 個以上置かれている", () => {
   [1, 2, 3, 4].forEach(i => {
     const chart = sim.buildChart(i);
     const holds = chart.notes.filter(n => n.kind === "hold");
@@ -332,6 +332,46 @@ test("抽選は持っていない共鳴しか返さない", () => {
       assert.ok(!state.upgrades.includes(id), "持っている " + id + " を再度提示している");
     }
   }
+});
+
+test("抽選は常に取り分を揃える", () => {
+  for (let seed = 1; seed <= 200; seed++) {
+    const state = sim.createState({ chapterIndex: 0, upgrades: ["wide"], seed });
+    const offers = sim.rollResonances(state, 3);
+    assert.equal(offers.length, 3, "seed " + seed + " で候補が減った");
+    assert.equal(new Set(offers.map(o => o.id)).size, 3, "seed " + seed + " で重複がある");
+  }
+  const full = sim.createState({ chapterIndex: 0, upgrades: sim.RESONANCES.map(r => r.id) });
+  assert.deepEqual(sim.rollResonances(full, 3), []);
+});
+
+test("同じレーンの長音符が連続すると、前のものは片づく", () => {
+  const chapterIndex = 1;
+  const state = sim.createState({ chapterIndex });
+  const hold = state.chart.notes.find(n => n.kind === "hold" && n.lane === 0);
+  assert.ok(hold, "第2章のレーン0に長音符がある");
+  const spb = state.chart.spb;
+
+  // 今の譜面にはこの並びは出ない。状態の前提として、
+  // 前の長音符が終わる前に次の長音符が始まるようにしておく。
+  const second = {
+    id: -1, beat: hold.beat + 1, time: hold.time + spb, lane: 0,
+    kind: "hold", lenBeats: 1, lenTime: spb, boss: false,
+    judged: false, grade: "", offset: 0, holdDone: false, holdBroken: false
+  };
+  state.chart.notes.push(second);
+  state.chart.notes.sort((a, b) => a.time - b.time);
+
+  sim.start(state, hold.time);
+  sim.press(state, 0, hold.time);
+  assert.equal(state.activeHold[0], hold, "一つ目の長音符が始まっている");
+
+  sim.update(state, second.time);
+  sim.press(state, 0, second.time);
+  assert.equal(hold.holdBroken, true, "前の長音符は断拍になる");
+  assert.equal(state.stats.breaks, 1, "断拍として計数される");
+  assert.equal(state.activeHold[0], second, "新しいものが入っている");
+  assert.equal(hold.holdDone, false, "完走にはならない");
 });
 
 /* -------------------------------------------------------------- 記録 -- */

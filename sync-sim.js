@@ -573,6 +573,11 @@ function press(state, lane, now) {
   note.offset = now - note.time;
   award(state, note.grade, lane, note);
   if (note.kind === "hold") {
+    // 同じレーンで次の長音符が始まったなら、前のを先に片づける。
+    // 決着しないまま永久に消える。
+    // 決着しないまま永久に消える。
+    const prev = state.activeHold[lane];
+    if (prev && !prev.holdDone && !prev.holdBroken) release(state, lane, now);
     note.holdDone = false;
     note.holdBroken = false;
     state.held[lane] = true;
@@ -749,11 +754,14 @@ function update(state, now) {
 function rollResonances(state, count) {
   const owned = new Set(state.upgrades);
   const pool = RESONANCES.filter(r => !owned.has(r.id));
+  const want = Math.max(0, Math.min(count || 3, pool.length));
   const out = [];
-  while (out.length < Math.min(count || 3, pool.length)) {
-    const pick = pool[Math.floor(state.random() * pool.length) % pool.length];
-    if (!pick || out.includes(pick)) break;
-    out.push(pick);
+  // 引くたびにプールを短くする。
+  // 重複で切ると候補が減る。
+  for (let i = 0; i < want; i++) {
+    const at = Math.floor(state.random() * pool.length) % pool.length;
+    out.push(pool[at]);
+    pool.splice(at, 1);
   }
   return out;
 }

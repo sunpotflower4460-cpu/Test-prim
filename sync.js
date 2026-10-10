@@ -115,6 +115,11 @@
       return !!ac && ac.state === "running";
     }
 
+    /** Existing Core only, or null. Never creates one. */
+    function rawContext() {
+      return ac;
+    }
+
     function tone(freq, dur, type, gain, at, bus, detune) {
       const c = context();
       if (!c) return;
@@ -307,7 +312,7 @@
       osc.stop(t0 + dur + 0.03);
     }
 
-    return { context, rawNow, isRunning, applyMute, now, tone, noise, kick, hat, snare, bass, pluck, pad, sub };
+    return { context, rawNow, isRunning, applyMute, now, rawContext, tone, noise, kick, hat, snare, bass, pluck, pad, sub };
   })();
 
   /* ---- 効果音 ---- */
@@ -373,6 +378,9 @@
   let pausedAt = 0;
   let scheduledBeat = 0;
   let schedulerId = null;
+
+  // How far ahead the music gets queued, in seconds.
+  const SCHEDULE_AHEAD = 0.25;
   let mood = sim.CHAPTERS[0].mood;
 
   const view = { w: 0, h: 0, cx: 0, cy: 0, outer: 0, strike: 0, core: 0, dpr: 1 };
@@ -416,6 +424,10 @@
   function midiToFreq(m) { return 440 * Math.pow(2, (m - 69) / 12); }
 
   function scheduleBeat(beat, at) {
+    // `at` lives in clockNow()'s domain. The Web Audio API only understands
+    // AudioContext.currentTime, so convert before reserving anything --
+    // otherwise notes get queued for the gap between the two clocks.
+    const t = audioAt(at);
     const chapter = sim.CHAPTERS[chapterIndex];
     const spb = 60 / chapter.bpm;
     const half = spb / 2;
@@ -425,34 +437,34 @@
     const scale = chapter.scale;
     const energy = game ? Math.min(1, game.combo / 60) : 0;
 
-    if (inBar === 0) audio.kick(at, 0.4 + energy * 0.12);
-    if (inBar === 2) audio.kick(at, 0.3 + energy * 0.1);
-    if (inBar === 1 || inBar === 3) audio.snare(at, 0.1 + energy * 0.05);
-    audio.hat(at, inBar === 0 ? 0.055 : 0.03);
-    audio.hat(at + half, 0.022);
+    if (inBar === 0) audio.kick(t, 0.4 + energy * 0.12);
+    if (inBar === 2) audio.kick(t, 0.3 + energy * 0.1);
+    if (inBar === 1 || inBar === 3) audio.snare(t, 0.1 + energy * 0.05);
+    audio.hat(t, inBar === 0 ? 0.055 : 0.03);
+    audio.hat(t + half, 0.022);
 
     if (inBar === 0 || inBar === 2) {
-      audio.bass(midiToFreq(root - 12), at, spb * 0.9, 0.16 + energy * 0.05);
+      audio.bass(midiToFreq(root - 12), t, spb * 0.9, 0.16 + energy * 0.05);
     }
     // 拍ごとに一音。コードの音を音階へ登らせて、拍そのものを音にする。
     const step = ((beat % 7) + 7) % scale.length;
     const degree = scale[(step + (energy > 0.5 ? 2 : 0)) % scale.length];
-    audio.pluck(midiToFreq(root + 12 + degree), at, 0.22, 0.05 + energy * 0.035);
-    audio.pluck(midiToFreq(root + 24 + degree), at + half, 0.16, 0.028 + energy * 0.02);
+    audio.pluck(midiToFreq(root + 12 + degree), t, 0.22, 0.05 + energy * 0.035);
+    audio.pluck(midiToFreq(root + 24 + degree), t + half, 0.16, 0.028 + energy * 0.02);
 
     if (beat % 8 === 0) {
       audio.pad([midiToFreq(root), midiToFreq(root + scale[2]), midiToFreq(root + scale[4])],
-        at, spb * 7.4, 0.05 + energy * 0.02);
+        t, spb * 7.4, 0.05 + energy * 0.02);
     }
     if (game && game.boss && game.boss.active && !game.boss.dead && inBar === 0 && beat % 4 === 0) {
-      audio.sub(58, at, 0.5, 0.16);
+      audio.sub(58, t, 0.5, 0.16);
     }
   }
 
   function pumpScheduler() {
     if (!game || !game.running) return;
     const spb = game.chart.spb;
-    const horizon = clockNow() + 0.25;
+    const horizon = clockNow() + SCHEDULE_AHEAD;
     let guard = 0;
     while (songStart + scheduledBeat * spb < horizon && guard++ < 64) {
       scheduleBeat(scheduledBeat, songStart + scheduledBeat * spb);
@@ -475,6 +487,14 @@
 
   const pointers = new Map();   // pointerId -> lane
   let heldKeys = null;          // 押しているキー側のレーン
+
+  /** Drop held-key/pointer bookkeeping. Called whenever the sim state is
+   *  replaced or the play session ends, so a finger still down from the
+   *  previous chapter cannot swallow the first input of the next one. */
+  function forgetInput() {
+    pointers.clear();
+    heldKeys = null;
+  }
 
   function laneAt(clientX, clientY) {
     const x = clientX - view.cx;
@@ -529,7 +549,6 @@
 
   function onKeyDown(event) {
     if (event.repeat) return;
-    const code = event.key.toUpperCase ? event.key.toUpperCase() : "";
     const keyLane = sim.LANE_KEYS.indexOf(event.code);
     const numberLane = /^Digit([1-6])$/.exec(event.code);
     let lane = -1;
@@ -576,6 +595,14 @@
   function chooseClock() {
     audio.context();
     clockKind = audio.isRunning() ? "audio" : "perf";
+  }
+
+  /** Map a clockNow() reading onto the AudioContext timeline.
+   *  This is the only place the two clocks meet, so the conversion is exact
+   *  for whichever clock is running and cannot drift. */
+  function audioAt(at) {
+    const c = audio.rawContext();
+    return c ? c.currentTime + (at - clockNow()) : at;
   }
 
   function songTime() {
@@ -1143,6 +1170,7 @@
 
   function exitSync() {
     stopScheduler();
+    forgetInput();
     mode = "off";
     hideCard();
     for (const key of Object.keys(screens)) if (screens[key]) screens[key].classList.add("hidden");
@@ -1179,6 +1207,7 @@
   }
 
   function startChapter(index, withUpgrades) {
+    forgetInput();
     chapterIndex = Math.max(0, Math.min(sim.CHAPTERS.length - 1, index));
     upgrades = (withUpgrades || []).slice();
     const chapter = sim.CHAPTERS[chapterIndex];
@@ -1228,7 +1257,7 @@
     // 止めた時間だけ時計をずらす。音を鳴らし始める位置を音の時計に合わせる。
     const gap = clockNow() - (songStart + pausedAt);
     songStart += gap;
-    scheduledBeat = Math.max(0, Math.ceil((clockNow() - songStart - 0.3) / game.chart.spb));
+    scheduledBeat = Math.max(0, Math.ceil((clockNow() - songStart + SCHEDULE_AHEAD) / game.chart.spb));
     hideCard();
     showScreen("play");
     startScheduler();
@@ -1285,6 +1314,7 @@
   function chapterCleared() {
     commitRecord();
     stopScheduler();
+    forgetInput();
     mode = "result";
     SFX.clear();
     const grade = sim.gradeOf(game);
@@ -1298,6 +1328,10 @@
       return;
     }
     const offers = sim.rollResonances(game, 3);
+    if (!offers.length) {
+      startChapter(chapterIndex + 1, upgrades);
+      return;
+    }
     pendingOffers = offers;
     card("CHAPTER " + (chapterIndex + 1) + " CLEAR", chapter.jp + " を越えた",
       body + "<p class=\"sync-sub\">次の章で持ち歩く共鳴を、ひとつ選んでください。</p>",
@@ -1346,8 +1380,9 @@
   }
 
   function gameOver() {
-    mode = "over";
     stopScheduler();
+    forgetInput();
+    mode = "over";
     commitRecord();
     saveRecord();
     card("RESONANCE LOST", "核が、静まった",
@@ -1454,10 +1489,13 @@
 
     ctx.setTransform(view.dpr, 0, 0, view.dpr, 0, 0);
     ctx.save();
+    drawBackground(t);
+    // Shake only what sits on top of the background. Translating first would
+    // leave the uncovered border showing the previous frame.
+    ctx.save();
     if (shake > 0.2) {
       ctx.translate((Math.random() - 0.5) * shake, (Math.random() - 0.5) * shake);
     }
-    drawBackground(t);
     drawLanes(t, pulse);
     drawRings(pulse);
     drawRipples(dt);
@@ -1466,6 +1504,7 @@
     drawCore(t, pulse);
     drawSilence(t);
     drawParticles(dt);
+    ctx.restore();
     ctx.restore();
 
     if (flashAmount > 0.01) {
