@@ -315,6 +315,9 @@
       const info = rowInfo(token);
       const rowDepth = token.t === "end" ? Math.max(0, depth - 1) : depth;
       const li = document.createElement("li");
+      li.tabIndex = 0;
+      li.setAttribute("role", "button");
+      li.setAttribute("aria-label", (index + 1) + " " + info.text + (token.t === "rep" ? " " + token.n + " 回。押すと回数を変える" : "。押すと選択"));
       li.className = "code-row" + (token.t === "rep" ? " rep" : token.t === "end" ? " end" : "") +
         (rowDepth ? " depth" + Math.min(3, rowDepth) : "");
       li.innerHTML = "<span class=\"ln\">" + (index + 1) + "</span>" +
@@ -322,6 +325,14 @@
         "<span class=\"label\">" + info.text + "</span>" +
         (token.t === "rep" ? "<span class=\"meta\">×" + token.n + "</span>" : "");
       li.addEventListener("click", () => onRowTap(index));
+      li.addEventListener("keydown", event => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          if (!event.repeat) onRowTap(index);
+          // Rebuilding repeat rows replaces the focused element.
+          if (rowEls[index]) rowEls[index].focus();
+        }
+      });
       list.appendChild(li);
       rowEls.push(li);
       if (token.t === "rep") depth++;
@@ -668,22 +679,29 @@
     const hud = document.querySelector(".code-hud");
     const panel = document.querySelector(".code-panel");
     const meters = document.querySelector(".code-meters");
-    let top = H * .16, bottom = H * .6;
+    let top = H * .16, bottom = H * .6, left = W * .03, right = W * .97;
     if (mode === "play") {
-      if (hud) top = hud.getBoundingClientRect().bottom + 34;
-      if (meters) top = Math.max(top, meters.getBoundingClientRect().bottom + 8);
-      if (panel) bottom = panel.getBoundingClientRect().top - 12;
+      if (hud) top = hud.getBoundingClientRect().bottom + 8;
+      if (meters && meters.getBoundingClientRect().height) top = Math.max(top, meters.getBoundingClientRect().bottom + 8);
+      if (panel && panel.getBoundingClientRect().height) {
+        const pr = panel.getBoundingClientRect();
+        const beside = pr.left > W * .34 && pr.top < top + 48 && pr.bottom > H * .7;
+        if (beside) { right = pr.left - 8; bottom = H - 8; }
+        else bottom = pr.top - 10;
+      }
     }
-    if (!(bottom > top + 120)) { top = H * .16; bottom = H * .62; }
+    if (!(bottom > top + 24)) bottom = top + 24;
     const spanX = (grid.w - 1 + grid.h - 1) * TILE_W / 2 + TILE_W;
     const spanY = (grid.w - 1 + grid.h - 1) * TILE_H / 2 + TILE_H + WALL_H;
-    const zoom = clamp(Math.min((W * .94) / spanX, ((bottom - top) * .92) / spanY), .42, 1.45);
+    const roomW = Math.max(48, right - left);
+    const roomH = Math.max(48, bottom - top);
+    const zoom = clamp(Math.min((roomW * .92) / spanX, (roomH * .9) / spanY), .12, 1.45);
     const minX = -(grid.h - 1) * TILE_W / 2 - TILE_W / 2;
     const maxX = (grid.w - 1) * TILE_W / 2 + TILE_W / 2;
     const minY = -WALL_H;
     const maxY = (grid.w - 1 + grid.h - 1) * TILE_H / 2 + TILE_H;
     view.zoom = zoom;
-    view.ox = W / 2 - zoom * (minX + maxX) / 2;
+    view.ox = (left + right) / 2 - zoom * (minX + maxX) / 2;
     view.oy = (top + bottom) / 2 - zoom * ((minY + maxY) / 2 + TILE_H / 2);
   }
 
@@ -1208,11 +1226,16 @@
   // 玄人コードが開いている間は、LUMINA 側のキー操作に渡さない
   window.addEventListener("keydown", event => {
     if (!isActive()) return;
-    if (document.body.classList.contains("sumifu-open")) return;
+    if (document.body.classList.contains("sumifu-open") || document.body.classList.contains("sync-active")) return;
+    if (event.defaultPrevented) return;
     const key = (event.key || "").toLowerCase();
     event.stopImmediatePropagation();
     if (key === "escape") {
       event.preventDefault();
+      const overlayOpen = !document.querySelector("#codeOverlay.hidden");
+      const kicker = overlayOpen ? document.querySelector("#codeOverlay .kicker") : null;
+      // あそびかたはステージを離れず閉じる。クリア／こしょうのカードは従来どおりステージ選択へ戻す。
+      if (kicker && kicker.textContent === "HOW TO PLAY") { hideOverlay(); return; }
       hideOverlay();
       if (mode === "play") { stopRun(true); refreshGrid(); showScreen("select"); }
       else if (mode === "select") { refreshTitle(); showScreen("title"); }
@@ -1220,11 +1243,9 @@
       return;
     }
     if (!document.querySelector("#codeOverlay.hidden")) return;
-    // This listener runs in the capture phase, so preventDefault() here would
-    // cancel the focused button's activation: Enter on the clear button would run
-    // the program instead. Hand the key back when a control owns it.
+    // Focused controls and editable program rows own their activation keys.
     const target = event.target;
-    const onControl = target && target.closest && target.closest("button, a, input, select, textarea");
+    const onControl = target && target.closest && target.closest('button, a, input, select, textarea, [role="button"]');
     if (key === "enter" || key === " ") {
       if (onControl) return;
       event.preventDefault();
@@ -1234,7 +1255,7 @@
     } else if (key.indexOf("arrow") === 0) {
       event.preventDefault();
     }
-  }, true);
+  });
 
   /* ---------- 起動 ---------- */
   $("codeSoundBtn").style.opacity = soundOn ? "" : ".45";

@@ -184,3 +184,18 @@ test("three nights can be bound and a fatal blot ends the run", () => {
   state.hurtPlayer(100);
   assert.equal(state.getScene(), "over");
 });
+
+test("focused sound, return and resume buttons retain native Enter and Space",()=>{
+  const {element:el,events,state}=setup();el('openSumifuBtn').click();
+  events.keydown({key:'Enter',repeat:false,target:{tagName:'BUTTON',id:'sumifuTitleSound'},preventDefault(){assert.fail('native activation must remain available');}});
+  assert.equal(state.getScene(),'title');el('sumifuStart').click();el('sumifuPause').click();
+  events.keydown({key:' ',repeat:false,target:{tagName:'BUTTON',id:'sumifuResume'},preventDefault(){assert.fail('Space must activate resume');}});
+  assert.equal(state.getScene(),'paused');el('sumifuResume').click();assert.equal(state.getScene(),'playing');
+});
+
+test("keyboard activation of combat buttons performs their action",()=>{
+  const {element:el,state}=setup();el('openSumifuBtn').click();el('sumifuStart').click();
+  el('sumifuSlash').trigger('click',{detail:0});assert.ok(state.getGame().player.slashCd>0);
+  el('sumifuSeal').trigger('click',{detail:0});assert.ok(state.getGame().player.sealCd>0);
+  el('sumifuDash').trigger('click',{detail:0});assert.ok(state.getGame().player.dashCd>0);
+});

@@ -21,6 +21,13 @@ jobs:
           node --check code.js
           node --check sync-sim.js
           node --check sync.js
+          node --check sol/entry.js
+          node --check sol/sim.js
+          node --check sol/levels.js
+          node --check sol/sea.js
+          node --check sol/audio.js
+          node --check sol/game.js
+          node --check luna/luna.js
           node --check sw.js
       - name: Game smoke tests
         run: node --test tests/*.test.cjs
@@ -31,4 +38,4 @@ jobs:
       - name: Japanese text scans
         run: |
           python3 tools/jp-scan.py --self-test
-          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sw.js index.html style.css README.md manifest.webmanifest
+          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sol/entry.js sol/sim.js sol/levels.js sol/sea.js sol/audio.js sol/game.js sol/index.html sol/tide.css luna/luna.js luna/index.html luna/luna.css sw.js index.html style.css README.md manifest.webmanifest

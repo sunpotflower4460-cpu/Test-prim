@@ -67,7 +67,7 @@ h1{font:500 clamp(53px,17vw,81px)/1 "Cormorant Garamond",Georgia,serif;letter-sp
 .launcher-button-label em{font-style:normal;font-size:10px;letter-spacing:.12em;color:#9fc0cf}
 .launcher-notice{position:fixed;inset:0;z-index:13;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:rgba(3,12,27,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
 .launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
-body.sumifu-open #codeWorld,body.sumifu-open .code-screen{display:none!important}
+body.sumifu-open #launcher,body.sumifu-open #world,body.sumifu-open #codeWorld,body.sumifu-open .code-screen{display:none!important}
 body.code-active #sumifu{display:none!important}
 @media(max-height:820px){.launcher-sigil{height:88px;width:88px;margin:2px 0}.launcher-core{font-size:38px}.launcher-index{margin:2px 0 4px}.launcher-divider{margin:8px 0}.launcher-copy{margin-bottom:8px;line-height:1.7}.launcher-entries,.launcher-actions{gap:7px}.launcher-button{height:58px}.launcher-inner{transform:none;padding-bottom:46px}.launcher-sub{margin-top:8px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 14px)}}
 @media(max-height:640px){.launcher-sigil{height:56px;width:56px}.launcher-core{font-size:26px}.launcher-button{height:50px;padding:0 12px}.launcher-button-symbol{font-size:22px}.launcher-button-label strong{font-size:13px;letter-spacing:.06em}.launcher-button-grok .launcher-button-label strong{font-size:11.5px;letter-spacing:.01em}}
@@ -97,7 +97,7 @@ body.code-active #sumifu{display:none!important}
   .launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 24px)}
 }
 .launcher-notice{position:fixed;inset:0;z-index:13;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:rgba(3,12,27,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
-.launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
+.launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em;pointer-events:none}
 /* 入口が増えても、最下行の表示と「TAP TO DISCOVER」が重ならないよう 下側に余白を取る。 */
 .launcher-inner{padding-bottom:56px}
 .launcher-button-label em{line-height:1.3}
@@ -157,6 +157,32 @@ body.code-active #flash,body.sync-active #flash{display:none}
   .launcher-inner{padding-bottom:4px}
   .launcher-bottom{font-size:8px;padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}
 }
+@media(orientation:landscape) and (max-height:340px){
+  .launcher-sigil,.launcher-eyebrow,.launcher-index,.launcher-divider,.launcher-sub{display:none}
+  .launcher-title{font-size:32px}
+  .launcher-copy{margin:0 0 6px}
+  .launcher-button{height:48px}
+  .launcher-entries{gap:6px}
+}
+/* 横に広いが縦が足りないとき、タイトルが上下にはみ出して
+   「戻る」が画面の外に固定されてしまう。装飾を畳んで収める。 */
+@media(orientation:landscape) and (max-height:520px){
+  #home{justify-content:flex-start;padding-top:12px}
+  .home-content{transform:none}
+  .title-orbit{height:48px;width:48px;margin:2px 0}
+  .orbit-spark{font-size:22px}
+  #home h1{font-size:40px;margin:2px 0}
+  .divider-star{margin:8px 0}
+  .opening{line-height:1.55;margin-bottom:10px}
+  .primary{min-height:46px}
+  .smallhint{margin-top:6px}
+  .footer-note{display:none}
+}
+@media(orientation:landscape) and (max-height:400px){
+  .title-orbit{display:none}
+  #home{padding-top:6px}
+  .record{margin-top:4px}
+}
 
 /* Quiet return path from the game title to the Test prim hub */
 .return-portal{
@@ -182,3 +208,34 @@ body.code-active #flash,body.sync-active #flash{display:none}
 @media(hover:hover){.launcher-button:hover{transform:translateY(-1px)}.launcher-button-grok:hover{box-shadow:0 14px 36px rgba(176,78,62,.22),inset 0 0 0 4px rgba(28,14,12,.35)}}
 
 @media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-button{height:66px;padding:0 12px;gap:10px}.launcher-button-label{gap:4px}.launcher-button-label small{font-size:8px;letter-spacing:.16em}.launcher-button-label strong{font-size:16px;letter-spacing:.1em}.launcher-button-grok .launcher-button-label strong{font-size:14px;letter-spacing:.07em}.launcher-button-symbol{font-size:26px}.launcher-button-arrow{font-size:20px}.launcher-bottom{left:22px;right:22px}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}
+
+/* Six doors. Keep the newest author's work last and the gallery readable at every height. */
+.launcher-button-sol{text-decoration:none;color:inherit;border-color:#e69f83aa;background:linear-gradient(115deg,#ed8b6726,#e7c68b14);box-shadow:0 11px 43px #ed8b6710,inset 0 0 0 4px #102c3850}
+.launcher-button-sol .launcher-button-symbol{font-size:29px;color:#f4bd99;text-shadow:0 0 22px #e68c6c66}
+.launcher-button-sol .launcher-button-label small{color:#ddbba0;letter-spacing:.14em}
+.launcher-button-sol .launcher-button-arrow{color:#f4bd99}
+.launcher-button-luna{text-decoration:none;color:inherit;grid-column:1/-1;border-color:#c6a6ffaa;background:linear-gradient(115deg,#a98aff26,#78d8ec12);box-shadow:0 11px 43px #a98aff12,inset 0 0 0 4px #17183270}
+.launcher-button-luna .launcher-button-symbol{font-size:29px;color:#ded0ff;text-shadow:0 0 22px #a98aff88}
+.launcher-button-luna .launcher-button-label small{color:#c9bbef;letter-spacing:.18em}
+.launcher-button-luna .launcher-button-arrow{color:#cfbdff}
+.launcher-entries{width:min(380px,100%)}
+.launcher-inner{flex-shrink:0}
+.launcher-bottom{position:static;width:min(760px,100%);padding:14px 12px 0;margin-top:14px;flex-shrink:0}
+.launcher{justify-content:center;gap:0;padding-top:max(20px,env(safe-area-inset-top));padding-bottom:max(20px,env(safe-area-inset-bottom))}
+.launcher-inner{transform:none;padding-bottom:0}
+.launcher-sigil{width:100px;height:100px;margin:8px 0 4px}
+.launcher-core{font-size:44px}
+.launcher-index{margin:4px 0 8px}
+.launcher-title{font-size:clamp(48px,14vw,70px)}
+.launcher-divider{margin:14px 0 12px}
+.launcher-copy{margin-bottom:18px}
+.launcher-button{height:66px}
+.launcher-entries{gap:9px}
+.launcher-sub{margin-top:13px}
+@media(orientation:landscape) and (min-width:600px){.launcher-entries{width:100%}.launcher-button-sol,.launcher-button-luna{grid-column:1/-1}.launcher-sigil{width:82px;height:82px}.launcher-core{font-size:36px}.launcher-title{font-size:58px}.launcher-button{height:62px}.launcher-bottom{margin-top:25px}}
+@media(max-height:760px) and (orientation:portrait){.launcher-sigil{width:68px;height:68px;margin:0}.launcher-core{font-size:31px}.launcher-eyebrow{font-size:8px}.launcher-title{font-size:48px}.launcher-copy{margin-bottom:12px}.launcher-divider{margin:10px 0}.launcher-button{height:57px}.launcher-entries{gap:7px}.launcher-bottom{margin-top:11px;padding-top:8px}.launcher-sub{margin-top:10px}}
+@media(max-height:620px) and (orientation:portrait){.launcher{padding:12px 19px}.launcher-sigil{width:44px;height:44px;margin:0}.launcher-core{font-size:22px}.launcher-index{font-size:7px;margin:3px 0 5px}.launcher-title{font-size:40px}.launcher-copy{font-size:9px;margin-bottom:9px}.launcher-divider{margin:7px 0}.launcher-button{height:51px;padding:0 12px}.launcher-button-label strong{font-size:14px}.launcher-button-grok .launcher-button-label strong{font-size:12px;letter-spacing:.04em}.launcher-button-label small{font-size:7px}.launcher-entries{gap:6px}.launcher-sub{font-size:7px;margin-top:8px}.launcher-bottom{font-size:7px;margin-top:8px}}
+@media(max-height:550px) and (orientation:landscape){.launcher{justify-content:flex-start;padding:14px 22px}.launcher-sigil{width:48px;height:48px;margin:0}.launcher-core{font-size:24px}.launcher-eyebrow{font-size:8px}.launcher-index{font-size:8px;margin:3px 0 5px}.launcher-title{font-size:40px}.launcher-divider{margin:6px 0}.launcher-copy{font-size:10px;margin-bottom:8px}.launcher-button{height:51px}.launcher-entries{gap:7px}.launcher-sub{margin-top:8px}.launcher-bottom{margin-top:10px;font-size:7px}}
+
+.launcher{touch-action:pan-y}
+@media(max-height:420px) and (orientation:landscape){.launcher-sigil{width:34px;height:34px}.launcher-core{font-size:19px}.launcher-title{font-size:36px}.launcher-button{height:47px}.launcher-bottom{padding-top:6px;margin-top:8px}.launcher-copy{margin-bottom:6px}}

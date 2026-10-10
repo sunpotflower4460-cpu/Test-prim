@@ -244,7 +244,7 @@
     ui.controls.classList.toggle("hidden", next !== "playing");
     const modal = next === "paused" || next === "upgrade" || next === "chapter" || next === "over" || next === "won";
     ui.overlay.classList.toggle("hidden", !modal);
-    if (next !== "playing") resetStick();
+    if (next !== "playing") { keys.clear(); resetStick(); }
   }
   function hintText() {
     if (!game.didSlash) return "J / 斬 で筆を振る";
@@ -1666,6 +1666,7 @@
       if (event.stopPropagation) event.stopPropagation();
       fn();
     });
+    el.addEventListener("click", event => { if (event.detail === 0) fn(); });
   }
   press(ui.slashBtn, slash);
   press(ui.sealBtn, seal);
@@ -1695,9 +1696,15 @@
   $("sumifuPause").addEventListener("click", pause);
   window.addEventListener("keydown", event => {
     if (scene === "closed") return;
-    if (document.body && document.body.classList && document.body.classList.contains("code-active")) return;
+    if (document.body && document.body.classList && (document.body.classList.contains("code-active") || document.body.classList.contains("sync-active"))) return;
     const k = event.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
+    const target = event.target;
+    const onControl = !!(target && (target.isContentEditable ||
+      (target.closest && target.closest("button, a, input, textarea, select")) ||
+      /^(BUTTON|A|INPUT|TEXTAREA|SELECT)$/.test(target.tagName || "")
+    ));
+    if (onControl && scene !== "playing" && (k === "enter" || k === " ")) return;
+    if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " "].indexOf(k) >= 0) event.preventDefault();
     keys.add(k === " " ? "space" : k);
     if (event.repeat) {
       if (scene === "playing" && (k === "j" || k === "z")) slash();

@@ -146,7 +146,7 @@
     ui.overlay.classList.toggle("hidden", value === "home" || value === "launcher" || value === "playing");
     ui.top.classList.toggle("hidden", value === "home" || value === "launcher");
     ui.controls.classList.toggle("hidden", value !== "playing");
-    if (value !== "playing") resetStick();
+    if (value !== "playing") { keys.clear(); resetStick(); }
   }
   function overlayCard(kicker, title, message, content) {
     ui.overlay.innerHTML = '<div class="card"><div class="card-kicker">' + kicker + '</div><h2>' + title + '</h2><p>' + message + '</p>' + (content || "") + '</div>';
@@ -419,27 +419,31 @@
     $("joystick").addEventListener(type, event => { if (stick.id === event.pointerId) resetStick(); });
   }
   ui.dash.addEventListener("pointerdown", event => { event.preventDefault(); dash(); });
+  ui.dash.addEventListener("click", event => { if (event.detail === 0) dash(); });
   $("openGameBtn").addEventListener("click", () => { setScene("home"); showToast("星灯りの庭へ"); });
   $("returnPortalBtn").addEventListener("click", () => { game = null; setScene("launcher"); });
   $("startBtn").addEventListener("click", startRun);
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
   window.addEventListener("keydown", event => {
+    if (event.defaultPrevented) return;
     if (document.body && document.body.classList && (document.body.classList.contains("sumifu-open") || document.body.classList.contains("code-active") || document.body.classList.contains("sync-active"))) return;
     const k = event.key.toLowerCase();
     // preventDefault() also cancels the default action of a focused button, so
     // Space could no longer activate つづける / もう一度 / 強化. Keep recording
     // the key so movement still works, but do not swallow the event.
     const t = event.target;
-    const onControl = t && (t.tagName === "BUTTON" || t.tagName === "INPUT" || t.tagName === "A" || t.isContentEditable);
+    const onControl = t && (t.tagName === "BUTTON" || t.tagName === "INPUT" || t.tagName === "A" || t.isContentEditable || (t.closest && t.closest("button, a, input")));
+    // Enter on a focused door must open only that door. The shortcut below would also open LUMINA.
+    if (onControl && k === "enter" && scene !== "playing") return;
     if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
     keys.add(k === " " ? "space" : k);
-    if ((k === " " || k === "shift") && !event.repeat) dash();
+    if ((k === "shift" || (k === " " && !onControl)) && !event.repeat) dash();
     if ((k === "escape" || k === "p") && !event.repeat) {
       if (scene === "playing") pause(); else if (scene === "paused") $("resume").click();
     }
-    if (k === "enter" && scene === "launcher") { setScene("home"); }
-    else if (k === "enter" && scene === "home") startRun();
+    if (k === "enter" && !onControl && !event.repeat && scene === "launcher") { setScene("home"); }
+    else if (k === "enter" && !onControl && !event.repeat && scene === "home") startRun();
   }, { passive: false });
   window.addEventListener("keyup", event => keys.delete(event.key.toLowerCase() === " " ? "space" : event.key.toLowerCase()));
   window.addEventListener("blur", () => { keys.clear(); resetStick(); if (scene === "playing") pause(); });

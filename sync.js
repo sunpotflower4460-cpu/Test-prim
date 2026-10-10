@@ -64,6 +64,15 @@
     let musicBus = null;
     let sfxBus = null;
     let noiseBuffer = null;
+    const musicSources = new Set();
+    function trackMusic(source) {
+      musicSources.add(source);
+      source.onended = () => musicSources.delete(source);
+    }
+    function stopMusic() {
+      for (const source of musicSources) { try { source.stop(); } catch (_) {} }
+      musicSources.clear();
+    }
 
     function context() {
       if (!soundOn) return null;
@@ -135,6 +144,7 @@
       env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(env);
       env.connect(bus || sfxBus);
+      if (bus === musicBus) trackMusic(osc);
       osc.start(t0);
       osc.stop(t0 + dur + 0.02);
     }
@@ -174,6 +184,7 @@
       env.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.3);
       osc.connect(env);
       env.connect(musicBus);
+      trackMusic(osc);
       osc.start(t0);
       osc.stop(t0 + 0.34);
     }
@@ -194,6 +205,7 @@
       src.connect(hp);
       hp.connect(env);
       env.connect(musicBus);
+      trackMusic(src);
       src.start(t0);
       src.stop(t0 + 0.06);
     }
@@ -215,6 +227,7 @@
       src.connect(bp);
       bp.connect(env);
       env.connect(musicBus);
+      trackMusic(src);
       src.start(t0);
       src.stop(t0 + 0.2);
       tone(186, 0.09, "triangle", 0.05, t0, musicBus);
@@ -243,6 +256,7 @@
       sub.connect(lp);
       lp.connect(env);
       env.connect(musicBus);
+      trackMusic(osc); trackMusic(sub);
       osc.start(t0);
       sub.start(t0);
       osc.stop(t0 + dur + 0.03);
@@ -263,6 +277,7 @@
       env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(env);
       env.connect(musicBus);
+      trackMusic(osc);
       osc.start(t0);
       osc.stop(t0 + dur + 0.02);
     }
@@ -283,6 +298,7 @@
         env.gain.linearRampToValueAtTime(0.0001, t0 + dur);
         osc.connect(env);
         env.connect(musicBus);
+        trackMusic(osc);
         osc.start(t0);
         osc.stop(t0 + dur + 0.05);
       });
@@ -308,11 +324,12 @@
       env.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
       osc.connect(env);
       env.connect(musicBus);
+      trackMusic(osc);
       osc.start(t0);
       osc.stop(t0 + dur + 0.03);
     }
 
-    return { context, rawNow, isRunning, applyMute, now, rawContext, tone, noise, kick, hat, snare, bass, pluck, pad, sub };
+    return { context, rawNow, isRunning, applyMute, stopMusic, now, rawContext, tone, noise, kick, hat, snare, bass, pluck, pad, sub };
   })();
 
   /* ---- 効果音 ---- */
@@ -377,6 +394,7 @@
   let songStart = 0;         // 拍0の時刻（音の時計）
   let pausedAt = 0;
   let scheduledBeat = 0;
+  let musicFrom = -Infinity;
   let schedulerId = null;
 
   // How far ahead the music gets queued, in seconds.
@@ -411,12 +429,28 @@
     canvas.width = Math.round(w * dpr);
     canvas.height = Math.round(h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    const size = Math.min(w, h * 0.78);
-    view.outer = size * 0.47;
-    view.strike = view.outer * 0.56;
+    let size = Math.min(w, h * 0.78);
+    let outer = size * 0.47;
+    let cy = h * 0.52;
+    const play = $("syncPlay");
+    const hud = document.querySelector(".sync-hud");
+    // 縦に足りない画面では、既定の円が上部の計器に隠れる。見えている範囲へ寄せる。
+    if (play && hud && !play.classList.contains("hidden")) {
+      const hudBottom = hud.getBoundingClientRect().bottom;
+      // 外側の飾り円ではなく、実際に叩く輪が計器に隠れるときだけ寄せる。
+      if (hudBottom > 40 && cy - outer * 0.56 < hudBottom + 8) {
+        const top = hudBottom + 8;
+        const room = Math.max(72, h - top - 10);
+        size = Math.min(w * 0.92, room / 0.94);
+        outer = size * 0.47;
+        cy = top + room * 0.5;
+      }
+    }
+    view.outer = outer;
+    view.strike = outer * 0.56;
     view.core = Math.max(26, size * 0.075);
     view.cx = w / 2;
-    view.cy = h * 0.52;
+    view.cy = cy;
   }
 
   /* -------------------------------------------------------------- 音楽 ---- */
@@ -431,32 +465,33 @@
     const chapter = sim.CHAPTERS[chapterIndex];
     const spb = 60 / chapter.bpm;
     const half = spb / 2;
+    const main = at >= musicFrom, offbeat = at + half >= musicFrom;
     const inBar = ((beat % 4) + 4) % 4;
     const chordIndex = Math.floor(beat / 4) % chapter.chords.length;
     const root = chapter.root + chapter.chords[chordIndex];
     const scale = chapter.scale;
     const energy = game ? Math.min(1, game.combo / 60) : 0;
 
-    if (inBar === 0) audio.kick(t, 0.4 + energy * 0.12);
-    if (inBar === 2) audio.kick(t, 0.3 + energy * 0.1);
-    if (inBar === 1 || inBar === 3) audio.snare(t, 0.1 + energy * 0.05);
-    audio.hat(t, inBar === 0 ? 0.055 : 0.03);
-    audio.hat(t + half, 0.022);
+    if (main && inBar === 0) audio.kick(t, 0.4 + energy * 0.12);
+    if (main && inBar === 2) audio.kick(t, 0.3 + energy * 0.1);
+    if (main && (inBar === 1 || inBar === 3)) audio.snare(t, 0.1 + energy * 0.05);
+    if (main) audio.hat(t, inBar === 0 ? 0.055 : 0.03);
+    if (offbeat) audio.hat(t + half, 0.022);
 
-    if (inBar === 0 || inBar === 2) {
+    if (main && (inBar === 0 || inBar === 2)) {
       audio.bass(midiToFreq(root - 12), t, spb * 0.9, 0.16 + energy * 0.05);
     }
     // 拍ごとに一音。コードの音を音階へ登らせて、拍そのものを音にする。
     const step = ((beat % 7) + 7) % scale.length;
     const degree = scale[(step + (energy > 0.5 ? 2 : 0)) % scale.length];
-    audio.pluck(midiToFreq(root + 12 + degree), t, 0.22, 0.05 + energy * 0.035);
-    audio.pluck(midiToFreq(root + 24 + degree), t + half, 0.16, 0.028 + energy * 0.02);
+    if (main) audio.pluck(midiToFreq(root + 12 + degree), t, 0.22, 0.05 + energy * 0.035);
+    if (offbeat) audio.pluck(midiToFreq(root + 24 + degree), t + half, 0.16, 0.028 + energy * 0.02);
 
-    if (beat % 8 === 0) {
+    if (main && beat % 8 === 0) {
       audio.pad([midiToFreq(root), midiToFreq(root + scale[2]), midiToFreq(root + scale[4])],
         t, spb * 7.4, 0.05 + energy * 0.02);
     }
-    if (game && game.boss && game.boss.active && !game.boss.dead && inBar === 0 && beat % 4 === 0) {
+    if (main && game && game.boss && game.boss.active && !game.boss.dead && inBar === 0 && beat % 4 === 0) {
       audio.sub(58, t, 0.5, 0.16);
     }
   }
@@ -481,6 +516,7 @@
 
   function stopScheduler() {
     if (schedulerId !== null) { clearInterval(schedulerId); schedulerId = null; }
+    audio.stopMusic();
   }
 
   /* ---------------------------------------------------------------- 入力 ---- */
@@ -512,8 +548,8 @@
   }
 
   function releaseLane(lane) {
-    if (!game || mode !== "play") return;
-    const result = sim.release(game, lane, songTime());
+    if (!game || (mode !== "play" && mode !== "paused")) return;
+    const result = sim.release(game, lane, mode === "paused" ? pausedAt : songTime());
     consume(result);
   }
 
@@ -548,6 +584,7 @@
   }
 
   function onKeyDown(event) {
+    if (!document.body.classList.contains("sync-active")) return;
     if (event.repeat) return;
     const keyLane = sim.LANE_KEYS.indexOf(event.code);
     const numberLane = /^Digit([1-6])$/.exec(event.code);
@@ -570,6 +607,7 @@
   }
 
   function onKeyUp(event) {
+    if (!document.body.classList.contains("sync-active")) return;
     const keyLane = sim.LANE_KEYS.indexOf(event.code);
     const numberLane = /^Digit([1-6])$/.exec(event.code);
     let lane = -1;
@@ -1221,6 +1259,7 @@
     chooseClock();
     songStart = clockNow() + 0.28;
     scheduledBeat = 0;
+    musicFrom = -Infinity;
     sim.start(game, -0.28);
     lastBeatDrawn = -1;
     bossEntry = 0;
@@ -1234,6 +1273,7 @@
     startScheduler();
     mode = "play";
     updateHud();
+    resize();
     $("syncChapter").textContent = "第" + CHAPTER_NUMERAL[chapterIndex] + "章 · " + chapter.jp;
     $("syncHint").textContent = chapter.lead;
     setTimeout(() => {
@@ -1257,7 +1297,9 @@
     // 止めた時間だけ時計をずらす。音を鳴らし始める位置を音の時計に合わせる。
     const gap = clockNow() - (songStart + pausedAt);
     songStart += gap;
-    scheduledBeat = Math.max(0, Math.ceil((clockNow() - songStart + SCHEDULE_AHEAD) / game.chart.spb));
+    // Requeue the remaining half-beat too, without replaying elapsed notes.
+    musicFrom = clockNow();
+    scheduledBeat = Math.max(0, Math.floor(pausedAt / game.chart.spb));
     hideCard();
     showScreen("play");
     startScheduler();
@@ -1285,6 +1327,12 @@
     } else {
       boss.classList.add("hidden");
     }
+    // ボスの欄が出ると計器が伸びる。円が隠れたときだけ配置を取り直す。
+    const hudBottom = boss.parentElement ? boss.parentElement.getBoundingClientRect().bottom : 0;
+    if (Math.abs(hudBottom - (view.hudBottom || 0)) > 2) {
+      view.hudBottom = hudBottom;
+      resize();
+    }
   }
 
   function statsBlock(state) {
@@ -1300,15 +1348,14 @@
   }
 
   function commitRecord() {
-    let better = false;
-    if (game.stats.score > record.bestScore) { record.bestScore = game.stats.score; better = true; }
-    if (chapterIndex + 1 > record.bestChapter) { record.bestChapter = chapterIndex + 1; better = true; }
+    if (game.stats.score > record.bestScore) record.bestScore = game.stats.score;
+    if (chapterIndex + 1 > record.bestChapter) record.bestChapter = chapterIndex + 1;
     const grade = sim.gradeOf(game);
     const order = ["C", "B", "A", "S", "SS", "SSS"];
-    if (order.indexOf(grade) > order.indexOf(record.bestGrade)) { record.bestGrade = grade; better = true; }
+    if (order.indexOf(grade) > order.indexOf(record.bestGrade)) record.bestGrade = grade;
     record.perfects += game.stats.perfect;
-    if (chapterIndex + 1 >= sim.CHAPTERS.length) record.clears += 1;
-    if (better || chapterIndex + 1 >= sim.CHAPTERS.length) saveRecord();
+    if (game.cleared && chapterIndex + 1 >= sim.CHAPTERS.length) record.clears += 1;
+    saveRecord();
   }
 
   function chapterCleared() {
@@ -1439,8 +1486,16 @@
   window.addEventListener("keydown", onKeyDown);
   window.addEventListener("keyup", onKeyUp);
   window.addEventListener("resize", resize);
+  function loseFocus() {
+    if (mode === "play") pause();
+    if (mode === "paused") {
+      for (const lane of new Set([...(heldKeys || []), ...pointers.values()])) releaseLane(lane);
+      forgetInput();
+    }
+  }
+  window.addEventListener("blur", loseFocus);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden && mode === "play") pause();
+    if (document.hidden) loseFocus();
   });
 
   /* ------------------------------------------------------------- 描画ループ ---- */

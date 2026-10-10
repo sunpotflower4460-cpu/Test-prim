@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#080a1b">
+  <meta name="description" content="LUNA — 星環航路。小さな探査船を導き、重力を借りて星屑を集める宇宙パズル。GPT 6 Luna オリジナル作品。">
+  <title>LUNA — 星環航路 | GPT 6 Luna</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="luna.css">
+  <script src="luna.js" defer></script>
+</head>
+<body>
+  <main id="app" data-view="title">
+    <canvas id="sky" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+    <section id="title" class="view title" aria-label="LUNA タイトル">
+      <header class="topline"><a class="back" href="../index.html">‹ <span>Test prim</span></a><span class="byline">AN ORIGINAL BY GPT 6 LUNA</span><button class="icon" data-action="settings" aria-label="設定">⚙</button></header>
+      <div class="title-art" aria-hidden="true"><div class="orbit orbit-a"></div><div class="orbit orbit-b"></div><div class="planet"><i></i></div><span class="title-ship">✦</span><span class="title-star star-a">·</span><span class="title-star star-b">✧</span></div>
+      <div class="title-copy"><p class="eyebrow">A SMALL SHIP, A WIDE NIGHT</p><h1>LUNA<span>.</span></h1><p class="jp-title">星環航路</p><p class="story">遠い灯りまで、<br>重力を借りて。</p><p class="description">星の引力を読み、小さな探査船を導く。<br>静かな宇宙の、軌道パズル。</p></div>
+      <div class="title-actions"><button class="primary" data-action="start">航路をえらぶ <span>↗</span></button><button class="text-button" data-action="how">あそびかた <span>→</span></button><p id="record" class="record">夜空には、まだ名前のない星がある。</p></div>
+      <div class="title-foot"><span>NO CLOCK · NO WRONG TURN</span><span>12 ROUTES · 4 SECTORS</span></div>
+    </section>
+    <section id="map" class="view map" hidden aria-label="航路選択">
+      <header class="map-head"><button class="back" data-action="title">‹ <span>タイトル</span></button><div><p class="eyebrow">STAR CHART / 01—12</p><h2>航路を、<em>ひとつ。</em></h2></div><button class="icon" data-action="settings" aria-label="設定">⚙</button></header>
+      <p id="mapProgress" class="map-progress"></p><div id="routeList" class="route-list"></div>
+      <footer class="map-foot">星屑をすべて集めると、航路の記録が残ります。<br>何度でもやり直せます。急がなくて大丈夫。</footer>
+    </section>
+    <section id="play" class="view play" hidden aria-label="航行画面">
+      <header class="play-head"><button class="back" data-action="map">‹ <span>航路図</span></button><div class="mission"><span id="sector" class="eyebrow"></span><strong id="missionName"></strong></div><button class="icon" data-action="pause" aria-label="一時停止">Ⅱ</button></header>
+      <div class="hud"><div class="hud-cell"><span>星屑</span><b id="shardCount">0 / 3</b></div><div class="hud-center"><span id="missionNo">ROUTE 01</span><small id="status">船をドラッグして、噴射。</small></div><div class="hud-cell fuel-cell"><span>推進剤</span><b id="fuelCount">3</b></div></div>
+      <div class="field-wrap"><canvas id="field" aria-label="星図。船をドラッグして噴射し、星屑を集めて灯台へ向かいます。"></canvas><div class="field-caption"><span id="fieldHint">DRAG FROM SHIP · RELEASE TO BURN</span><button data-action="reset">↺ やりなおす</button></div></div>
+      <div class="control-row"><button class="tool" data-action="undo"><span>↶</span><small>噴射を戻す</small></button><button class="tool" data-action="predict"><span>⌁</span><small id="predictLabel">軌道予測 ON</small></button><button class="tool" data-action="help"><span>?</span><small>あそびかた</small></button></div>
+    </section>
+    <div id="modal" class="modal" hidden><section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript><p class="noscript">この航路を描くにはJavaScriptが必要です。<a href="../index.html">Test primへ戻る</a></p></noscript>
+  </main>
+</body>
+</html>
