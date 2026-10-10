@@ -1684,13 +1684,40 @@
     const pt = pointerPoint(event);
     mouse.x = pt.x; mouse.y = pt.y; mouse.hot = true; mouse.at = clock;
   });
-  $("openSumifuBtn").addEventListener("click", () => {
-    audioInit(() => tone(196, 0.18, "triangle", 0.03, 0.6));
+  function enterKasane() {
     setScene("title");
     loadRecord();
-  });
+  }
+  const openKasane = $("openSumifuBtn");
+  if (openKasane) {
+    openKasane.addEventListener("click", event => {
+      const host = event && event.currentTarget;
+      if (host && String(host.tagName).toUpperCase() === "A" && host.getAttribute && host.getAttribute("href")) return;
+      audioInit(() => tone(196, 0.18, "triangle", 0.03, 0.6));
+      enterKasane();
+    });
+    openKasane.addEventListener("keydown", event => {
+      const host = event && event.currentTarget;
+      if (!host || String(host.tagName).toUpperCase() !== "A") return;
+      if (event.key === "Enter" && event.stopPropagation) event.stopPropagation();
+      if (event.key === " ") {
+        if (event.preventDefault) event.preventDefault();
+        if (event.stopPropagation) event.stopPropagation();
+        host.click();
+      }
+    });
+  }
   $("sumifuStart").addEventListener("click", startRun);
-  $("sumifuReturn").addEventListener("click", () => { game = null; setScene("closed"); });
+  $("sumifuReturn").addEventListener("click", () => {
+    game = null;
+    setScene("closed");
+    try {
+      const search = window.location && window.location.search || "";
+      if (new URLSearchParams(search).get("work") === "kasane" && window.history && window.history.replaceState) {
+        window.history.replaceState(null, "", "index.html");
+      }
+    } catch (err) {}
+  });
   ui.sound.addEventListener("click", toggleSound);
   ui.titleSound.addEventListener("click", toggleSound);
   $("sumifuPause").addEventListener("click", pause);
@@ -1734,5 +1761,9 @@
   layout();
   loadRecord();
   setScene("closed");
+  try {
+    const search = window.location && window.location.search || "";
+    if (new URLSearchParams(search).get("work") === "kasane") enterKasane();
+  } catch (err) {}
   requestAnimationFrame(frame);
 })();
