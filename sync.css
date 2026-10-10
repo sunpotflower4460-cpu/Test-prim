@@ -1,7 +1,7 @@
 @import url('https://fonts.googleapis.com/css2?family=Zen+Antique&family=Zen+Kaku+Gothic+New:wght@400;500;700&display=swap');
 /* Minimax M3.1 — SYNC// 共鳴
-   LUMINA（幻想・セリフ体）も RELAY（端末風モノスペース）も 아닌、
-   「音と光と同心円」 треть の美的。字は細く、余白は広く、发光は冷たく。 */
+   LUMINA（幻想・セリフ体）とも RELAY（端末風モノスペース）とも違う、
+   音と光と同心円の見た目。字は細く、余白は広く、光は冷たく。 */
 
 :root{
   --sync-bg:#04060c;
@@ -163,6 +163,21 @@ body:not(.sync-active) .sync-screen{display:none}
 }
 .sync-toast.show{opacity:1;transform:translate(-50%,0)}
 
+@media(orientation:landscape) and (max-height:520px){
+  .sync-hint{top:auto;bottom:calc(env(safe-area-inset-bottom) + 10px)}
+  .sync-hud{padding-top:calc(env(safe-area-inset-top) + 6px);gap:5px}
+  .sync-shell{padding:8px 16px 12px}
+  .sync-eyebrow{margin:28px 0 4px}
+  .sync-mark{width:40px;height:40px;margin:0}
+  .sync-mark b{font-size:18px}
+  .sync-logo{font-size:28px;margin:0}
+  .sync-jp{margin:2px 0 0;letter-spacing:.4em;text-indent:.4em}
+  .sync-rule{margin:6px 0}
+  .sync-lead{margin:0 0 8px;line-height:1.45}
+  .sync-primary{min-height:44px}
+  .sync-record{margin:4px 0 0}
+  .sync-keys{margin:8px 0 0;line-height:1.5}
+}
 @media(max-width:360px){
   .sync-mark{width:118px;height:118px}
   .sync-mark b{font-size:36px}
