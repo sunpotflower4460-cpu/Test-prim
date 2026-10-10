@@ -1,6 +1,6 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v12";
+const CACHE = "test-prim-gallery-v13";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
@@ -9,6 +9,7 @@ const ASSETS = [
   "./luna/index.html", "./luna/luna.css", "./luna/luna.js",
   "./grok/index.html", "./grok/shelf.css",
   "./oriko/index.html", "./oriko/oriko.css", "./oriko/optics.js", "./oriko/levels.js", "./oriko/game.js",
+  "./mikan/index.html", "./mikan/mikan.css", "./mikan/phys.js", "./mikan/levels.js", "./mikan/game.js",
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {

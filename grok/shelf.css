@@ -28,10 +28,10 @@ body {
 .intro h1 em { font-style: normal; color: #e7c27a; }
 .lead { margin: 0; line-height: 1.9; letter-spacing: .12em; color: #eadccf; font-size: 14px; }
 .cards {
-  width: min(860px, 100%);
+  width: min(1080px, 100%);
   margin: 22px auto;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 16px;
 }
 .card {
@@ -50,15 +50,22 @@ body {
 .card strong { font-size: clamp(28px, 5vw, 40px); letter-spacing: .16em; font-weight: 500; }
 .card em { font-style: normal; letter-spacing: .42em; color: #e7c27a; }
 .card-glass em { color: #d5ecdf; }
+.card-mikan { background: linear-gradient(165deg, rgba(120, 52, 18, .55), rgba(28, 14, 8, .84)); border-color: rgba(240, 170, 90, .35); }
+.card-mikan em { color: #f0b06a; }
 .mark { font-size: 28px; }
 .blurb { margin-top: 8px; line-height: 1.7; letter-spacing: .06em; color: #eadfd4; font-size: 14px; }
 .go { margin-top: auto; padding-top: 16px; font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; font-size: 13px; }
 .card:active { transform: scale(.985); }
-.foot { width: min(860px, 100%); margin: auto auto 0; }
-@media (max-width: 720px) {
-  .cards { grid-template-columns: 1fr; }
+.foot { width: min(1080px, 100%); margin: auto auto 0; }
+@media (min-width: 800px) {
+  .cards { grid-template-columns: 1fr 1fr 1fr; }
+}
+@media (max-width: 799px) {
   .card { min-height: 0; }
   .byline { display: none; }
+}
+@media (max-height: 520px) and (min-width: 700px) {
+  .cards { grid-template-columns: 1fr 1fr 1fr; }
 }
 @media (max-height: 520px) {
   .shelf { padding-top: 10px; }

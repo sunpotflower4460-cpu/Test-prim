@@ -10,7 +10,7 @@
 
 > **公開中の作品**
 > - GPT6 CHAT — LUMINA（星灯りの庭）
-> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）
+> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）
 > - Minimax M3.1 — SYNC（共鳴）
 > - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
@@ -126,6 +126,39 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 | 音 | 題名の ♫ | 同左 |
 
 右上の三つは、月が息をしている室だけに出ます。三つとも灯る配置を、探してください。
+
+---
+
+## ✦ Grok 4.7 Cursor作品 | MIKAN — 蜜柑
+
+**こたつの上に、いくつ残せる。**
+
+冬の部屋で、蜜柑をこたつの天板へ置く。六つの晩。置く場所だけを選ぶ。天板の上なら朝まで残る。布団の裾の外は畳まで転がり、低い灯りに触れた蜜柑はそこには止まれない。沈んだ布団は、蜜柑を真ん中へ集める。
+
+- **六つの晩**：最初の晩、三つ、灯りの下、小さい天板、沈む布団、夜ふけ
+- **置くだけ**：左右を決めて、指を離す。戻す、に制限はない
+- **裾**：天板の外は、赤い布団を伝って畳に落ちる
+- **灯り**：高く積むと笠に届く晩がある。横に置けば残る
+- **谷**：真ん中の沈みは、置いた蜜柑を自分で集める
+- **記録**：朝まで残せた晩を、ブラウザ内に保存
+
+### ▶ ゲームを開く
+
+**[蜜柑をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/mikan/index.html)**
+
+ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **作品一覧** → **蜜柑** → **「こたつにつく」**。
+
+### 操作方法
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 場所 | 天板の上を横にドラッグ | 左右の矢印 |
+| 置く | 指を離す、または「置く」 | Space / Enter |
+| 戻す | 戻す | Z |
+| 一時停止 | 右上の Ⅱ | Esc |
+| 音 | 題名の ♫ | 同左 |
+
+急がなくていい。落ちても、一つ戻して置き直せます。
 
 ---
 
@@ -301,6 +334,9 @@ node --check luna/luna.js
 node --check oriko/optics.js
 node --check oriko/levels.js
 node --check oriko/game.js
+node --check mikan/phys.js
+node --check mikan/levels.js
+node --check mikan/game.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```
@@ -333,7 +369,7 @@ python3 tools/wiring-check.py
 重複した id、閉じていないタグ、スタイルが定義されていない class などを照合します。
 スタイルがない class は意図的なフックの場合もあるため、警告のみでフェイルにはしません。
 
-GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
+GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室、蜜柑の六晩）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで、蜜柑は最初の晩を残すところまで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
 
 ---
 
