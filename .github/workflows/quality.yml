@@ -19,6 +19,8 @@ jobs:
           node --check sumifu.js
           node --check code-sim.js
           node --check code.js
+          node --check sync-sim.js
+          node --check sync.js
           node --check sw.js
       - name: Game smoke tests
         run: node --test tests/*.test.cjs

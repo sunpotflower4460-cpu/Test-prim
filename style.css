@@ -50,8 +50,12 @@ h1{font:500 clamp(53px,17vw,81px)/1 "Cormorant Garamond",Georgia,serif;letter-sp
 .launcher-button:active{transform:scale(.97);background:rgba(151,244,218,.26)}
 .launcher-button.launcher-button-grok:active{background:rgba(196,92,74,.38)}
 .launcher-button-symbol{font:34px Georgia,serif;color:#d8ffec;text-shadow:0 0 21px #a1eed8}
-.launcher-button-label{flex:1;display:flex;flex-direction:column;gap:7px}
-.launcher-button-label small{font:9px Arial,sans-serif;letter-spacing:.26em;color:#a4c7c6}
+.launcher-button-label{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.launcher-button-label strong{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* 入口名の中に一番文字数の多い「Grok 4.7 Cursor」は、他より一段小さくして
+   1行に収める。折り返すと「COMING SOON」と潰れて読めなくなる。 */
+.launcher-button-grok .launcher-button-label strong{font-size:17px;letter-spacing:.12em}
+.launcher-button-label small{font:9px Arial,sans-serif;letter-spacing:.26em;color:#a4c7c6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 .launcher-button-label strong{font:600 20px Arial,sans-serif;letter-spacing:.17em;color:#fffaf0}
 .launcher-button-arrow{font:27px Georgia,serif;color:#eddfb5}
 .launcher-sub{font:9px Arial,sans-serif;color:#91b3b9;letter-spacing:.18em;margin:19px 0 0}
@@ -67,7 +71,92 @@ body.sumifu-open #codeWorld,body.sumifu-open .code-screen{display:none!important
 body.code-active #sumifu{display:none!important}
 @media(max-height:820px){.launcher-sigil{height:88px;width:88px;margin:2px 0}.launcher-core{font-size:38px}.launcher-index{margin:2px 0 4px}.launcher-divider{margin:8px 0}.launcher-copy{margin-bottom:8px;line-height:1.7}.launcher-entries,.launcher-actions{gap:7px}.launcher-button{height:58px}.launcher-inner{transform:none;padding-bottom:46px}.launcher-sub{margin-top:8px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 14px)}}
 @media(max-height:640px){.launcher-sigil{height:56px;width:56px}.launcher-core{font-size:26px}.launcher-button{height:50px;padding:0 12px}.launcher-button-symbol{font-size:22px}.launcher-button-label strong{font-size:13px;letter-spacing:.06em}.launcher-button-grok .launcher-button-label strong{font-size:11.5px;letter-spacing:.01em}}
+
+.launcher-button-grok{border-color:rgba(228,204,163,.5);background:linear-gradient(115deg,rgba(236,220,171,.14),rgba(173,238,221,.07))}
+.launcher-button-grok:active{background:rgba(236,220,171,.22)}
+.launcher-button-grok .launcher-button-symbol{color:#fdf0d2;text-shadow:0 0 19px #ead3a4}
+.launcher-button-grok .launcher-button-label em{color:#c8bc9c;letter-spacing:.24em}
+/* Minimax M3.1 — SYNC。冷たく透明なシアンと菫の器。 */
+.launcher-button-sync{border-color:rgba(150,215,255,.46);background:linear-gradient(115deg,rgba(126,214,255,.15),rgba(179,156,255,.1))}
+.launcher-button-sync:active{background:rgba(126,214,255,.24)}
+.launcher-button-sync .launcher-button-symbol{color:#dff6ff;text-shadow:0 0 21px #7fd4ff}
+.launcher-button-sync .launcher-button-label strong{color:#f2fbff}
+.launcher-button-sync .launcher-button-label em{color:#a8c6ea;letter-spacing:.18em}
+.launcher-button-sync .launcher-button-arrow{color:#8ef0ff}
+@media(hover:hover){.launcher-button:hover{border-color:rgba(233,255,247,.85);box-shadow:0 14px 48px rgba(120,226,222,.15),inset 0 0 0 4px rgba(8,28,43,.43)}}
+/* 入口が4つになっても、短い画面では詰まって読めなくならないようにする。 */
+@media(max-height:840px){
+  .launcher-sigil{height:138px;width:138px;margin:16px 0 8px}
+  .launcher-core{font-size:58px}
+  .launcher-index{margin:5px 0 8px}
+  .launcher-divider{margin:15px 0 13px}
+  .launcher-copy{margin-bottom:24px}
+  .launcher-button{height:74px}
+  .launcher-entries{gap:10px}
+  .launcher-sub{margin:15px 0 0}
+  .launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 24px)}
+}
+.launcher-notice{position:fixed;inset:0;z-index:13;display:flex;align-items:center;justify-content:center;padding:max(24px,env(safe-area-inset-top)) 20px max(24px,env(safe-area-inset-bottom));background:rgba(3,12,27,.72);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y}
+.launcher-bottom{position:absolute;bottom:calc(env(safe-area-inset-bottom) + 31px);left:40px;right:40px;display:flex;justify-content:space-between;gap:12px;font:9px Arial,sans-serif;color:#88a4ad;letter-spacing:.15em}
+/* 入口が増えても、最下行の表示と「TAP TO DISCOVER」が重ならないよう 下側に余白を取る。 */
+.launcher-inner{padding-bottom:56px}
+.launcher-button-label em{line-height:1.3}
+@media(max-height:720px){.launcher-sigil{height:120px;width:120px;margin:5px 0}.launcher-core{font-size:55px}.launcher-index{margin:5px 0 7px}.launcher-divider{margin:12px 0}.launcher-copy{margin-bottom:16px}.launcher-button{height:70px}.launcher-entries{gap:9px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 22px)}}
 @media(prefers-reduced-motion:reduce){.launcher-ring-one,.launcher-ring-two,.launcher-core{animation:none}}
+
+/* 別の作品を遊んでいる間は、共有のトーストと閃光を消しておく。
+   案内が重なると、隣の作品のものに見えてしまう。 */
+body.code-active #toast,body.sync-active #toast{display:none}
+body.code-active #flash,body.sync-active #flash{display:none}
+
+/* 画面が背の高い向きや、横向きで高さが足りないときは、
+   最下行の表示を絶対配置から外してスクロールに任せる。
+   絶対配置のままでは、最後の入口と重なって読めなくなる。 */
+@media(max-height:700px){
+  .launcher{justify-content:flex-start}
+  .launcher-inner{transform:none;padding-bottom:8px}
+  .launcher-bottom{position:static;width:100%;flex:0 0 auto;margin-top:auto;padding:0 40px calc(env(safe-area-inset-bottom) + 20px)}
+}
+
+/* 横向き・PC では入口を2列に並べる。
+   1列のままだと縦に伸び切って、下までスクロールしないと
+   入口に辿り着けない。 */
+@media(orientation:landscape) and (min-width:600px){
+  .launcher{justify-content:center}
+  .launcher-sigil{height:104px;width:104px;margin:6px 0 4px}
+  .launcher-core{font-size:44px}
+  .launcher-title{font-size:clamp(38px,6.4vw,62px)}
+  .launcher-divider{margin:9px 0 8px}
+  .launcher-copy{margin-bottom:14px}
+  .launcher-inner{max-width:min(720px,94vw)}
+  .launcher-entries{display:grid;grid-template-columns:1fr 1fr;gap:10px;width:100%}
+  .launcher-button{width:100%;height:68px}
+  .launcher-sub{margin:14px 0 0}
+  .launcher-inner{padding-bottom:30px}
+}
+
+/* 入口が4つになって、高さの足りないスマホ（iPhone SE  など）では
+   スクロールなしで全部の入口が収まるよう、装飾を削る。 */
+@media(max-width:380px),(max-height:620px){
+  .launcher-eyebrow{font-size:8px;letter-spacing:.22em}
+  .launcher-sigil{height:96px;width:96px;margin:10px 0 4px}
+  .launcher-core{font-size:42px}
+  .launcher-index{font-size:8px;letter-spacing:.22em;margin:3px 0 6px}
+  .launcher-title{font-size:clamp(42px,13vw,56px)}
+  .launcher-divider{margin:9px 0 8px;gap:12px;font-size:11px}
+  .launcher-copy{font-size:10px;line-height:1.8;margin-bottom:14px}
+  .launcher-button{height:58px;padding:0 11px;gap:10px}
+  .launcher-entries{gap:7px}
+  .launcher-button-label{gap:3px}
+  .launcher-button-label small{font-size:7px;letter-spacing:.14em}
+  .launcher-button-label strong{font-size:15px;letter-spacing:.1em}
+  .launcher-button-label em{font-size:8px}
+  .launcher-button-symbol{font-size:23px}
+  .launcher-button-arrow{font-size:18px}
+  .launcher-sub{font-size:8px;margin:9px 0 0}
+  .launcher-inner{padding-bottom:4px}
+  .launcher-bottom{font-size:8px;padding-bottom:calc(env(safe-area-inset-bottom) + 12px)}
+}
 
 /* Quiet return path from the game title to the Test prim hub */
 .return-portal{
@@ -92,3 +181,5 @@ body.code-active #sumifu{display:none!important}
 .joystick-zone,.dash-btn,#world{touch-action:none}
 @media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-bottom{left:22px;right:22px}.launcher-button-grok .launcher-button-label strong{font-size:12.5px;letter-spacing:.02em}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}
 @media(hover:hover){.launcher-button:hover{transform:translateY(-1px)}.launcher-button-grok:hover{box-shadow:0 14px 36px rgba(176,78,62,.22),inset 0 0 0 4px rgba(28,14,12,.35)}}
+
+@media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-button{height:66px;padding:0 12px;gap:10px}.launcher-button-label{gap:4px}.launcher-button-label small{font-size:8px;letter-spacing:.16em}.launcher-button-label strong{font-size:16px;letter-spacing:.1em}.launcher-button-grok .launcher-button-label strong{font-size:14px;letter-spacing:.07em}.launcher-button-symbol{font-size:26px}.launcher-button-arrow{font-size:20px}.launcher-bottom{left:22px;right:22px}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}

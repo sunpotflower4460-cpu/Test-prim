@@ -1,7 +1,11 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-lumina-v6";
-const ASSETS = ["./index.html", "./style.css", "./sumifu.css", "./code.css", "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./icon.svg", "./manifest.webmanifest"];
+const CACHE = "test-prim-gallery-v7";
+const ASSETS = [
+  "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css",
+  "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
+  "./icon.svg", "./manifest.webmanifest"
+];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

@@ -12,6 +12,7 @@
 > - GPT6 CHAT — LUMINA（星灯りの庭）
 > - Grok 4.7 Cursor — KASANE（重ね）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）
+> - Minimax M3.1 — SYNC（共鳴）
 
 ---
 
@@ -33,6 +34,11 @@
 **[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
 
 ゲームを開く → **「GPT6 CHAT」** を選ぶ → **LUMINA** のタイトル画面 → **「旅をはじめる」**。
+
+
+玄人コードを遊ぶ → **「玄人コード」** を選ぶ → **RELAY** のタイトル画面 → **「ステージを えらぶ」**。
+
+Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** のタイトル画面 → **「共鳴をはじめる」**。
 
 > GitHub Pagesでの正式配信は、初回だけリポジトリの **Settings → Pages → Build and deployment → Deploy from a branch → main / (root) → Save** を選ぶと有効になります。以降は `main` の変更が自動反映されます。設定前は [コードプレビュー](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html) を利用できます（プレビューは外部サービス経由）。
 
@@ -121,6 +127,37 @@
 
 ## Test primで見ていきたいこと
 
+## ◎ Minimax M3.1作品 | SYNC — 共鳴
+
+**ノイズは拍で近づいてくる。その一瞬に、叩けば砕ける。**
+
+リズムゲームと防衛の混ぜ物です。画面の中心に「核」があり、6本のレーンを突きながらノイズが迫ってきます。ノイズは音楽の拍に合わせて整列してくるので、**拍の、その一瞬**にレーンを叩けば砕け散ります。逃すと核が傷つき、静かに音が止まったように感じますが、拍は止まっていません。
+
+- **5つの章**：テンポ84 → 140 BPM。章ごとに配色も音階も変わり、「第零拍」から「終拍」まで難度が畳み掛けます
+- **3種類の音符**：タップ／長音符（押しっぱなし）／アクセント（黄色・ダメージ1.7倍）
+- **静寂**：赤い輪が縮む区間、叩くと核を大きく傷つける。第四・第五章で追加されます
+- **共鳴（12種）**：章の合間に3つから1つを選べます。判定幅を広くするものも、リズムそのものを設計し直すものもあります
+- **ボス「終拍の主」**：最終章に登場。周期の途中で4〜5拍を沈黙させ、大ダメージのアクセント音符を捲きつけます
+- **音**：Web Audioで生成。音が鳴った瞬間と絵が動く瞬間は **同じ時計** を共有しています
+- **スマホ対応**：縦画面で、片手でタップ（レーンをなぞって移動もできる）／PCでは A S D F J K
+
+### ▶ ゲームを開く
+
+**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+
+### あそびかた
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| レーンを叩く | 扇形の場所をタップ | A S D F J K |
+| 長音符 | その扇形を押しっぱなし | キーを押したまま |
+| 一時停止 | 右上の Ⅱ | P / Esc |
+| あそびかた | 右上の ? | 同左 |
+
+判定幅は **PERFECT ±48ms / GREAT ±92ms / GOOD ±136ms**。点数、コンボ倍率、正確さ（SSS〜C）の評価が結果画面に残り、最高記録はブラウザ内に保存されます。
+
+---
+
 AIの違いを、単純な点数だけでなく、遊んだときの体験として比べていきます。
 
 **ゲームとしての面白さ / 操作の気持ちよさ / アートと演出 / 音の表現 / 独自性 / スマホでの遊びやすさ / 安定性と完成度**
@@ -130,6 +167,12 @@ AIの違いを、単純な点数だけでなく、遊んだときの体験とし
 ## 開発・実行
 
 このリポジトリはブラウザゲームの静的サイトです。LUMINA と KASANE と RELAY は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
+
+制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。**現在実装されている作品はGPT6 CHATのLUMINA、玄人コードのRELAY、Minimax M3.1のSYNC 共鳴です。** 他のAIの作品は追加後に並べて紹介します。
+
+## 開発・実行
+
+このリポジトリはブラウザゲームの静的サイトです。LUMINA・RELAY・SYNC は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
 
 ローカル起動：
 
@@ -146,11 +189,23 @@ node --check game.js
 node --check sumifu.js
 node --check code-sim.js
 node --check code.js
+node --check sync-sim.js
+node --check sync.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```
 
 GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
+
+SYNC の譜面とバランスだけを取り出して確認する（外部ライブラリ不要）:
+
+```bash
+node tools/balance.cjs
+```
+
+各章が「打てる手で通るか」「放置すると必ず負けるか」「静寂区間に音符が混ざっていないか」を機械で回します。譜面の書き間違いは譜面ファイル自体の読み込み時にエラーになるので、音の消えたまま出荷されることはありません。
+
+GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、RELAYの全15ステージ可解性、SYNCの全5章の可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
 
 ---
 

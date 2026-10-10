@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE、玄人コードの RELAY。AIごとのゲームを、遊びながら比べる。">
+  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE、玄人コードの RELAY、Minimax M3.1 の SYNC 共鳴。AIごとのゲームを、遊びながら比べる。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
@@ -14,10 +14,12 @@
   <link rel="stylesheet" href="style.css">
   <link rel="stylesheet" href="sumifu.css">
   <link rel="stylesheet" href="code.css">
+  <link rel="stylesheet" href="sync.css">
 </head>
 <body>
   <canvas id="world" aria-label="星灯りの庭 ゲーム画面"></canvas>
   <canvas id="codeWorld" class="hidden" aria-hidden="true"></canvas>
+  <canvas id="syncWorld" class="hidden" aria-hidden="true"></canvas>
   <div class="grain" aria-hidden="true"></div>
   <div class="vignette" aria-hidden="true"></div>
 
@@ -80,10 +82,16 @@
           <span class="launcher-button-label"><small>RELAY · ひかりの手順</small><strong>玄人コード</strong><em>（自作ツール）</em></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </button>
+        <button id="openSyncBtn" class="launcher-button launcher-button-sync" type="button" aria-label="Minimax M3.1 のゲーム、SYNC 共鳴を開く">
+          <span class="launcher-button-symbol">◎</span>
+          <span class="launcher-button-label"><small>SYNC · 共鳴</small><strong>Minimax M3.1</strong></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </button>
       </div>
       <p class="launcher-sub">TAP A DOOR · PLAY THE WORLD INSIDE</p>
     </div>
     <div class="launcher-bottom"><span>TEST PRIM</span><span>03 / 03</span><span>2026</span></div>
+    <div class="launcher-bottom"><span>TEST PRIM</span><span>04 EXPERIMENTS</span><span>2026</span></div>
   </section>
 
   <div id="launcherNotice" class="launcher-notice hidden" aria-live="polite"></div>
@@ -238,9 +246,59 @@
     <div id="sumifu-flash" class="sumifu-flash" aria-hidden="true"></div>
   </section>
 
+  <!-- Minimax M3.1 — SYNC// 共鳴 -->
+  <section id="syncTitle" class="sync-screen hidden" aria-label="SYNC タイトル画面">
+    <div class="sync-shell">
+      <button type="button" id="syncReturnBtn" class="sync-return">‹ Test prim へ</button>
+      <p class="sync-eyebrow">MINIMAX M3.1 / RESONANCE</p>
+      <div class="sync-mark" aria-hidden="true"><span></span><span></span><span></span><b>◎</b></div>
+      <p class="sync-logo">SYNC<em>//</em></p>
+      <p class="sync-jp">共鳴</p>
+      <div class="sync-rule"><span></span> ✧ <span></span></div>
+      <p class="sync-lead">ノイズは、拍に合わせて近づいてくる。<br>その一瞬にレーンを叩けば、砕け散る。<br>五つの章を越え、終拍の主に届くか。</p>
+      <button id="syncStartBtn" class="sync-primary" type="button"><span>共鳴をはじめる</span><b>↗</b></button>
+      <p id="syncRecord" class="sync-record">SCORE 0 · PERFECT 0</p>
+      <p id="syncProgress" class="sync-progress">まだ ひとの音も鳴っていない。</p>
+      <p class="sync-keys">
+        <kbd>A</kbd><kbd>S</kbd><kbd>D</kbd><kbd>F</kbd><kbd>J</kbd><kbd>K</kbd><br>
+        スマートフォンでは扇形をタップ · 長音符は押しっぱなし
+      </p>
+    </div>
+  </section>
+
+  <section id="syncPlay" class="sync-screen sync-play hidden" aria-label="SYNC プレイ画面">
+    <div class="sync-hud">
+      <div class="sync-hud-top">
+        <span class="sync-chapter" id="syncChapter">第一章 · 第零拍</span>
+        <div class="sync-tools">
+          <button id="syncHowBtn" class="sync-icon" type="button" aria-label="あそびかた">?</button>
+          <button id="syncSoundBtn" class="sync-icon" type="button" aria-label="音の切り替え">♫</button>
+          <button id="syncPauseBtn" class="sync-icon" type="button" aria-label="一時停止">Ⅱ</button>
+        </div>
+      </div>
+      <div class="sync-bar hp"><div id="syncHpFill"></div></div>
+      <div class="sync-hp-line"><span>核の強度</span><strong id="syncHpLabel">100 / 100</strong></div>
+      <div class="sync-readout">
+        <span>SCORE <strong id="syncScore">0</strong></span>
+        <span class="sync-combo" id="syncCombo">×1.00</span>
+        <span>正確さ <strong id="syncAcc">100%</strong></span>
+      </div>
+      <div class="sync-boss hidden" id="syncBoss">
+        <div class="sync-boss-line"><span id="syncBossName">終拍の主</span><span>LAST BEAT</span></div>
+        <div class="sync-bar boss"><div id="syncBossFill"></div></div>
+      </div>
+    </div>
+    <p class="sync-hint" id="syncHint"></p>
+  </section>
+
+  <div id="syncOverlay" class="sync-overlay hidden" aria-live="polite"></div>
+  <div id="syncToast" class="sync-toast" role="status" aria-live="polite"></div>
+
   <script src="game.js" defer></script>
   <script src="sumifu.js" defer></script>
   <script src="code-sim.js" defer></script>
   <script src="code.js" defer></script>
+  <script src="sync-sim.js" defer></script>
+  <script src="sync.js" defer></script>
 </body>
 </html>
