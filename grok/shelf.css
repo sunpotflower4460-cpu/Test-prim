@@ -60,6 +60,17 @@ body {
   .card { min-height: 0; }
   .byline { display: none; }
 }
+@media (max-height: 520px) {
+  .shelf { padding-top: 10px; }
+  .intro { margin: 6px auto; }
+  .intro h1 { font-size: 28px; margin: 2px 0; }
+  .lead { font-size: 13px; line-height: 1.45; }
+  .cards { margin: 8px auto; }
+  .card { min-height: 0; padding: 10px 14px 8px; gap: 2px; }
+  .card strong { font-size: 26px; }
+  .blurb { display: none; }
+  .go { padding-top: 6px; }
+}
 @media (prefers-reduced-motion: reduce) {
   .card:active { transform: none; }
 }

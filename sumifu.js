@@ -1718,10 +1718,6 @@
       }
     } catch (err) {}
   });
-  try {
-    const search = window.location && window.location.search || "";
-    if (new URLSearchParams(search).get("work") === "kasane") enterKasane();
-  } catch (err) {}
   ui.sound.addEventListener("click", toggleSound);
   ui.titleSound.addEventListener("click", toggleSound);
   $("sumifuPause").addEventListener("click", pause);
@@ -1765,5 +1761,9 @@
   layout();
   loadRecord();
   setScene("closed");
+  try {
+    const search = window.location && window.location.search || "";
+    if (new URLSearchParams(search).get("work") === "kasane") enterKasane();
+  } catch (err) {}
   requestAnimationFrame(frame);
 })();

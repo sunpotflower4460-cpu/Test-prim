@@ -374,6 +374,10 @@
     const sweep = level.source.sweep || 0;
     const shown = sweep ? phase * sweep : 0;
     const cast = O.trace(level, placed, shown);
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(s0[0], s0[1], s1[0] - s0[0], s1[1] - s0[1]);
+    ctx.clip();
     cast.beams.forEach(beam => {
       const a = toScreen(beam.x1, beam.y1), b = toScreen(beam.x2, beam.y2);
       ctx.strokeStyle = cssColor(beam.color, 0.18);
@@ -383,6 +387,7 @@
       ctx.lineWidth = Math.max(1.5, view.scale * 0.28);
       ctx.stroke();
     });
+    ctx.restore();
 
     const moon = toScreen(level.source.x, level.source.y);
     ctx.fillStyle = "#f6f1e4";

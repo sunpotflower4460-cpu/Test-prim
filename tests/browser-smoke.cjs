@@ -139,7 +139,7 @@ const targets = [
       assert.ok(shelfFit.html <= shelfFit.width + 1, "grok shelf has no horizontal overflow");
       await page.locator("#openOriko").click();
       await page.locator("#title").waitFor({ state: "visible" });
-      assert.equal(await page.locator("#title h1").innerText().replace(/\s/g, ""), "ORIKO");
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "ORIKO");
       await page.locator("#howBtn").click();
       await page.locator("#dialogTitle").waitFor({ state: "visible" });
       await page.keyboard.press("Escape");
