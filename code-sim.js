@@ -279,6 +279,10 @@
   // クリアはできないが実行は安全に終わる（描画側も null を許容する）。
   function parseGrid(rows) {
     const tiles = rows.map(row => row.split(""));
+    const width = tiles[0].length;
+    if (tiles.some(row => row.length !== width)) {
+      throw new Error("ragged level rows: " + tiles.map(r => r.length).join(","));
+    }
     const cores = [], switches = [];
     let exit = null;
     for (let y = 0; y < tiles.length; y++) {
@@ -289,7 +293,7 @@
         else if (ch === "E") exit = [x, y];
       }
     }
-    return { tiles, w: tiles[0].length, h: tiles.length, cores, switches, exit };
+    return { tiles, w: width, h: tiles.length, cores, switches, exit };
   }
 
   for (const level of LEVELS) {
@@ -348,7 +352,7 @@
       return true;
     };
     const done = walk(0, tokens.length, 0);
-    if (!done || steps.length >= MAX_STEPS) return { ok: false, error: "tooLong", index: 0, steps: [] };
+    if (!done) return { ok: false, error: "tooLong", index: 0, steps: [] };
     return { ok: true, steps };
   }
 
@@ -377,7 +381,9 @@
 
   function tileAt(run, x, y) {
     if (y < 0 || y >= run.h || x < 0 || x >= run.w) return "#";
-    return run.tiles[y][x];
+    const ch = run.tiles[y][x];
+    // A ragged row would yield undefined here, which step() reads as walkable.
+    return typeof ch === "string" ? ch : "#";
   }
 
   function allObjectivesMet(run) {
@@ -392,7 +398,7 @@
     for (const patrol of run.patrols) {
       patrol.index += patrol.dir;
       if (patrol.index < 0) { patrol.index = 1; patrol.dir = 1; }
-      else if (patrol.index >= patrol.path.length) { patrol.index = patrol.path.length - 2; patrol.dir = -1; }
+      else if (patrol.index >= patrol.path.length) { patrol.index = Math.max(0, patrol.path.length - 2); patrol.dir = -1; }
     }
   }
 

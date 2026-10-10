@@ -24,3 +24,11 @@ jobs:
           node --check sw.js
       - name: Game smoke tests
         run: node --test tests/*.test.cjs
+      - name: Chart and level integrity
+        run: |
+          node tools/balance.cjs
+          python3 tools/wiring-check.py
+      - name: Japanese text scans
+        run: |
+          python3 tools/jp-scan.py --self-test
+          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sw.js index.html style.css README.md manifest.webmanifest

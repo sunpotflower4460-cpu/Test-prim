@@ -179,7 +179,6 @@ body.code-active #flash,body.sync-active #flash{display:none}
 /* Menus remain scrollable on compact touchscreens; gameplay canvas keeps gesture capture. */
 .screen,.card,.upgrade-list{touch-action:pan-y;overscroll-behavior:contain}
 .joystick-zone,.dash-btn,#world{touch-action:none}
-@media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-bottom{left:22px;right:22px}.launcher-button-grok .launcher-button-label strong{font-size:12.5px;letter-spacing:.02em}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}
 @media(hover:hover){.launcher-button:hover{transform:translateY(-1px)}.launcher-button-grok:hover{box-shadow:0 14px 36px rgba(176,78,62,.22),inset 0 0 0 4px rgba(28,14,12,.35)}}
 
 @media(max-width:360px){.launcher-eyebrow{font-size:8px;letter-spacing:.19em}.launcher-button{height:66px;padding:0 12px;gap:10px}.launcher-button-label{gap:4px}.launcher-button-label small{font-size:8px;letter-spacing:.16em}.launcher-button-label strong{font-size:16px;letter-spacing:.1em}.launcher-button-grok .launcher-button-label strong{font-size:14px;letter-spacing:.07em}.launcher-button-symbol{font-size:26px}.launcher-button-arrow{font-size:20px}.launcher-bottom{left:22px;right:22px}.mobile-controls{padding:0 12px}.dash-btn{width:91px;height:91px}.joystick-zone{width:122px;height:137px}.joystick-base{width:104px;height:104px}}

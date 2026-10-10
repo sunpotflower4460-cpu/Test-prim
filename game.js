@@ -249,6 +249,7 @@
     const available = perks.filter(item => (game.player.perkLevels[item.id] || 0) < item.max);
     available.sort(() => Math.random() - .5);
     const options = available.slice(0, 3);
+    if (!options.length) { setScene("playing"); return; }
     const list = $("upgradeList");
     for (const item of options) {
       const n = game.player.perkLevels[item.id] || 0;
@@ -424,9 +425,14 @@
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
   window.addEventListener("keydown", event => {
-    if (document.body && document.body.classList && (document.body.classList.contains("sumifu-open") || document.body.classList.contains("code-active"))) return;
+    if (document.body && document.body.classList && (document.body.classList.contains("sumifu-open") || document.body.classList.contains("code-active") || document.body.classList.contains("sync-active"))) return;
     const k = event.key.toLowerCase();
-    if (["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
+    // preventDefault() also cancels the default action of a focused button, so
+    // Space could no longer activate つづける / もう一度 / 強化. Keep recording
+    // the key so movement still works, but do not swallow the event.
+    const t = event.target;
+    const onControl = t && (t.tagName === "BUTTON" || t.tagName === "INPUT" || t.tagName === "A" || t.isContentEditable);
+    if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
     keys.add(k === " " ? "space" : k);
     if ((k === " " || k === "shift") && !event.repeat) dash();
     if ((k === "escape" || k === "p") && !event.repeat) {
@@ -916,15 +922,24 @@
       orbShape(cx + Math.cos(a) * (125 + i % 3 * 25), cy + Math.sin(a) * (125 + i % 3 * 20), 2.6, i % 2 ? "#d5ffcb" : "#ffddb4", clock * .7);
     }
   }
+  function foreignActive() {
+    const c = document.body && document.body.classList;
+    if (!c) return false;
+    return c.contains("sumifu-open") || c.contains("code-active") || c.contains("sync-active");
+  }
   function frame(now) {
     if (!last) last = now;
     const dt = clamp((now - last) / 1000, 0, .034);
     last = now; clock += dt;
-    if (scene === "playing" && game) update(dt);
-    ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-    ctx.clearRect(0, 0, W, H);
-    background();
-    if (game) drawGame(); else drawHome();
+    // 他の作品出てる間は、この canvas は display:none になっている。
+    // 描画だけ停めて、60fps の無効な再描画を避ける。
+    if (!foreignActive()) {
+      if (scene === "playing" && game) update(dt);
+      ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+      ctx.clearRect(0, 0, W, H);
+      background();
+      if (game) drawGame(); else drawHome();
+    }
     requestAnimationFrame(frame);
   }
   requestAnimationFrame(frame);

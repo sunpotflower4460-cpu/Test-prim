@@ -1,5 +1,5 @@
 {
-  "name": "Test prim — LUMINA / KASANE / RELAY",
+  "name": "Test prim — LUMINA / KASANE / RELAY / SYNC",
   "short_name": "Test prim",
   "description": "Test prim の実験ギャラリー。GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE、玄人コードの RELAY、Minimax M3.1 のリズム×防衛 SYNC — 共鳴を遊べます。",
   "start_url": "./index.html",

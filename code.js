@@ -179,6 +179,9 @@
     setTimeout(() => el.classList.remove("code-shake"), 340);
   }
   function later(seconds, fn) { anim.gap = seconds; anim.after = fn; }
+  // True while a result card is scheduled. Running the program again inside that
+  // gap reset anim.after, so the card was silently discarded.
+  let cardPending = false;
 
   /* ---------- タイトル / ステージ選択 ---------- */
   function refreshTitle() {
@@ -413,11 +416,16 @@
 
   /* ---------- 実行と演出 ---------- */
   function runProgramUI() {
-    if (!current || running) return;
+    if (!current || running || cardPending) return;
     const check = sim.validate(program);
     if (!check.ok) { programError(check); return; }
     const plan = sim.expand(program);
     if (!plan.ok) { programError(plan); return; }
+    if (!plan.steps.length) {
+      SFX.bump();
+      toast("\u306a\u306b\u3082 \u306f\u305f\u3089\u304b\u306a\u3044 \u3081\u3044\u308c\u3044\u3060\u3088\u3002");
+      return;
+    }
     hideOverlay();
     run = sim.createRun(current);
     queue = plan.steps.slice();
@@ -524,6 +532,7 @@
 
   function showCrash() {
     setRunningUI(false);
+    cardPending = true;
     const zapped = run.status === "zapped";
     if (zapped) SFX.zap(); else SFX.crash();
     bursts.push({ x: run.unit.x, y: run.unit.y, life: .7, max: .7, kind: zapped ? "zap" : "poof" });
@@ -548,6 +557,7 @@
 
   function showWin() {
     setRunningUI(false);
+    cardPending = true;
     const blocks = program.length;
     const stars = sim.starsFor(current, blocks);
     if (stars > starOf(current.id)) {
@@ -645,7 +655,7 @@
     overlay.classList.remove("hidden");
     return card;
   }
-  function hideOverlay() { $("codeOverlay").classList.add("hidden"); }
+  function hideOverlay() { cardPending = false; $("codeOverlay").classList.add("hidden"); }
 
   function addLabel(x, y, text, color) {
     labels.push({ x, y, text, color: color || "#e8f4ff", life: 1.5, max: 1.5 });
@@ -657,7 +667,7 @@
     const grid = current.grid;
     const hud = document.querySelector(".code-hud");
     const panel = document.querySelector(".code-panel");
-    const meters = $("codeMeters");
+    const meters = document.querySelector(".code-meters");
     let top = H * .16, bottom = H * .6;
     if (mode === "play") {
       if (hud) top = hud.getBoundingClientRect().bottom + 34;
@@ -1210,7 +1220,13 @@
       return;
     }
     if (!document.querySelector("#codeOverlay.hidden")) return;
+    // This listener runs in the capture phase, so preventDefault() here would
+    // cancel the focused button's activation: Enter on the clear button would run
+    // the program instead. Hand the key back when a control owns it.
+    const target = event.target;
+    const onControl = target && target.closest && target.closest("button, a, input, select, textarea");
     if (key === "enter" || key === " ") {
+      if (onControl) return;
       event.preventDefault();
       if (mode === "play" && !running) runProgramUI();
       else if (mode === "select") startLevel(resumeStage());

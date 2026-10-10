@@ -134,6 +134,31 @@ test("kasane title, movement, slash, parry, dash and upgrade", () => {
   assert.equal(state.getScene(), "playing");
 });
 
+test("a parried boss keeps attacking", () => {
+  const { element: el, state, tick } = setup();
+  el("openSumifuBtn").click();
+  el("sumifuStart").click();
+  const game = state.getGame();
+  game.enemies.length = 0;
+  game.bossSpawned = false;
+  const boss = state.spawnBoss();
+  assert.ok(boss, "the boss appears");
+  state.face(0);
+  boss.x = game.player.x + 26;
+  boss.y = game.player.y;
+  boss.state = "lunge";
+  boss.lungeAge = 0.02;
+  boss.parried = false;
+  state.slash();
+  assert.ok(boss.parried, "the lunge was parried");
+
+  // updateBoss has no "move" branch, so an unhandled state would freeze the boss
+  const seen = new Set();
+  for (let i = 0; i < 900; i++) { tick(1); seen.add(boss.state); }
+  const attacking = ["aim", "windup", "lunge", "slam"].some(s => seen.has(s));
+  assert.ok(attacking, "the boss resumes attacking; saw only " + [...seen].join(","));
+});
+
 test("three nights can be bound and a fatal blot ends the run", () => {
   const { element: el, state, localData } = setup();
   el("openSumifuBtn").click();

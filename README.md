@@ -31,7 +31,7 @@
 
 ### ▶ ゲームを開く
 
-**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
 ゲームを開く → **「GPT6 CHAT」** を選ぶ → **LUMINA** のタイトル画面 → **「旅をはじめる」**。
 
@@ -72,7 +72,7 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ### ▶ ゲームを開く
 
-**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
 ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **KASANE** の題名 → **「筆を取る」**。
 
@@ -107,7 +107,7 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ### ▶ ゲームを開く
 
-**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
 ゲームを開く → **「玄人コード」** を選ぶ → **RELAY** のタイトル画面 → **「ステージを えらぶ」**。
 
@@ -143,7 +143,7 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ### ▶ ゲームを開く
 
-**[Test prim をプレイする（GitHub Pages）](https://sunpotflower4460-cpu.github.io/Test-prim/)**
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
 ### あそびかた
 
@@ -207,6 +207,15 @@ python3 tools/jp-vocab.py sync.js sync-sim.js --all-comments
 `jp-scan.py` は簡体字と、ラテン文字が CJK に無空白で貼り付いた形を拾います。
 `jp-vocab.py` はそれで拾えない、ハングルや他言語の混入と U+FFFD を見つけます。
 両者を並べて回すと、機械では見つけられない取り違えも見つかります。
+
+マークアップとクラスの対応を確認する（外部ライブラリ不要）:
+
+```bash
+python3 tools/wiring-check.py
+```
+
+重複した id、閉じていないタグ、スタイルが定義されていない class などを照合します。
+スタイルがない class は意図的なフックの場合もあるため、警告のみでフェイルにはしません。
 
 GitHub Actions の **Quality Checks** が構文とテスト（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ可解性、SYNCの全5章の可解性）を検証し、**Browser Experience Checks** がスマホ・小型スマホ・PCの起動と操作をChromiumで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動配信します。
 

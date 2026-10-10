@@ -88,6 +88,32 @@ test("expand unfolds nested repeats in order and refuses runaway programs", () =
   assert.equal(sim.expand(runaway).error, "tooLong");
 });
 
+test("a program of exactly MAX_STEPS is still legal", () => {
+  // rep5 * rep5 * rep5 * 32 fwd = 4000 = MAX_STEPS; the walk already caps the list,
+  // so the outer bound must not reject the boundary value.
+  const prog = [
+    sim.tokenOf("rep5"), sim.tokenOf("rep5"), sim.tokenOf("rep5"),
+    ...Array.from({ length: 32 }, () => sim.tokenOf("fwd")),
+    sim.tokenOf("end"), sim.tokenOf("end"), sim.tokenOf("end")
+  ];
+  const plan = sim.expand(prog);
+  assert.equal(plan.error, undefined, "boundary program is not tooLong");
+  assert.equal(plan.ok, true);
+  assert.equal(plan.steps.length, 4000);
+});
+
+test("a ragged level is rejected instead of producing holes", () => {
+  assert.throws(() => sim.parseGrid([".....", "..."]), /ragged/);
+  assert.equal(sim.tileAt({ w: 3, h: 2, tiles: [["a", "b", "c"], ["a"]] }, 2, 1), "#");
+});
+
+test("a one-cell patrol path bounces instead of crashing", () => {
+  const level = makeLevel(["......", "..C...", "..S...", "......", "......", "..E..."], { x: 1, y: 1 },
+    [{ path: [[3, 2]], at: 0, dir: 1 }]);
+  const result = sim.runProgram(level, ["fwd", "fwd", "fwd", "end"]);
+  assert.ok(result.status !== undefined);
+});
+
 test("jump clears hazards but cannot be used as a free shortcut", () => {
   const level = sim.LEVELS[0];
   const hop = sim.runProgram(level, ["jump"]);

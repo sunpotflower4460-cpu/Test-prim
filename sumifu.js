@@ -213,8 +213,15 @@
     ui.hint.classList.add("sumifu-hint-hot");
   }
   function flash(alpha) {
+    // The stylesheet transitions opacity over .4s, which also damps the rise,
+    // so resetting after 40 ms never reaches the requested opacity at all.
+    // Peak with the transition off, then hand the fade back to the stylesheet.
+    ui.flash.style.transition = "none";
     ui.flash.style.opacity = String(alpha || 0.35);
-    setTimeout(() => { ui.flash.style.opacity = "0"; }, 40);
+    requestAnimationFrame(() => {
+      ui.flash.style.transition = "";
+      ui.flash.style.opacity = "0";
+    });
   }
   function haptic(ms) { if (navigator.vibrate) { try { navigator.vibrate(ms); } catch (err) {} } }
   function card(kicker, title, message, extra) {
@@ -635,7 +642,8 @@
     const p = game.player;
     e.parried = true;
     e.stun = 0.95;
-    e.state = "move";
+    // ボスに updateBoss は "move" 分岐がない。
+    e.state = e.type === "boss" ? "idle" : "move";
     e.cd = 0.35;
     hurtEnemy(e, p.damage * 1.45 + 8, "受け");
     p.hp = Math.min(p.maxHp, p.hp + p.parryHeal);
@@ -992,6 +1000,14 @@
       game.strokes[i].life -= dt;
       if (game.strokes[i].life <= 0) game.strokes.splice(i, 1);
     }
+    // update() only runs while playing, so without this a dash or a seal cast
+    // just before dying or pausing leaves its ink frozen behind the overlay.
+    for (let i = game.trails.length - 1; i >= 0; i--) game.trails[i].life -= dt;
+    game.trails = game.trails.filter(tr => tr.life > 0);
+    for (let i = 0; i < game.seals.length; i++) {
+      if (game.seals[i].boom) game.seals[i].t += dt;
+    }
+    game.seals = game.seals.filter(s => !(s.boom && s.t > 0.38));
   }
   function update(dt) {
     const p = game.player;

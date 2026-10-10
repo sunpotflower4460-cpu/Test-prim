@@ -1,0 +1,12 @@
+# macOS
+.DS_Store
+.AppleDouble
+._*
+
+# Python bytecode from running the text scanners
+__pycache__/
+*.py[cod]
+
+# Node
+node_modules/
+npm-debug.log*
