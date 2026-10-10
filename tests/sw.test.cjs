@@ -15,10 +15,10 @@ function setup(){
   async function event(name,request){const waits=[];let response;listeners[name]({request,waitUntil:p=>waits.push(p),respondWith:p=>response=p});const result=await response;await Promise.all(waits);return result;}
   return {event,stores,online:v=>online=v,request:u=>({url:root+u,method:'GET'})};
 }
-test('every required game asset is installed for offline use',async()=>{const h=setup();await h.event('install');const assets=[...h.stores.values()][0];assert.ok(assets.size>=24);for(const path of ['luna/index.html','luna/luna.css','luna/luna.js','grok/index.html','oriko/optics.js','oriko/game.js'])assert.ok([...assets.keys()].some(url=>url.endsWith('/'+path)),'asset is precached: '+path);});
+test('every required game asset is installed for offline use',async()=>{const h=setup();await h.event('install');const assets=[...h.stores.values()][0];assert.ok(assets.size>=24);for(const path of ['luna/index.html','luna/luna.css','luna/luna.js','grok/index.html','oriko/optics.js','oriko/game.js','mikan/index.html','mikan/phys.js','mikan/game.js'])assert.ok([...assets.keys()].some(url=>url.endsWith('/'+path)),'asset is precached: '+path);});
 test('offline directory URLs resolve to the installed gallery and game',async()=>{
   const h=setup();await h.event('install');
-  for(const [url,text] of [['','./index.html'],['sol/','./sol/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
+  for(const [url,text] of [['','./index.html'],['sol/','./sol/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['mikan/','./mikan/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
   assert.equal((await h.event('fetch',h.request('missing.html'))).type,'error');
 });
 test('worker activation removes previous gallery caches and preserves unrelated apps',async()=>{

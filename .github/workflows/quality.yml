@@ -31,6 +31,9 @@ jobs:
           node --check oriko/optics.js
           node --check oriko/levels.js
           node --check oriko/game.js
+          node --check mikan/phys.js
+          node --check mikan/levels.js
+          node --check mikan/game.js
           node --check sw.js
       - name: Game smoke tests
         run: node --test tests/*.test.cjs
@@ -41,4 +44,4 @@ jobs:
       - name: Japanese text scans
         run: |
           python3 tools/jp-scan.py --self-test
-          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sol/entry.js sol/sim.js sol/levels.js sol/sea.js sol/audio.js sol/game.js sol/index.html sol/tide.css luna/luna.js luna/index.html luna/luna.css oriko/optics.js oriko/levels.js oriko/game.js oriko/index.html oriko/oriko.css grok/index.html grok/shelf.css sw.js index.html style.css README.md manifest.webmanifest
+          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sol/entry.js sol/sim.js sol/levels.js sol/sea.js sol/audio.js sol/game.js sol/index.html sol/tide.css luna/luna.js luna/index.html luna/luna.css oriko/optics.js oriko/levels.js oriko/game.js oriko/index.html oriko/oriko.css mikan/phys.js mikan/levels.js mikan/game.js mikan/index.html mikan/mikan.css grok/index.html grok/shelf.css sw.js index.html style.css README.md manifest.webmanifest

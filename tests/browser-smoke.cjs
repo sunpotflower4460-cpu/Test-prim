@@ -133,6 +133,7 @@ const targets = [
       await page.locator("#grokShelf").waitFor({ state: "visible" });
       assert.equal(await page.locator("#openKasane").count(), 1);
       assert.equal(await page.locator("#openOriko").count(), 1);
+      assert.equal(await page.locator("#openMikan").count(), 1);
       const shelfFit = await page.evaluate(() => ({
         width: innerWidth, html: document.documentElement.scrollWidth
       }));
@@ -181,6 +182,37 @@ const targets = [
       await page.locator("#playBack").click();
       await page.locator("#map").waitFor({ state: "visible" });
       assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 9/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openMikan").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "MIKAN");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".night").count(), 6, "six evenings are listed");
+      assert.equal(await page.locator(".night:disabled").count(), 5, "later evenings stay locked");
+      await page.locator(".night").first().click();
+      await page.locator("#kotatsu").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__mikan && window.__mikan.getNight() === "first");
+      const kotatsu = await page.locator("#kotatsu").boundingBox();
+      assert.ok(kotatsu && kotatsu.height > 80, "the kotatsu has room for a mikan");
+      await page.mouse.click(kotatsu.x + kotatsu.width / 2, kotatsu.y + kotatsu.height * 0.55);
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
+      assert.equal(await page.locator("#dialogTitle").innerText(), "最初の晩", "the first mikan stays on the kotatsu");
+      const mikanFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#kotatsu").width
+      }));
+      assert.ok(mikanFit.html <= mikanFit.width + 1, "mikan has no horizontal overflow");
+      assert.ok(mikanFit.tools <= mikanFit.height + 1, "mikan controls fit on screen");
+      assert.ok(mikanFit.canvas > 50, "mikan canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 6/);
       await page.locator("#mapBack").click();
       await page.locator("#title .back").click();
       await page.locator("#grokShelf .back").click();
