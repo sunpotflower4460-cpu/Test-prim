@@ -135,6 +135,7 @@ const targets = [
       assert.equal(await page.locator("#openOriko").count(), 1);
       assert.equal(await page.locator("#openMikan").count(), 1);
       assert.equal(await page.locator("#openHebi").count(), 1);
+      assert.equal(await page.locator("#openKake").count(), 1);
       const shelfFit = await page.evaluate(() => ({
         width: innerWidth, html: document.documentElement.scrollWidth
       }));
@@ -248,6 +249,40 @@ const targets = [
       await page.locator("#letterMap").click();
       await page.locator("#map").waitFor({ state: "visible" });
       assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 7/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openKake").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "KAKE");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".roof").count(), 6, "six roofs are listed");
+      assert.equal(await page.locator(".roof:disabled").count(), 5, "later roofs stay locked");
+      await page.locator(".roof").first().click();
+      await page.locator("#roof").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__kake && window.__kake.getRoof() === "eave");
+      const roof = await page.locator("#roof").boundingBox();
+      assert.ok(roof && roof.height > 80, "the roof has room to run");
+      await page.keyboard.down("ArrowRight");
+      await page.waitForFunction(() => window.__kake.x() > 260, null, { timeout: 4000 });
+      await page.keyboard.press("ArrowUp");
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 8000 });
+      await page.keyboard.up("ArrowRight");
+      assert.equal(await page.locator("#dialogTitle").innerText(), "軒", "the runner reaches the first lantern");
+      const kakeFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#roof").width
+      }));
+      assert.ok(kakeFit.html <= kakeFit.width + 1, "kake has no horizontal overflow");
+      assert.ok(kakeFit.tools <= kakeFit.height + 1, "kake controls fit on screen");
+      assert.ok(kakeFit.canvas > 50, "kake canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 6/);
       await page.locator("#mapBack").click();
       await page.locator("#title .back").click();
       await page.locator("#grokShelf .back").click();

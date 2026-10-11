@@ -10,7 +10,7 @@
 
 > **公開中の作品**
 > - GPT6 CHAT — LUMINA（星灯りの庭）
-> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）、HEBI（蛇）
+> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）、HEBI（蛇）、KAKE（駆け）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）
 > - Minimax M3.1 — SYNC（共鳴）
 > - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
@@ -194,6 +194,38 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ---
 
+## ✦ Grok 4.7 Cursor作品 | KAKE — 駆け
+
+**屋根を走って、灯りまで。**
+
+夜の町の屋根を、六つ渡る。走る、跳ぶ、駆ける。空きは跳んで越える。低い梁の下で早く跳ぶと、頭を打って落ちる。蝙蝠の羽に触れると落ちるので、跳んで越えるか、駆けて突き抜ける。戸は開いた短いあいだだけ通れる。広い空きは、跳んでから空中で駆ける。落ちても回数は数えない。その屋根の最初から、もう一度走ればいい。
+
+- **六つの屋根**：軒、梁、蝙蝠、戸、三つの空き、夜明け
+- **跳ぶ**：空きの手前で跳ぶ
+- **駆ける**：一気に前へ出る。羽を突き抜け、開いた戸を抜ける
+- **灯り**：屋根の先の灯りに触れれば、その夜は終わる
+- **記録**：走った屋根を、ブラウザ内に保存
+
+### ▶ ゲームを開く
+
+**[駆けをプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/kake/index.html)**
+
+ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **作品一覧** → **駆け** → **「屋根に出る」**。
+
+### 操作方法
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 走る | 左・右 | 矢印キー、A / D |
+| 跳ぶ | 跳 | Space、上、Z |
+| 駆ける | 駆 | Shift、X |
+| 一時停止 | 右上の Ⅱ | Esc |
+| 音 | 題名の ♫ | 同左 |
+
+落ちても、回数は数えない。もう一度、走ればいい。
+
+---
+
 ## ▚ 玄人コード（自作ツール）作品 | RELAY — ひかりの手順
 
 **命令ブロックをくみたてて、ちいさなユニットを出口へみちびく。**
@@ -372,6 +404,9 @@ node --check mikan/game.js
 node --check hebi/sim.js
 node --check hebi/levels.js
 node --check hebi/game.js
+node --check kake/sim.js
+node --check kake/levels.js
+node --check kake/game.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```
@@ -404,7 +439,7 @@ python3 tools/wiring-check.py
 重複した id、閉じていないタグ、スタイルが定義されていない class などを照合します。
 スタイルがない class は意図的なフックの場合もあるため、警告のみでフェイルにはしません。
 
-GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室、蜜柑の六晩、蛇の七つの蔵）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで、蜜柑は最初の晩を残すところまで、蛇は最初の蔵の戸口まで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
+GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室、蜜柑の六晩、蛇の七つの蔵、駆けの六つの屋根）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで、蜜柑は最初の晩を残すところまで、蛇は最初の蔵の戸口まで、駆けは最初の屋根の灯りまで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
 
 ---
 
