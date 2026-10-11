@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#070a18">
+  <meta name="description" content="ECHO — きろくの協力者。時間が巻きもどる塔で、過去の自分の残像（エコー）と協力して扉をひらくターン制パズル。玄人コード（自作ツール）の2作目。">
+  <title>ECHO — きろくの協力者 | 玄人コード</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="echo.css">
+  <script src="sim.js" defer></script>
+  <script src="levels.js" defer></script>
+  <script src="audio.js" defer></script>
+  <script src="render.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <div id="app" data-scene="title" data-chapter="0">
+    <canvas id="tower" aria-hidden="true"></canvas>
+    <div class="grain" aria-hidden="true"></div>
+
+    <section id="title" class="title-view" aria-label="ECHO タイトル">
+      <header class="title-top">
+        <a href="../index.html#code" class="back-link">‹ <span>玄人コード</span></a>
+        <span class="byline">AN ORIGINAL BY KODOU CODE</span>
+        <button id="titleSound" class="icon-button" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="title-copy">
+        <p class="eyebrow"><span class="tiny-line"></span> THE TOWER REMEMBERS YOU</p>
+        <h1>EC<em>H</em>O</h1>
+        <p class="jp">きろくの協力者</p>
+        <p class="lead">時間は、あなたが動いた分だけ 巻きもどる。<br>のこされたのは、過去の自分の光。<br>エコーと協力して、塔の扉をひらこう。</p>
+        <button id="start" class="primary" type="button"><span>塔へ のぼる</span><span aria-hidden="true">↗</span></button>
+        <button id="openFloors" class="text-button" type="button">フロアをえらぶ <span aria-hidden="true">→</span></button>
+        <p id="titleRecord" class="micro"></p>
+      </div>
+      <div class="title-caption" aria-hidden="true"><span>01 / THE REWINDING TOWER</span><span>きろくは、あなたの味方。</span></div>
+      <footer class="title-footer"><span>EVERY TURN IS KEPT.</span><span>10 FLOORS · 3 CHAPTERS</span></footer>
+    </section>
+
+    <section id="floors" class="floors-view" hidden aria-label="フロア選択">
+      <header class="floors-top">
+        <button id="floorsBack" class="back-link" type="button">‹ タイトル</button>
+        <span class="eyebrow">THE FLOORS</span>
+        <button id="floorsSound" class="icon-button" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="floors-intro">
+        <p class="eyebrow">YOUR CLIMB</p>
+        <h2>塔の <em>きろく</em></h2>
+        <p>ひかりを、ひとつずつ つないで。</p>
+        <span id="floorsProgress" class="floors-progress"></span>
+      </div>
+      <div id="floorGrid" class="floor-grid"></div>
+      <footer class="floors-footer">★ は その階を クリアした証。<br>エコーを ふやすほど、扉は ひらく。</footer>
+    </section>
+
+    <section id="play" class="play-view" hidden aria-label="フロア">
+      <header class="play-top">
+        <button id="playBack" class="back-link" type="button">‹ 一覧</button>
+        <div class="floor-heading"><span id="chapterName" class="eyebrow"></span><h2 id="floorName"></h2></div>
+        <button id="playHelp" class="icon-button" type="button" aria-label="あそびかた">?</button>
+        <button id="playSound" class="icon-button" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div id="boardArea" class="board-area" tabindex="0" role="group" aria-label="塔のフロア。WASDと矢印キーで移動、Spaceで待つ、Zで一手戻す">
+        <div id="tileButtons" class="tile-buttons" role="group" aria-label="塔のマス"></div>
+        <span class="board-index" id="boardIndex"></span>
+        <div class="board-caption" id="boardCaption"></div>
+      </div>
+      <aside class="panel" aria-label="塔の手帳">
+        <div class="loop-display" id="loopDisplay">
+          <div class="loop-symbol" id="loopSymbol" aria-hidden="true">↺</div>
+          <div class="loop-text"><strong id="loopName">第1周</strong><span id="loopRule">0 / 12 ターン</span></div>
+          <span class="loop-next" id="loopNext">周が おわると 時間が 巻きもどる</span>
+        </div>
+        <div class="echoes">
+          <span>エコー <b id="echoCount">0</b></span>
+          <span>もどした手 <b id="undoCount">0</b></span>
+          <span>手数 <b id="turnCount">0</b></span>
+        </div>
+        <p id="floorNote" class="floor-note"></p>
+        <div class="controls" aria-label="操作">
+          <div class="dpad">
+            <button type="button" data-action="up" class="north" aria-label="上へ進む">↑</button>
+            <button type="button" data-action="left" class="west" aria-label="左へ進む">←</button>
+            <button type="button" data-action="wait" class="center" aria-label="その場で待つ"><span aria-hidden="true">◉</span><small>待つ</small></button>
+            <button type="button" data-action="right" class="east" aria-label="右へ進む">→</button>
+            <button type="button" data-action="down" class="south" aria-label="下へ進む">↓</button>
+          </div>
+          <div class="tools">
+            <button id="undo" type="button">↶ <span>1手もどす</span></button>
+            <button id="undoAll" type="button">⟲ <span>周をやりなおす</span></button>
+            <button id="skip" type="button">≫ <span>時をすすめる</span></button>
+            <button id="hint" type="button">✧ <span>ヒント</span></button>
+          </div>
+        </div>
+        <p class="keyboard-note">WASD / ↑↓←→ 移動 · Space 待つ · Z もどす · R 周をやりなおす</p>
+      </aside>
+      <div id="announcement" class="announcement" role="status" aria-live="polite"></div>
+    </section>
+
+    <div id="modal" class="modal" hidden><section id="modalCard" class="modal-card" role="dialog" aria-modal="true" aria-labelledby="modalTitle" tabindex="-1"></section></div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript><div class="no-script">この塔をのぼるにはJavaScriptが必要です。<a href="../index.html">Test primへ戻る</a></div></noscript>
+  </div>
+</body>
+</html>
