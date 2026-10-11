@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇、玄人コードの RELAY、Minimax M3.1 の SYNC、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA。AIごとのゲームを遊び比べる。">
+  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇と駆け、玄人コードの RELAY、Minimax M3.1 の SYNC、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA。AIごとのゲームを遊び比べる。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
@@ -74,7 +74,7 @@
         </button>
         <a id="openSumifuBtn" class="launcher-button launcher-button-grok" href="grok/index.html" aria-label="Grok 4.7 Cursor の作品を開く">
           <span class="launcher-button-symbol">筆</span>
-          <span class="launcher-button-label"><small>四つの作品</small><strong>Grok 4.7 Cursor</strong></span>
+          <span class="launcher-button-label"><small>五つの作品</small><strong>Grok 4.7 Cursor</strong></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </a>
         <button id="openCodeBtn" class="launcher-button launcher-button-code" type="button" aria-label="玄人コード（自作ツール）のゲーム、RELAY ひかりの手順を開く">
@@ -123,10 +123,37 @@
 
   <section id="overlay" class="screen hidden" aria-live="polite"></section>
 
+  <!-- 玄人コード（自作ツール） — 作品のたな -->
+  <section id="codeHub" class="code-screen hidden" aria-label="玄人コード 作品えらび">
+    <div class="code-shell">
+      <button type="button" id="codeHubBack" class="code-return">‹ Test prim にもどる</button>
+      <p class="code-eyebrow">KODOU CODE / WORKS</p>
+      <div class="code-logo">CODE<span>//</span></div>
+      <p class="code-jp">自作ツールの たな</p>
+      <p class="code-lead">ふたつの 手順を どうぞ。<br>ひかりの 配線か、時間の 巻きもどりか。</p>
+      <div class="code-hub-grid">
+        <button type="button" id="codeHubRelay" class="code-hub-card">
+          <span class="code-hub-mark" aria-hidden="true">▚</span>
+          <strong>RELAY</strong>
+          <small>ひかりの手順</small>
+          <em>命令ブロックで ユニットを 出口へ。</em>
+          <span class="code-hub-stars" id="codeHubRelayStars">★ 0 / 45</span>
+        </button>
+        <a href="echo/index.html" id="codeHubEcho" class="code-hub-card">
+          <span class="code-hub-mark" aria-hidden="true">◍</span>
+          <strong>ECHO</strong>
+          <small>きろくの協力者</small>
+          <em>時間を 巻きもどし、過去の自分と 協力する。</em>
+          <span class="code-hub-stars">NEW</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
   <!-- 玄人コード（自作ツール） — RELAY ひかりの手順 -->
   <section id="codeTitle" class="code-screen hidden" aria-label="RELAY タイトル画面">
     <div class="code-shell">
-      <button type="button" id="codeReturnBtn" class="code-return">‹ Test prim にもどる</button>
+      <button type="button" id="codeReturnBtn" class="code-return">‹ 作品をえらぶ</button>
       <p class="code-eyebrow">KODOU CODE / RELAY PROTOCOL</p>
       <div class="code-logo">RELAY<span>//</span></div>
       <p class="code-jp">ひかりの手順</p>

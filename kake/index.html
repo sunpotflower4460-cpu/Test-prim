@@ -1,0 +1,96 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#121722">
+  <meta name="description" content="KAKE — 駆け。夜の屋根を走り、跳んで、駆けて、灯りまで届ける遊び。Grok 4.7 Cursor オリジナル作品。">
+  <title>KAKE — 駆け | Grok 4.7 Cursor</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="kake.css">
+  <script src="sim.js" defer></script>
+  <script src="levels.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main id="app" data-view="title">
+    <div class="roomwash" aria-hidden="true"></div>
+    <section id="title" class="view" aria-label="駆け タイトル">
+      <header class="topline">
+        <a class="back" href="../grok/index.html">‹ <span>作品一覧</span></a>
+        <span class="byline">AN ORIGINAL BY GROK 4.7 CURSOR</span>
+        <button id="titleSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="title-art" aria-hidden="true">
+        <svg class="title-hare" viewBox="0 0 320 150">
+          <ellipse cx="168" cy="28" rx="18" ry="18" fill="#d5deea" opacity=".35"/>
+          <path d="M0 118 H320" stroke="#2a3344" stroke-width="10"/>
+          <path d="M18 118 C40 96 54 108 78 118 C100 100 130 108 160 118 C190 96 230 104 268 118 C286 108 300 112 320 118" fill="#1c2433"/>
+          <ellipse cx="168" cy="96" rx="42" ry="16" fill="#f4efe6"/>
+          <ellipse cx="206" cy="86" rx="20" ry="14" fill="#f7f4ee"/>
+          <ellipse cx="198" cy="58" rx="5" ry="18" fill="#f7f4ee" transform="rotate(-18 198 58)"/>
+          <ellipse cx="214" cy="54" rx="5" ry="20" fill="#f4efe6" transform="rotate(14 214 54)"/>
+          <ellipse cx="216" cy="56" rx="2" ry="11" fill="#e7b7b0" transform="rotate(14 216 56)"/>
+          <circle cx="216" cy="84" r="2.4" fill="#1c140f"/>
+          <path d="M128 102 C96 108 72 96 58 104" stroke="#d25a4a" stroke-width="3" fill="none" stroke-linecap="round"/>
+          <ellipse cx="250" cy="78" rx="6" ry="4" fill="#f0b15a"/>
+        </svg>
+      </div>
+      <div class="title-copy">
+        <p class="eyebrow">A RUN ACROSS THE ROOFS</p>
+        <h1>KA<em>KE</em></h1>
+        <p class="jp">駆け</p>
+        <p class="story">屋根を走って、<br>灯りまで。</p>
+        <p class="lead">六つの屋根。跳んで、駆けて、渡る。<br>羽と戸には、間を見て。</p>
+      </div>
+      <div class="title-actions">
+        <button id="startBtn" class="primary" type="button"><span>屋根に出る</span><b>↗</b></button>
+        <button id="howBtn" class="text" type="button">あそびかた</button>
+        <p id="titleRecord" class="record">まだ、どの屋根も暗い。</p>
+      </div>
+      <footer class="title-foot"><span>NO LIVES</span><span>6 ROOFS</span></footer>
+    </section>
+
+    <section id="map" class="view" hidden aria-label="屋根の一覧">
+      <header class="topline">
+        <button id="mapBack" class="back" type="button">‹ <span>タイトル</span></button>
+        <span class="byline">SIX ROOFS</span>
+        <button id="mapSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="map-intro">
+        <p class="eyebrow">THE ROOFS</p>
+        <h2>どの屋根を、<em>走る。</em></h2>
+        <p id="mapProgress" class="record"></p>
+      </div>
+      <div id="roofList" class="roof-list"></div>
+    </section>
+
+    <section id="play" class="view play" hidden aria-label="夜の屋根">
+      <header class="topline play-top">
+        <button id="playBack" class="back" type="button">‹ <span>屋根の一覧</span></button>
+        <div class="room-heading"><span class="eyebrow">ROOF</span><strong id="roofName"></strong></div>
+        <button id="pauseBtn" class="icon" type="button" aria-label="一時停止">Ⅱ</button>
+      </header>
+      <p id="hintLine" class="hint"></p>
+      <div id="boardWrap" class="board-wrap">
+        <canvas id="roof" tabindex="-1" aria-label="夜の屋根。走って跳んで、灯りまで届ける。"></canvas>
+      </div>
+      <div class="dock">
+        <p id="statusLine" class="remain">駆 できる</p>
+        <div class="tools">
+          <button id="leftBtn" class="tool" type="button" data-act="left" aria-label="左へ走る">左</button>
+          <button id="rightBtn" class="tool" type="button" data-act="right" aria-label="右へ走る">右</button>
+          <button id="jumpBtn" class="tool" type="button" data-act="jump" aria-label="跳ぶ">跳</button>
+          <button id="dashBtn" class="tool primary-tool" type="button" data-act="dash" aria-label="駆ける">駆</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="modal" class="modal" hidden>
+      <section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript><p class="noscript">この屋根を走るには JavaScript が必要です。<a href="../grok/index.html">作品一覧へ戻る</a></p></noscript>
+  </main>
+</body>
+</html>
