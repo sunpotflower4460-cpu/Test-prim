@@ -52,29 +52,39 @@ body {
 .card-glass em { color: #d5ecdf; }
 .card-mikan { background: linear-gradient(165deg, rgba(120, 52, 18, .55), rgba(28, 14, 8, .84)); border-color: rgba(240, 170, 90, .35); }
 .card-mikan em { color: #f0b06a; }
+.card-hebi { background: linear-gradient(165deg, rgba(36, 58, 52, .62), rgba(12, 16, 18, .88)); border-color: rgba(190, 214, 198, .34); }
+.card-hebi em { color: #d5e6d4; }
+.card-kake { background: linear-gradient(165deg, rgba(48, 36, 58, .6), rgba(12, 14, 22, .88)); border-color: rgba(240, 180, 120, .34); }
+.card-kake em { color: #f0b15a; }
 .mark { font-size: 28px; }
 .blurb { margin-top: 8px; line-height: 1.7; letter-spacing: .06em; color: #eadfd4; font-size: 14px; }
 .go { margin-top: auto; padding-top: 16px; font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; font-size: 13px; }
 .card:active { transform: scale(.985); }
 .foot { width: min(1080px, 100%); margin: auto auto 0; }
-@media (min-width: 800px) {
-  .cards { grid-template-columns: 1fr 1fr 1fr; }
+@media (min-width: 720px) and (max-width: 1099px) {
+  .cards { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 799px) {
+@media (min-width: 1100px) {
+  .cards { grid-template-columns: repeat(5, 1fr); }
+}
+@media (max-width: 719px) {
   .card { min-height: 0; }
   .byline { display: none; }
 }
 @media (max-height: 520px) and (min-width: 700px) {
-  .cards { grid-template-columns: 1fr 1fr 1fr; }
+  .cards { grid-template-columns: repeat(5, 1fr); }
+  .card { padding: 8px 6px 6px; }
+  .card strong { font-size: 16px; letter-spacing: .04em; }
+  .meta, .go { letter-spacing: .04em; }
 }
 @media (max-height: 520px) {
   .shelf { padding-top: 10px; }
   .intro { margin: 6px auto; }
   .intro h1 { font-size: 28px; margin: 2px 0; }
-  .lead { font-size: 13px; line-height: 1.45; }
+  .lead { font-size: 12px; line-height: 1.35; }
   .cards { margin: 8px auto; }
-  .card { min-height: 0; padding: 10px 14px 8px; gap: 2px; }
-  .card strong { font-size: 26px; }
+  .card { min-height: 0; padding: 8px 6px 6px; gap: 2px; }
+  .card strong { font-size: 16px; letter-spacing: .04em; }
   .blurb { display: none; }
   .go { padding-top: 6px; }
 }

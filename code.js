@@ -135,7 +135,7 @@
   }
 
   /* ---------- 画面の切り替え ---------- */
-  const screens = { title: $("codeTitle"), select: $("codeSelect"), play: $("codePlay") };
+  const screens = { hub: $("codeHub"), title: $("codeTitle"), select: $("codeSelect"), play: $("codePlay") };
   function isActive() { return document.body.classList.contains("code-active"); }
   function showScreen(name) {
     mode = name;
@@ -146,11 +146,12 @@
     }
   }
   function enterCode() {
+    if (isActive()) { showScreen("hub"); return; }
     document.body.classList.add("code-active");
     canvas.classList.remove("hidden");
     canvas.setAttribute("aria-hidden", "false");
     refreshTitle();
-    showScreen("title");
+    showScreen("hub");
     resize();
   }
   function exitCode() {
@@ -185,8 +186,11 @@
 
   /* ---------- タイトル / ステージ選択 ---------- */
   function refreshTitle() {
-    const line = $("codeProgressLine");
-    if (line) line.textContent = "★ " + totalStars() + " / " + TOTAL_STARS;
+    const line = "★ " + totalStars() + " / " + TOTAL_STARS;
+    const progress = $("codeProgressLine");
+    if (progress) progress.textContent = line;
+    const hub = $("codeHubRelayStars");
+    if (hub) hub.textContent = line;
   }
   function buildGrid() {
     const grid = $("codeStageGrid");
@@ -1185,7 +1189,9 @@
 
   /* ---------- UI の配線 ---------- */
   $("openCodeBtn").addEventListener("click", () => { SFX.tap(); enterCode(); });
-  $("codeReturnBtn").addEventListener("click", () => { SFX.tap(); exitCode(); });
+  $("codeHubBack").addEventListener("click", () => { SFX.tap(); exitCode(); });
+  $("codeHubRelay").addEventListener("click", () => { SFX.tap(); refreshTitle(); showScreen("title"); });
+  $("codeReturnBtn").addEventListener("click", () => { SFX.tap(); refreshTitle(); showScreen("hub"); });
   $("codeStartBtn").addEventListener("click", () => { SFX.tap(); refreshGrid(); showScreen("select"); });
   $("codeSelectBack").addEventListener("click", () => { SFX.tap(); refreshTitle(); showScreen("title"); });
   $("codePlayBack").addEventListener("click", () => {
@@ -1239,6 +1245,7 @@
       hideOverlay();
       if (mode === "play") { stopRun(true); refreshGrid(); showScreen("select"); }
       else if (mode === "select") { refreshTitle(); showScreen("title"); }
+      else if (mode === "title") { refreshTitle(); showScreen("hub"); }
       else exitCode();
       return;
     }
@@ -1261,4 +1268,7 @@
   $("codeSoundBtn").style.opacity = soundOn ? "" : ".45";
   resize();
   requestAnimationFrame(frame);
+  // ECHO から「作品をえらぶ」で戻ってきたときは、たなを開いて迎える。
+  if (location.hash === "#code") enterCode();
+  window.addEventListener("hashchange", () => { if (location.hash === "#code") enterCode(); });
 })();
