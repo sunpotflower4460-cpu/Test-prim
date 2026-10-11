@@ -33,6 +33,19 @@ body:not(.code-active) .code-screen{display:none}
 .code-return{position:absolute;top:calc(env(safe-area-inset-top) + 14px);left:14px;padding:9px 12px;border:1px solid var(--relay-line);border-radius:8px;background:rgba(9,16,28,.6);color:#cfe6f3;font:11px/1.2 var(--relay-mono);letter-spacing:.06em}
 .code-return:active{background:rgba(110,242,168,.18)}
 
+/* --- 作品えらび（たな） --- */
+.code-hub-grid{width:100%;display:grid;gap:12px;margin-top:4px}
+.code-hub-card{position:relative;display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;padding:18px 18px 16px;border:1px solid var(--relay-line);border-radius:12px;background:linear-gradient(160deg,rgba(16,28,46,.92),rgba(7,12,22,.92));color:var(--relay-text);font-family:var(--relay-mono);text-decoration:none;overflow:hidden;transition:transform .15s,border-color .15s,box-shadow .25s}
+.code-hub-card:hover{border-color:var(--relay-line-strong);box-shadow:0 0 26px rgba(122,215,255,.14)}
+.code-hub-card:active{transform:scale(.98)}
+.code-hub-mark{position:absolute;right:14px;top:12px;font-size:26px;color:var(--relay-cyan);opacity:.75}
+.code-hub-card strong{font-family:Orbitron,var(--relay-mono);font-size:22px;letter-spacing:.08em;font-weight:700;color:#f2fbff}
+.code-hub-card small{font-size:11px;letter-spacing:.3em;color:var(--relay-cyan)}
+.code-hub-card em{font-style:normal;font-size:10.5px;line-height:1.9;color:#b9d3e2;letter-spacing:.04em;margin-top:6px}
+.code-hub-stars{font-size:10px;letter-spacing:.18em;color:var(--relay-amber);margin-top:10px}
+#codeHubEcho strong{color:#e6dcff;text-shadow:0 0 22px rgba(184,166,255,.45)}
+#codeHubEcho small,#codeHubEcho .code-hub-mark{color:#b8a6ff}
+
 /* --- ステージ選択 --- */
 .code-topline{width:100%;display:flex;align-items:center;gap:10px;justify-content:space-between;margin-bottom:8px}
 .code-topline-title{font-family:Orbitron,var(--relay-mono);font-size:12px;letter-spacing:.3em;color:var(--relay-cyan)}

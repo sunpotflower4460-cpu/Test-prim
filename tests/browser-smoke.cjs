@@ -25,7 +25,7 @@ const targets = [
       await page.route("https://fonts.gstatic.com/**", route => route.abort());
       await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
       await page.locator("#launcher").waitFor({ state: "visible" });
-      for (const [door, title, back] of [["openCodeBtn","codeTitle","codeReturnBtn"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
+      for (const [door, title, back] of [["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
         await page.locator("#" + door).press("Enter");
         await page.locator("#" + title).waitFor({state:"visible"});
         assert.ok(!(await page.locator("#home").isVisible()), "Enter opens only the selected game");
@@ -288,8 +288,10 @@ const targets = [
       await page.locator("#grokShelf .back").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       await page.locator("#openCodeBtn").click();
+      await page.locator("#codeHub").waitFor({ state: "visible" });
+      await page.locator("#codeHubRelay").click();
       await page.locator("#codeTitle").waitFor({ state: "visible" });
-      assert.equal(await page.locator(".code-logo").innerText(), "RELAY//");
+      assert.equal(await page.locator("#codeTitle .code-logo").innerText(), "RELAY//");
       await page.locator("#codeStartBtn").click();
       await page.locator("#codeSelect").waitFor({ state: "visible" });
       assert.equal(await page.locator("#codeStageGrid .code-stage").count(), 15, "fifteen stages listed");
@@ -387,9 +389,42 @@ const targets = [
       await page.locator("#codeSelectBack").click();
       await page.locator("#codeTitle").waitFor({ state: "visible" });
       await page.locator("#codeReturnBtn").click();
+      await page.locator("#codeHub").waitFor({ state: "visible" });
+      await page.locator("#codeHubBack").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       assert.ok(await page.locator("#openGameBtn").isVisible(), "launcher entries remain usable");
       assert.ok(!(await page.locator("#codeTitle").isVisible()), "relay title is hidden after leaving the game");
+
+      // 玄人コードの2作目 ECHO。たなから塔へ入り、第1階の正解（→→→→↓↓）を実際のキー入力で通す。
+      await page.locator("#openCodeBtn").click();
+      await page.locator("#codeHub").waitFor({ state: "visible" });
+      await page.locator("#codeHubEcho").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#title h1").innerText(), "ECHO");
+      await page.locator("#start").click();
+      await page.locator("#play").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#floorName").innerText(), "第1階 · めざめ");
+      for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");
+      for (let i = 0; i < 2; i++) await page.keyboard.press("ArrowDown");
+      await page.locator("#modal:not([hidden])").waitFor({ state: "visible", timeout: 8000 });
+      assert.equal(await page.locator("#modalTitle").innerText(), "きろく された。");
+      // つぎの階へ。クリア済みの盤面が残らず、第2階が最初から始まる。
+      await page.locator('#modal [data-ui="next"]').click();
+      await page.locator("#floorName").filter({ hasText: "第2階" }).waitFor({ state: "visible" });
+      assert.equal(await page.locator("#floorName").innerText(), "第2階 · かど");
+      assert.equal(await page.locator("#turnCount").innerText(), "0", "the next floor starts fresh");
+      // 一覧へ戻り、10枚のカードと第1階の★を確認する。
+      await page.locator("#playBack").click();
+      await page.locator("#floors").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#floorGrid .floor-card").count(), 10, "ten floors listed");
+      assert.match(await page.locator("#floorGrid .floor-card").first().innerText(), /★/);
+      await page.locator("#floorsBack").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      await page.locator("#title .back-link").click();
+      await page.locator("#codeHub").waitFor({ state: "visible" });
+      await page.locator("#codeHubBack").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      assert.ok(!(await page.locator("#codeHub").isVisible()), "the shelf hides after leaving code");
 
       // RELAY を出たあとも LUMINA の操作（ポーズ）がつづけられる。
       await page.locator("#openGameBtn").click();
