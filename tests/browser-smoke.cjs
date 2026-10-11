@@ -25,7 +25,7 @@ const targets = [
       await page.route("https://fonts.gstatic.com/**", route => route.abort());
       await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
       await page.locator("#launcher").waitFor({ state: "visible" });
-      for (const [door, title, back] of [["openSumifuBtn","sumifu-title","sumifuReturn"],["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
+      for (const [door, title, back] of [["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
         await page.locator("#" + door).press("Enter");
         await page.locator("#" + title).waitFor({state:"visible"});
         assert.ok(!(await page.locator("#home").isVisible()), "Enter opens only the selected game");
@@ -83,7 +83,7 @@ const targets = [
         clientHeight: document.documentElement.clientHeight
       }));
       assert.ok(launcherFit.htmlWidth <= launcherFit.viewport + 1, "launcher has no horizontal overflow");
-      await page.locator("#openSumifuBtn").click();
+      await page.goto("http://127.0.0.1:8000/?work=kasane", { waitUntil: "domcontentloaded" });
       await page.locator("#sumifu-title").waitFor({ state: "visible" });
       assert.equal(await page.locator("#sumifu-title h1").innerText(), "KASANE");
       await page.locator("#sumifuTitleSound").press("Enter");
@@ -116,7 +116,7 @@ const targets = [
       await page.locator("#sumifuQuit").click();
       await page.locator("#sumifuReturn").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
-
+      assert.ok(!page.url().includes("work=kasane"), "leaving KASANE returns to the gallery address");
 
       // 入口が増えても、最後の入口と最下行の表示が重ならないこと
       //（入口の並び順そのものは、冒頭の検査で確かめている）
@@ -128,16 +128,170 @@ const targets = [
       });
       assert.ok(layout.subBottom <= layout.bottomTop + 1, "launcher footer does not overlap the last entry");
       assert.ok(layout.lastVisible, "the last launcher entry fits on screen");
-      // 2本目の Grok 4.7 Cursor は KASANE が公開済みなので、「準備中」の案内は出ない。
+      // Grok の扉は作品一覧。KASANE と折光室が並び、折光室の最初の室は点灯する。
       await page.locator("#openSumifuBtn").click();
-      await page.locator("#sumifu-title").waitFor({ state: "visible" });
-      await page.locator("#sumifuReturn").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#openKasane").count(), 1);
+      assert.equal(await page.locator("#openOriko").count(), 1);
+      assert.equal(await page.locator("#openMikan").count(), 1);
+      assert.equal(await page.locator("#openHebi").count(), 1);
+      assert.equal(await page.locator("#openKake").count(), 1);
+      const shelfFit = await page.evaluate(() => ({
+        width: innerWidth, html: document.documentElement.scrollWidth
+      }));
+      assert.ok(shelfFit.html <= shelfFit.width + 1, "grok shelf has no horizontal overflow");
+      await page.locator("#openOriko").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "ORIKO");
+      await page.locator("#howBtn").click();
+      await page.locator("#dialogTitle").waitFor({ state: "visible" });
+      await page.keyboard.press("Escape");
+      await page.locator("#modal").waitFor({ state: "hidden" });
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".room").count(), 9, "nine rooms are listed");
+      assert.equal(await page.locator(".room:disabled").count(), 8, "later rooms stay locked");
+      await page.locator(".room").first().click();
+      await page.locator("#glass").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__oriko && window.__oriko.getRoom() === "first-fold");
+      const tray = await page.locator(".piece-btn").first().boundingBox();
+      const glassBox = await page.locator("#glass").boundingBox();
+      assert.ok(tray && glassBox && glassBox.height > 80, "the glasshouse board has room to place a mirror");
+      await page.mouse.move(tray.x + tray.width / 2, tray.y + tray.height / 2);
+      await page.mouse.down();
+      await page.mouse.move(glassBox.x + glassBox.width / 2, glassBox.y + glassBox.height / 2, { steps: 8 });
+      await page.mouse.up();
+      assert.equal(await page.evaluate(() => window.__oriko.placedCount()), 1, "a dragged mirror lands on the board");
+      await page.locator("#turnRight").click();
+      await page.locator("#undoBtn").click();
+      await page.locator("#undoBtn").click();
+      assert.equal(await page.evaluate(() => window.__oriko.placedCount()), 0, "undo lifts the mirror back off the board");
+      assert.equal(await page.evaluate(() => window.__oriko.placeSolution()), true, "the authored fold lights the flower");
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 4000 });
+      assert.equal(await page.locator("#dialogTitle").innerText(), "最初の折り");
+      const orikoFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#glass").width
+      }));
+      assert.ok(orikoFit.html <= orikoFit.width + 1, "oriko has no horizontal overflow");
+      assert.ok(orikoFit.tools <= orikoFit.height + 1, "oriko controls fit on screen");
+      assert.ok(orikoFit.canvas > 50, "oriko canvas is sized");
+      await page.locator("#letterNext").click();
+      await page.waitForFunction(() => window.__oriko.getRoom() === "past-the-wall");
+      await page.locator("#playBack").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 9/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openMikan").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "MIKAN");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".night").count(), 6, "six evenings are listed");
+      assert.equal(await page.locator(".night:disabled").count(), 5, "later evenings stay locked");
+      await page.locator(".night").first().click();
+      await page.locator("#kotatsu").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__mikan && window.__mikan.getNight() === "first");
+      const kotatsu = await page.locator("#kotatsu").boundingBox();
+      assert.ok(kotatsu && kotatsu.height > 80, "the kotatsu has room for a mikan");
+      await page.mouse.click(kotatsu.x + kotatsu.width / 2, kotatsu.y + kotatsu.height * 0.55);
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
+      assert.equal(await page.locator("#dialogTitle").innerText(), "最初の晩", "the first mikan stays on the kotatsu");
+      const mikanFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#kotatsu").width
+      }));
+      assert.ok(mikanFit.html <= mikanFit.width + 1, "mikan has no horizontal overflow");
+      assert.ok(mikanFit.tools <= mikanFit.height + 1, "mikan controls fit on screen");
+      assert.ok(mikanFit.canvas > 50, "mikan canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 6/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openHebi").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "HEBI");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".vault").count(), 7, "seven rooms are listed");
+      assert.equal(await page.locator(".vault:disabled").count(), 6, "later rooms stay locked");
+      await page.locator(".vault").first().click();
+      await page.locator("#floor").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__hebi && window.__hebi.getRoom() === "face");
+      const floor = await page.locator("#floor").boundingBox();
+      assert.ok(floor && floor.height > 80, "the storehouse floor has room for the snake");
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("ArrowDown");
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
+      assert.equal(await page.locator("#dialogTitle").innerText(), "顔を出す", "the snake reaches the first door");
+      const hebiFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#floor").width
+      }));
+      assert.ok(hebiFit.html <= hebiFit.width + 1, "hebi has no horizontal overflow");
+      assert.ok(hebiFit.tools <= hebiFit.height + 1, "hebi controls fit on screen");
+      assert.ok(hebiFit.canvas > 50, "hebi canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 7/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openKake").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "KAKE");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".roof").count(), 6, "six roofs are listed");
+      assert.equal(await page.locator(".roof:disabled").count(), 5, "later roofs stay locked");
+      await page.locator(".roof").first().click();
+      await page.locator("#roof").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__kake && window.__kake.getRoof() === "eave");
+      const roof = await page.locator("#roof").boundingBox();
+      assert.ok(roof && roof.height > 80, "the roof has room to run");
+      await page.keyboard.down("ArrowRight");
+      await page.waitForFunction(() => window.__kake.x() > 260, null, { timeout: 4000 });
+      await page.keyboard.press("ArrowUp");
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 8000 });
+      await page.keyboard.up("ArrowRight");
+      assert.equal(await page.locator("#dialogTitle").innerText(), "軒", "the runner reaches the first lantern");
+      const kakeFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#roof").width
+      }));
+      assert.ok(kakeFit.html <= kakeFit.width + 1, "kake has no horizontal overflow");
+      assert.ok(kakeFit.tools <= kakeFit.height + 1, "kake controls fit on screen");
+      assert.ok(kakeFit.canvas > 50, "kake canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 6/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf .back").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       await page.locator("#openCodeBtn").click();
       await page.locator("#codeHub").waitFor({ state: "visible" });
       await page.locator("#codeHubRelay").click();
       await page.locator("#codeTitle").waitFor({ state: "visible" });
-      assert.equal(await page.locator(".code-logo").innerText(), "RELAY//");
+      assert.equal(await page.locator("#codeTitle .code-logo").innerText(), "RELAY//");
       await page.locator("#codeStartBtn").click();
       await page.locator("#codeSelect").waitFor({ state: "visible" });
       assert.equal(await page.locator("#codeStageGrid .code-stage").count(), 15, "fifteen stages listed");

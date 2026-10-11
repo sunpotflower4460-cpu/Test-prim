@@ -72,7 +72,7 @@ body.code-active #sumifu{display:none!important}
 @media(max-height:820px){.launcher-sigil{height:88px;width:88px;margin:2px 0}.launcher-core{font-size:38px}.launcher-index{margin:2px 0 4px}.launcher-divider{margin:8px 0}.launcher-copy{margin-bottom:8px;line-height:1.7}.launcher-entries,.launcher-actions{gap:7px}.launcher-button{height:58px}.launcher-inner{transform:none;padding-bottom:46px}.launcher-sub{margin-top:8px}.launcher-bottom{bottom:calc(env(safe-area-inset-bottom) + 14px)}}
 @media(max-height:640px){.launcher-sigil{height:56px;width:56px}.launcher-core{font-size:26px}.launcher-button{height:50px;padding:0 12px}.launcher-button-symbol{font-size:22px}.launcher-button-label strong{font-size:13px;letter-spacing:.06em}.launcher-button-grok .launcher-button-label strong{font-size:11.5px;letter-spacing:.01em}}
 
-.launcher-button-grok{border-color:rgba(228,204,163,.5);background:linear-gradient(115deg,rgba(236,220,171,.14),rgba(173,238,221,.07))}
+.launcher-button-grok{text-decoration:none;color:inherit;border-color:rgba(228,204,163,.5);background:linear-gradient(115deg,rgba(236,220,171,.14),rgba(173,238,221,.07))}
 .launcher-button-grok:active{background:rgba(236,220,171,.22)}
 .launcher-button-grok .launcher-button-symbol{color:#fdf0d2;text-shadow:0 0 19px #ead3a4}
 .launcher-button-grok .launcher-button-label em{color:#c8bc9c;letter-spacing:.24em}
