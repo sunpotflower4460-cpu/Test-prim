@@ -207,7 +207,8 @@
       btn.disabled = left <= 0;
       btn.innerHTML = O.pieceName(item.type, item.mask) + "<small>のこり " + left + "</small>";
       btn.addEventListener("pointerdown", event => {
-        if (left <= 0 || viewName !== "play") return;
+        if (event.button != null && event.button !== 0) return;
+        if (left <= 0 || viewName !== "play" || !$("modal").hidden) return;
         event.preventDefault();
         drag = { type: item.type, mask: item.mask || 0, x: 0, y: 0, pointer: event.pointerId, over: false };
         btn.setPointerCapture(event.pointerId);
@@ -218,11 +219,13 @@
         drag.x = board[0]; drag.y = board[1];
         drag.over = inside(board[0], board[1]);
       });
-      btn.addEventListener("pointerup", event => {
+      const endDrag = event => {
         if (!drag || drag.pointer !== event.pointerId) return;
-        if (drag.over) placeNew(drag.type, drag.mask, drag.x, drag.y);
+        if (event.type === "pointerup" && drag.over) placeNew(drag.type, drag.mask, drag.x, drag.y);
         drag = null;
-      });
+      };
+      btn.addEventListener("pointerup", endDrag);
+      btn.addEventListener("pointercancel", endDrag);
       tray.appendChild(btn);
     });
   }
@@ -521,6 +524,7 @@
   }
   canvas.addEventListener("contextmenu", event => { if (event.preventDefault) event.preventDefault(); });
   canvas.addEventListener("pointerdown", event => {
+    if (event.button != null && event.button !== 0) return;
     if (viewName !== "play" || !level || !$("modal").hidden) return;
     const board = toBoard(event.clientX, event.clientY);
     let found = -1, best = 8;
@@ -548,10 +552,12 @@
     piece.y = y;
     paintTools();
   });
-  canvas.addEventListener("pointerup", event => {
+  function endMove(event) {
     if (!moving || moving.pointer !== event.pointerId) return;
     moving = null;
-  });
+  }
+  canvas.addEventListener("pointerup", endMove);
+  canvas.addEventListener("pointercancel", endMove);
   window.addEventListener("keydown", event => {
     const key = event.key.toLowerCase();
     const modalOpen = !$("modal").hidden;
