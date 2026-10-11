@@ -386,6 +386,7 @@
   }
 
   canvas.addEventListener("pointerdown", event => {
+    if (event.button != null && event.button !== 0) return;
     if (viewName !== "play" || !level || !$("modal").hidden || settled) return;
     aim = clampAim(toWorld(event.clientX), nextRadius() || 16);
     canvas.setPointerCapture(event.pointerId);
@@ -395,7 +396,8 @@
     aim = clampAim(toWorld(event.clientX), nextRadius() || 16);
   });
   canvas.addEventListener("pointerup", event => {
-    if (viewName !== "play" || falling || settled) return;
+    if (event.button != null && event.button !== 0) return;
+    if (viewName !== "play" || !$("modal").hidden || falling || settled) return;
     aim = clampAim(toWorld(event.clientX), nextRadius() || 16);
     release();
   });

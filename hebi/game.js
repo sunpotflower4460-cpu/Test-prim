@@ -550,16 +550,21 @@
 
   let swipe = null;
   canvas.addEventListener("pointerdown", event => {
+    if (event.button != null && event.button !== 0) return;
     if (viewName !== "play" || !$("modal").hidden || won) return;
-    swipe = { x: event.clientX, y: event.clientY };
+    swipe = { id: event.pointerId, x: event.clientX, y: event.clientY };
   });
   canvas.addEventListener("pointerup", event => {
-    if (!swipe || viewName !== "play") return;
+    if (event.button != null && event.button !== 0) return;
+    if (!swipe || swipe.id !== event.pointerId || viewName !== "play") return;
     const dx = event.clientX - swipe.x;
     const dy = event.clientY - swipe.y;
     swipe = null;
     if (Math.hypot(dx, dy) < 18) return;
     tryMove(Math.abs(dx) > Math.abs(dy) ? (dx > 0 ? "R" : "L") : (dy > 0 ? "D" : "U"));
+  });
+  canvas.addEventListener("pointercancel", event => {
+    if (swipe && swipe.id === event.pointerId) swipe = null;
   });
   canvas.addEventListener("contextmenu", event => { if (event.preventDefault) event.preventDefault(); });
 
@@ -577,6 +582,7 @@
     const dir = { arrowup: "U", arrowdown: "D", arrowleft: "L", arrowright: "R", w: "U", a: "L", s: "D", d: "R" }[lower];
     if (dir) {
       event.preventDefault();
+      if (event.repeat) return;
       tryMove(dir);
     } else if ((lower === "z" || key === "Backspace") && !event.repeat) {
       event.preventDefault();

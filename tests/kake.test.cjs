@@ -26,6 +26,19 @@ test("the first gap stays crossable through a stretch of the run", () => {
   assert.equal(sim.play(eave, [go(40), hop(1), go(160)]).won, false);
 });
 
+test("the left edge of a roof is a wall, not a hidden drop", () => {
+  const eave = book.levels[0];
+  let state = sim.create(eave);
+  for (let i = 0; i < 180; i++) state = sim.step(state, eave, { left: true });
+  assert.equal(state.dead, false);
+  assert.ok(state.x > 0 && state.x < 20, "the runner stays on the first tiles, x=" + state.x);
+  assert.equal(state.ground, true);
+  for (let i = 0; i < 120; i++) state = sim.step(state, eave, { left: true, jump: i === 0 });
+  assert.equal(state.dead, false);
+  assert.ok(state.x > 0 && state.x < 20, "a jump against the wall stays on the roof, x=" + state.x);
+  assert.equal(state.ground, true);
+});
+
 test("a dash cuts the bat, and a sprint does not open the shutter", () => {
   const bat = book.levels.find(level => level.id === "bat");
   const gate = book.levels.find(level => level.id === "shutter");

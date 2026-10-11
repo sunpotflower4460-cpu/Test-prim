@@ -187,6 +187,8 @@
   function failReset() {
     hurt = 0.42;
     acc = 0;
+    edge.jump = false;
+    edge.dash = false;
     toast("落ちた");
     tone(120, 0.16, "sine", 0.04);
     paintTools();
@@ -232,7 +234,9 @@
     });
     ctx.fillStyle = "#2a3548";
     for (let i = 0; i < 8; i++) {
-      const x = ((i * 150 - view.cam * 0.25) % (view.w + 180)) - 40;
+      const span = view.w + 180;
+      const raw = (i * 150 - view.cam * 0.25) % span;
+      const x = (raw < 0 ? raw + span : raw) - 40;
       const h = 90 + (i % 3) * 28;
       ctx.fillRect(x, view.h * 0.62 - h, 108, h);
     }
@@ -275,7 +279,7 @@
     level.gates.forEach(gate => {
       const phase = K.gatePhase(gate, state.time);
       const open = phase < gate.open;
-      const soon = !open && phase > gate.period - 0.35;
+      const soon = !open && phase > gate.period - 0.1;
       ctx.fillStyle = soon ? "#e7c9a4" : "#8a6a52";
       ctx.fillRect(gate.x - 4, gate.y, 4, gate.h);
       ctx.fillRect(gate.x + gate.w, gate.y, 4, gate.h);
@@ -450,7 +454,12 @@
   function pause() {
     if (viewName !== "play" || !$("modal").hidden) return;
     viewName = "pause";
+    held.left = false;
+    held.right = false;
+    edge.jump = false;
+    edge.dash = false;
     bed(false);
+    paintTools();
     openDialog(
       '<p class="eyebrow">PAUSED</p><h2 id="dialogTitle">屋根は、待っている。</h2>' +
       '<button class="primary" id="resumeBtn" type="button"><span>つづける</span></button>' +
@@ -465,7 +474,9 @@
   function bindHold(btn) {
     const act = btn.dataset.act;
     const down = event => {
+      if (event.button != null && event.button !== 0) return;
       event.preventDefault();
+      if (viewName !== "play" || !$("modal").hidden || won || hurt > 0) return;
       if (btn.setPointerCapture) btn.setPointerCapture(event.pointerId);
       if (act === "jump" || act === "dash") edge[act] = true;
       else held[act] = true;

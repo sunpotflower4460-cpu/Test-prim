@@ -64,6 +64,8 @@
 
   function solidsAt(level, time) {
     const list = level.solids.slice();
+    // 屋根の始まりに見えない崖を作らない。左へ走っても、ここに止まる。
+    list.push({ x: -48, y: 40, w: 48, h: 160 });
     level.gates.forEach(gate => {
       if (!gateOpen(gate, time)) list.push(gate);
     });
