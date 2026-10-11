@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#14181c">
+  <meta name="description" content="HEBI — 蛇。床の下から出てきた白い蛇を、戸口まで届ける夜の遊び。Grok 4.7 Cursor オリジナル作品。">
+  <title>HEBI — 蛇 | Grok 4.7 Cursor</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="hebi.css">
+  <script src="sim.js" defer></script>
+  <script src="levels.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <main id="app" data-view="title">
+    <div class="roomwash" aria-hidden="true"></div>
+    <section id="title" class="view" aria-label="蛇 タイトル">
+      <header class="topline">
+        <a class="back" href="../grok/index.html">‹ <span>作品一覧</span></a>
+        <span class="byline">AN ORIGINAL BY GROK 4.7 CURSOR</span>
+        <button id="titleSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="title-art" aria-hidden="true">
+        <div class="beam"></div>
+        <svg class="title-snake" viewBox="0 0 280 140">
+          <path d="M46 112 C40 70 86 42 118 58 C148 74 132 108 96 100 C64 92 62 66 90 60 C124 52 150 86 186 96 C224 106 246 78 250 58" fill="none" stroke="#6d8074" stroke-width="22" stroke-linecap="round"/>
+          <path d="M46 112 C40 70 86 42 118 58 C148 74 132 108 96 100 C64 92 62 66 90 60 C124 52 150 86 186 96 C224 106 246 78 250 58" fill="none" stroke="#d7e4d4" stroke-width="16" stroke-linecap="round"/>
+          <path d="M52 108 C48 74 88 50 116 62 C140 72 128 98 100 94 C76 90 74 70 96 66" fill="none" stroke="#f7faf4" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+          <ellipse cx="258" cy="52" rx="18" ry="12" fill="#f7faf6" transform="rotate(-48 258 52)"/>
+          <circle cx="264" cy="46" r="2.6" fill="#1c1612"/>
+          <path class="tongue" d="M270 56 L284 64 M270 56 L282 50" stroke="#d24b42" stroke-width="1.8" fill="none" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="title-copy">
+        <p class="eyebrow">A SNAKE UNDER THE FLOOR</p>
+        <h1>HE<em>BI</em></h1>
+        <p class="jp">蛇</p>
+        <p class="story">床の下から、<br>出てくる。</p>
+        <p class="lead">七つの蔵。頭だけを、進める。<br>温石をわたり、皿は倒さない。</p>
+      </div>
+      <div class="title-actions">
+        <button id="startBtn" class="primary" type="button"><span>蔵に入る</span><b>↗</b></button>
+        <button id="howBtn" class="text" type="button">あそびかた</button>
+        <p id="titleRecord" class="record">まだ、どの蔵も暗い。</p>
+      </div>
+      <footer class="title-foot"><span>NO CLOCK</span><span>7 ROOMS</span></footer>
+    </section>
+
+    <section id="map" class="view" hidden aria-label="蔵の一覧">
+      <header class="topline">
+        <button id="mapBack" class="back" type="button">‹ <span>タイトル</span></button>
+        <span class="byline">SEVEN ROOMS</span>
+        <button id="mapSound" class="icon" type="button" aria-label="音の切り替え">♫</button>
+      </header>
+      <div class="map-intro">
+        <p class="eyebrow">THE STOREHOUSE</p>
+        <h2>どの蔵を、<em>抜ける。</em></h2>
+        <p id="mapProgress" class="record"></p>
+      </div>
+      <div id="vaultList" class="vault-list"></div>
+    </section>
+
+    <section id="play" class="view play" hidden aria-label="蔵の床">
+      <header class="topline play-top">
+        <button id="playBack" class="back" type="button">‹ <span>蔵の一覧</span></button>
+        <div class="room-heading"><span class="eyebrow">ROOM</span><strong id="vaultName"></strong></div>
+        <button id="pauseBtn" class="icon" type="button" aria-label="一時停止">Ⅱ</button>
+      </header>
+      <p id="hintLine" class="hint"></p>
+      <div id="boardWrap" class="board-wrap">
+        <canvas id="floor" aria-label="蔵の床。蛇の頭を進め、温石を踏んで戸口へ届ける。"></canvas>
+      </div>
+      <div class="dock">
+        <p id="statusLine" class="remain">胴 0</p>
+        <div class="tools">
+          <button class="tool" type="button" data-dir="L" aria-label="左へ">左</button>
+          <button class="tool" type="button" data-dir="U" aria-label="上へ">上</button>
+          <button class="tool" type="button" data-dir="D" aria-label="下へ">下</button>
+          <button class="tool" type="button" data-dir="R" aria-label="右へ">右</button>
+          <button id="undoBtn" class="tool" type="button" disabled>戻す</button>
+        </div>
+      </div>
+    </section>
+
+    <div id="modal" class="modal" hidden>
+      <section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section>
+    </div>
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <noscript><p class="noscript">この蛇を出すには JavaScript が必要です。<a href="../grok/index.html">作品一覧へ戻る</a></p></noscript>
+  </main>
+</body>
+</html>

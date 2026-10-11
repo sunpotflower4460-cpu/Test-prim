@@ -10,7 +10,7 @@
 
 > **公開中の作品**
 > - GPT6 CHAT — LUMINA（星灯りの庭）
-> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）
+> - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）、HEBI（蛇）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）
 > - Minimax M3.1 — SYNC（共鳴）
 > - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
@@ -159,6 +159,38 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 | 音 | 題名の ♫ | 同左 |
 
 急がなくていい。落ちても、一つ戻して置き直せます。
+
+---
+
+## ✦ Grok 4.7 Cursor作品 | HEBI — 蛇
+
+**床の下から、出てくる。**
+
+夜の蔵で、白い蛇の頭だけを進める。七つの蔵。餌はなく、胴は伸びない。温石をすべて踏み、戸口で胴が掛け金の上に残っていれば、朝までに戻れる。自分の胴は壁になる。尾がどいた跡だけ、あとから通れる。抜け殻を踏むと一マス短くなり、狭い割れ目をくぐれる。短くしすぎると、掛け金まで届かない。皿に触れたマスには進めない。
+
+- **七つの蔵**：顔を出す、自分の胴、抜け殻、皿のそば、掛け金、一度だけ、蔵の奥
+- **頭だけ**：一マスずつ進める。戻す、に制限はない
+- **温石**：頭が踏んだものだけが灯る
+- **抜け殻と割れ目**：長いとくぐれない。一度抜けると通れる
+- **掛け金**：戸口のとき、胴がその上に残っていること
+- **記録**：抜けた蔵を、ブラウザ内に保存
+
+### ▶ ゲームを開く
+
+**[蛇をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/hebi/index.html)**
+
+ゲームを開く → **「Grok 4.7 Cursor」** を選ぶ → **作品一覧** → **蛇** → **「蔵に入る」**。
+
+### 操作方法
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 進む | 左・上・下・右、または床を払う | 矢印キー |
+| 戻す | 戻す | Z |
+| 一時停止 | 右上の Ⅱ | Esc |
+| 音 | 題名の ♫ | 同左 |
+
+急がなくていい。壁に触れても、蛇はその場に残ります。
 
 ---
 
@@ -337,6 +369,9 @@ node --check oriko/game.js
 node --check mikan/phys.js
 node --check mikan/levels.js
 node --check mikan/game.js
+node --check hebi/sim.js
+node --check hebi/levels.js
+node --check hebi/game.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```
@@ -369,7 +404,7 @@ python3 tools/wiring-check.py
 重複した id、閉じていないタグ、スタイルが定義されていない class などを照合します。
 スタイルがない class は意図的なフックの場合もあるため、警告のみでフェイルにはしません。
 
-GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室、蜜柑の六晩）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで、蜜柑は最初の晩を残すところまで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
+GitHub Actions の **Quality Checks** が構文とルール検証（LUMINAの通し進行、KASANEの三夜、RELAYの全15ステージ、SYNCの全5章、AFTERTIDEの全18航路、折光室の九室、蜜柑の六晩、蛇の七つの蔵）を行い、**Browser Experience Checks** がスマホ・小型スマホ・横向き・PCで6入口と各作品の操作をChromiumで確認します。LUNAは全サイズで最初の航路の星屑回収とクリアまで、折光室は最初の室の点灯まで、蜜柑は最初の晩を残すところまで、蛇は最初の蔵の戸口まで確認します。GitHub Pagesは一度ブランチ公開を設定すると `main` の更新を自動反映します。
 
 ---
 

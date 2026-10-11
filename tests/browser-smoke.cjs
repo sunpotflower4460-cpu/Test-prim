@@ -134,6 +134,7 @@ const targets = [
       assert.equal(await page.locator("#openKasane").count(), 1);
       assert.equal(await page.locator("#openOriko").count(), 1);
       assert.equal(await page.locator("#openMikan").count(), 1);
+      assert.equal(await page.locator("#openHebi").count(), 1);
       const shelfFit = await page.evaluate(() => ({
         width: innerWidth, html: document.documentElement.scrollWidth
       }));
@@ -213,6 +214,40 @@ const targets = [
       await page.locator("#letterMap").click();
       await page.locator("#map").waitFor({ state: "visible" });
       assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 6/);
+      await page.locator("#mapBack").click();
+      await page.locator("#title .back").click();
+      await page.locator("#grokShelf").waitFor({ state: "visible" });
+      await page.locator("#openHebi").click();
+      await page.locator("#title").waitFor({ state: "visible" });
+      assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "HEBI");
+      await page.locator("#startBtn").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.equal(await page.locator(".vault").count(), 7, "seven rooms are listed");
+      assert.equal(await page.locator(".vault:disabled").count(), 6, "later rooms stay locked");
+      await page.locator(".vault").first().click();
+      await page.locator("#floor").waitFor({ state: "visible" });
+      await page.waitForFunction(() => window.__hebi && window.__hebi.getRoom() === "face");
+      const floor = await page.locator("#floor").boundingBox();
+      assert.ok(floor && floor.height > 80, "the storehouse floor has room for the snake");
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowDown");
+      await page.keyboard.press("ArrowRight");
+      await page.keyboard.press("ArrowDown");
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
+      assert.equal(await page.locator("#dialogTitle").innerText(), "顔を出す", "the snake reaches the first door");
+      const hebiFit = await page.evaluate(() => ({
+        width: innerWidth,
+        html: document.documentElement.scrollWidth,
+        tools: document.querySelector(".tools").getBoundingClientRect().bottom,
+        height: innerHeight,
+        canvas: document.querySelector("#floor").width
+      }));
+      assert.ok(hebiFit.html <= hebiFit.width + 1, "hebi has no horizontal overflow");
+      assert.ok(hebiFit.tools <= hebiFit.height + 1, "hebi controls fit on screen");
+      assert.ok(hebiFit.canvas > 50, "hebi canvas is sized");
+      await page.locator("#letterMap").click();
+      await page.locator("#map").waitFor({ state: "visible" });
+      assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 7/);
       await page.locator("#mapBack").click();
       await page.locator("#title .back").click();
       await page.locator("#grokShelf .back").click();

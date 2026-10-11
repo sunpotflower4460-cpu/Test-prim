@@ -52,20 +52,25 @@ body {
 .card-glass em { color: #d5ecdf; }
 .card-mikan { background: linear-gradient(165deg, rgba(120, 52, 18, .55), rgba(28, 14, 8, .84)); border-color: rgba(240, 170, 90, .35); }
 .card-mikan em { color: #f0b06a; }
+.card-hebi { background: linear-gradient(165deg, rgba(36, 58, 52, .62), rgba(12, 16, 18, .88)); border-color: rgba(190, 214, 198, .34); }
+.card-hebi em { color: #d5e6d4; }
 .mark { font-size: 28px; }
 .blurb { margin-top: 8px; line-height: 1.7; letter-spacing: .06em; color: #eadfd4; font-size: 14px; }
 .go { margin-top: auto; padding-top: 16px; font-family: "Hiragino Sans", "Noto Sans JP", sans-serif; font-size: 13px; }
 .card:active { transform: scale(.985); }
 .foot { width: min(1080px, 100%); margin: auto auto 0; }
-@media (min-width: 800px) {
-  .cards { grid-template-columns: 1fr 1fr 1fr; }
+@media (min-width: 720px) and (max-width: 979px) {
+  .cards { grid-template-columns: 1fr 1fr; }
 }
-@media (max-width: 799px) {
+@media (min-width: 980px) {
+  .cards { grid-template-columns: 1fr 1fr 1fr 1fr; }
+}
+@media (max-width: 719px) {
   .card { min-height: 0; }
   .byline { display: none; }
 }
 @media (max-height: 520px) and (min-width: 700px) {
-  .cards { grid-template-columns: 1fr 1fr 1fr; }
+  .cards { grid-template-columns: 1fr 1fr 1fr 1fr; }
 }
 @media (max-height: 520px) {
   .shelf { padding-top: 10px; }
