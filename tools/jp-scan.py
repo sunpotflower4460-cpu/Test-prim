@@ -62,7 +62,8 @@ def scan_line(lineno, line):
             break
     low = line.lower()
     for junk in LATIN_JUNK:
-        if junk in low:
+        # Reject stray fragments, without matching inside valid identifiers.
+        if re.search(r"(?<![A-Za-z])" + re.escape(junk) + r"(?![A-Za-z])", low):
             problems.append((lineno, "LATIN", junk, line))
             break
     for m in GLUED.finditer(line):
@@ -83,11 +84,13 @@ def self_test():
     must_flag = [
         "\u8bef\u89e3",          # simplified
         "\u8bef\u3063\u305f\u8a71",   # simplified 误 (U+8BEF), not 誤 (U+8AA4)
+        "\u5f37\u5316oldown", # stray fragment in Japanese
         "syokuhin\u306e\u65e5",  # GLUED latin
     ]
     must_pass = [
         "\u661f\u306e\u4f11\u606f",     # 休息 - legitimate Japanese
         "\u4f1a\u4f53\u5185\u4e71\u8996\u53cd\u5fa9",  # all excluded chars, still valid
+        "cooldown MeshStandardMaterial configuration",
         "\u6b63\u3057\u3044 PERFECT \u3068 BPM",
     ]
     failures = []

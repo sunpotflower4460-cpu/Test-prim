@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="ja">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#102330"><meta name="description" content="SKYWARD 蒼穹の帰路。群島の空を守り、基地へ帰る三人称3D戦闘機ゲーム。GPT 6.1 sol の第二作。"><title>SKYWARD — 蒼穹の帰路 | GPT 6.1 sol</title><link rel="icon" href="../../icon.svg" type="image/svg+xml"><link rel="stylesheet" href="skyward.css"></head>
+<body>
+<canvas id="world" tabindex="0" aria-label="群島と戦闘機の3D飛行画面"></canvas><canvas id="instruments" aria-hidden="true"></canvas><div id="vignette" class="vignette" aria-hidden="true"></div>
+<main id="menu" class="screen">
+ <header class="mast"><a href="../works.html">‹ 作品一覧</a><span>GPT 6.1 SOL / WORK 02</span><button id="settingsBtn" class="quiet">設定</button></header>
+ <div class="menu-layout"><section class="identity"><p class="eyebrow">A SKY TO PROTECT. A PLACE TO RETURN.</p><h1>SKY<span>WARD</span></h1><p class="jtitle">蒼穹の帰路</p><p class="premise">空を守る。<br>そして、帰ってくる。</p><p class="intro-copy">海峡に散らばる、小さな灯。<br>その上を飛ぶ、あなたと一機の翼。<br>操縦を覚え、群島の空を守ろう。</p><div class="aircraft-spec"><b>AURORA / F-27</b><span>単座・双発 / 多用途戦闘機</span><span>最高 1,580 km/h · 最大 9 G</span></div><button id="resumeSortie" class="quiet" hidden>保存した飛行を再開 ↗</button></section>
+ <section class="dispatch" aria-labelledby="dispatchTitle"><div class="dispatch-top"><h2 id="dispatchTitle">出撃任務</h2><span id="recordCount">0 / 5 COMPLETED</span></div><div id="missionList" class="mission-list"></div><div class="brief"><p class="eyebrow" id="missionTag"></p><h3 id="missionTitle"></h3><p id="missionDesc"></p><div class="brief-map"><svg viewBox="0 0 400 115" role="img" aria-label="群島の空域図"><defs><pattern id="grid" width="28" height="28" patternUnits="userSpaceOnUse"><path d="M28 0H0V28" fill="none" stroke="#fff" stroke-opacity=".09"/></pattern></defs><rect width="400" height="115" fill="url(#grid)"/><g fill="#86aaa4" fill-opacity=".2" stroke="#a6c2b6" stroke-opacity=".3"><path d="M78 94l-22-13 9-18 24-9 30 13-7 18zM195 70l-9-35 26-23 24 18 5 24-17 28zM292 46l-28-18 33-24 44 13 23 24-17 15z"/></g><path d="M86 75L169 55 218 37 291 30" fill="none" stroke="#e5be7b" stroke-dasharray="5 5"/><circle cx="86" cy="75" r="4" fill="#e5be7b"/><text x="98" y="97" fill="#b9c5c6" font-size="9">AURORA BASE</text><text x="268" y="87" fill="#b9c5c6" font-size="9">NORTH STRAIT</text></svg></div><div class="brief-meta"><span id="missionGoal"></span><span id="missionWeather"></span></div><button id="launchBtn" class="primary">出撃する <span>↗</span></button><button id="manualBtn" class="quiet manual-link">操縦の手引き / CONTROLS</button></div></section></div>
+ <footer class="menu-footer"><span>3D FLIGHT · ORIGINAL SOUND · OFFLINE READY</span><span>キーボード / タッチ対応</span></footer>
+</main>
+<section id="flightUI" hidden aria-label="飛行操作">
+ <header class="flight-top"><a id="flightBack" href="../works.html" aria-label="作品一覧へ戻る">‹</a><div><b id="sortieName"></b><span id="objective"></span></div><div class="flight-tools"><button id="soundBtn" aria-label="音声を切り替える">音 ON</button><button id="viewBtn" aria-label="視点を切り替える">視点</button><button id="helpBtn" aria-label="操縦の手引きを開く">?</button><button id="pauseBtn" aria-label="一時停止">Ⅱ</button></div></header>
+ <button id="perfBtn" class="perf-readout" aria-label="描画品質の設定を開く">— FPS · 画質</button>
+ <div class="radio" id="radio" role="status"><span>AURORA CONTROL</span><p id="radioText"></p></div>
+ <div class="nav-status" id="navStatus"></div><p id="warning" class="warning" aria-live="polite"></p>
+ <div class="flight-bottom"><div class="stick-wrap"><div id="stick" class="stick" role="img" aria-label="操縦スティック。上下で機首、左右でバンク"><span id="knob"></span><small>ROLL / PITCH</small></div><button id="levelBtn" class="control" aria-label="機体を水平に戻す">水平</button></div>
+ <div class="throttle-wrap"><label for="throttle">THR <output id="throttleValue">68%</output></label><input id="throttle" type="range" min="5" max="100" value="68" aria-label="スロットル"><button id="boostBtn" class="control hold">AB</button></div>
+ <div class="weapon-controls"><div class="aux-controls"><button id="targetBtn" class="control">目標 <small>TAB</small></button><button id="flareBtn" class="control">フレア <small>C</small></button><button id="gearBtn" class="control">脚 <small>G</small></button></div><div class="fire-controls"><button id="missileBtn" class="control missile">MISSILE <small>捕捉待ち</small></button><button id="gunBtn" class="control gun hold">GUN <small>650</small></button></div></div></div>
+ <div class="key-reminder">W/S・↑↓ 機首　A/D・←→ バンク　Q/E ラダー　R/F 推力　Space 機関砲　X ミサイル　C フレア　L 水平　V 視点　P 停止</div>
+</section>
+<dialog id="dialog"><div id="dialogBody"></div></dialog>
+<div id="loading" class="loading"><span class="loading-mark">✧</span><b>SKYWARD</b><p>群島の空を準備しています…</p></div>
+<script src="sim.js"></script><script type="module" src="game.js"></script>
+</body></html>

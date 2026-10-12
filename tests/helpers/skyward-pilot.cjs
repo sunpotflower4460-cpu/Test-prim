@@ -1,0 +1,3 @@
+const S=require('../../sol/skyward/sim.js');
+function pilot(s,d,desiredSpeed=220){const p=s.player,delta=S.sub(d,p),dist=Math.hypot(delta.x,delta.z),head=Math.atan2(delta.x,delta.z),err=S.wrap(head-p.heading);const bank=S.clamp(err*4.0,-1.42,1.42),pitch=S.clamp(Math.atan2(delta.y,dist)-(s.phase==='active'&&s.mission>0?p.aoa:0),-.35,.4),load=(Math.cos(p.pitch)+p.speed*(pitch-p.pitch)*.8/S.G)/Math.max(.12,Math.cos(p.bank));p.throttle=S.clamp(.37+(desiredSpeed-p.speed)*.03,.05,1);return {roll:S.clamp((bank-p.bank)*2.5/1.72,-1,1),pitch:S.clamp((load-1)/(load>1?6.5:3),-1,1),gun:false};}
+module.exports=pilot;

@@ -12,8 +12,8 @@
 > - GPT6 CHAT — LUMINA（星灯りの庭）
 > - Grok 4.7 Cursor — KASANE（重ね）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）・ ECHO（きろくの協力者）
-> - Minimax M3.1 — SYNC（共鳴）
-> - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
+> - Minimax M3.1 — SYNC（共鳴）・ HELIX（螺旋）
+> - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）・SKYWARD（蒼穹の帰路）
 > - GPT 6 Luna — LUNA（星環航路）
 
 ---
@@ -197,6 +197,45 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ---
 
+## ⟳ Minimax M3.1 第二作 | HELIX — 螺旋
+
+**壁に張り付いて跳ね返る。五つの段を、一息で登り切る。**
+
+精密な足場アクション。足場は読めば必ず届きますが、読む前に跳べば落ちます。
+
+- **5つの段**：足場 → 壁沿い → 往来 → 灯火 → 峰
+- **手感**：コヨーテタイム、先行入力、可変ジャンプ、壁沿い、壁跳び、ダッシュ
+- **番人**：上下に往復する。軌道が点線で描かれる
+- **真珠**：取らなくても先に進める
+- **音**：Web Audioで生成。外部ライブラリなし
+- **スマホ**：左半分か移動。右半分は跳ぶ。連打でダッシュ
+
+### ▶ ゲームを開く
+
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
+
+### あそびかた
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 移動 | 左半分のタップ位置 | ← → / A D |
+| 跳ぶ | 右半分をタップ | Space / ↑ / W / Z |
+| ダッシュ | 右半分を連打 | Shift / X / K |
+| 一時停止 | 右上の Ⅱ | P / Esc |
+
+### ステージが解けることの証明
+
+各段には 0 死でクリアする入力スクリプトが同梱されています。`tests/helix.test.cjs` が Node 上で再生し、終点への到達を確認します。`window.__helix.replayScript()` は同じスクリプトをブラウザ側の実入力で再生します。
+
+スクリプトは手で書いたものではありません。`tools/helix-solve.cjs` が実シミュレーション上で beam search で見つけ、`runScript` で一度再生して確かめてから保存します。段の地形だけ書き換えると（`tools/helix-levels.cjs` の矩形を動かして）、解けなくなった瞬間にテストが落ちます。
+
+```bash
+node tools/helix-author.cjs --seconds=170   # 全段のスクリプトを作り直す
+node tools/helix-levels.cjs --check          # 段を描いて検証する
+node --test tests/helix.test.cjs             # 保存済みスクリプトを再生
+```
+
+---
 ## ⚓ GPT 6.1 sol 作品 | AFTERTIDE — 潮の郵便屋
 
 **海の向こうに、待っている人がいる。**
@@ -231,6 +270,39 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 **表示中の潮で移動し、その後で潮が変わります。** 錨なら舟を動かさず、潮だけを変えられます。点線は進める隣のマス。PCではマスにカーソルを置くと、流された先まで予告されます。灯台は手紙が全部そろうと灯ります。貝殻は任意なので、最初は配達だけでも大丈夫です。
 
 実装と検証の詳細は [AFTERTIDEの制作ノート](sol/README.md) にあります。
+
+---
+
+## ✧ GPT 6.1 sol 第二作 | SKYWARD — 蒼穹の帰路
+
+**空を守る。そして、帰ってくる。**
+
+群島の空を舞台に、架空の双発戦闘機を操る三人称3D飛行・空戦ゲームです。翼を傾け、速度を管理し、見越し射撃やミサイルで空を守ります。任務の最後は上空通過で帰投するか、脚を下ろして着陸に挑戦できます。
+
+- **5任務と自由飛行**：航法訓練 → 機関砲訓練 → 迎撃 → 船団防衛 → 二波の最終任務。順番に解放し、最終任務には結末があります
+- **飛行を感じるモデル**：揚力・抗力・推力・重力、旋回時の速度低下、失速、高度による大気密度、アフターバーナー、脚、燃料
+- **追う・狙う・守る空戦**：弾道と見越し点、射程・角度・時間を使う捕捉、追尾ミサイル、敵味方のフレア、離脱と再攻撃
+- **オリジナルの3D世界**：機体、群島、滑走路、船団、空、雲、海面、HUD。エンジン・風・警報・射撃の音も合成
+- **帰投と着陸**：滑走路へ安全に接地し、制動して止まると結果を表示。機体の状態と帰投方法でS / A / Bを記録
+- **PC・タッチ・途中再開**：操縦スティック、推力、武器のボタン。自動停止・途中保存・操作と画質の設定。描画ライブラリも同梱し、外部ネットワークに依存しません
+
+### ▶ ゲームを開く
+
+共有タイトルの **「GPT 6.1 sol」** → **作品一覧** → **SKYWARD** → **「出撃する」**。
+
+[SKYWARDを直接ひらく（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/sol/skyward/index.html)
+
+| 操作 | PC | スマートフォン |
+| --- | --- | --- |
+| 機首 / バンク | W S / A D、矢印キー | 左のスティック |
+| 推力 / アフターバーナー | R F / Shift長押し | THR / AB長押し |
+| 機関砲 / ミサイル | Space長押し / X | GUN長押し / MISSILE |
+| 目標 / フレア / 脚 | Tab ・ T / C / G | 各ボタン |
+| 水平復帰 / 視点 / 一時停止 | L長押し / V / P ・ Esc | 水平 / 視点 / Ⅱ |
+
+**翼を傾けて、少し引くと旋回します。** 引きすぎると速度を失うので、推力を上げて引きを緩めましょう。機関砲は黄色い見越し点、ミサイルは正面24°・6.2km以内で1.5秒捕捉して発射。小さな画面は横向きにすると空を見渡しやすくなります。
+
+飛行モデルの範囲、着陸の条件、制作・検証の詳細は [SKYWARDの制作ノート](sol/skyward/README.md) にあります。
 
 ---
 
@@ -271,11 +343,11 @@ AIの違いを、単純な点数だけでなく、遊んだときの体験とし
 
 **ゲームとしての面白さ / 操作の気持ちよさ / アートと演出 / 音の表現 / 独自性 / スマホでの遊びやすさ / 安定性と完成度**
 
-制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。現在の7作品は、それぞれ別の遊び方と世界を持っています。
+制作過程も含めて作品ごとの特徴を残し、AIの表現の幅が増えるにつれてコレクションが育っていくことを目指します。現在の8作品は、それぞれ別の遊び方と世界を持っています。
 
 ## 開発・実行
 
-このリポジトリはブラウザゲームの静的サイトです。収録作は HTML / CSS / JavaScript / Canvas 2D / Web Audio / Service Worker で動作し、ビルド環境や外部ゲームエンジンを必要としません。
+このリポジトリはブラウザゲームの静的サイトです。収録作は HTML / CSS / JavaScript / Canvas 2D ・ WebGL / Web Audio / Service Worker で動作し、ビルド環境を必要としません。SKYWARDの描画用 Three.js はリポジトリに同梱しています。
 
 ローカル起動：
 
@@ -294,6 +366,8 @@ node --check code-sim.js
 node --check code.js
 node --check sync-sim.js
 node --check sync.js
+node --check helix-sim.js
+node --check helix.js
 node --check sol/sim.js
 node --check sol/levels.js
 node --check sol/sea.js
@@ -305,6 +379,11 @@ node --check echo/audio.js
 node --check echo/render.js
 node --check echo/game.js
 node --check luna/luna.js
+node --check sol/skyward/sim.js
+node --check sol/skyward/scene.js
+node --check sol/skyward/hud.js
+node --check sol/skyward/audio.js
+node --check sol/skyward/game.js
 node --check sw.js
 node --test tests/*.test.cjs
 ```

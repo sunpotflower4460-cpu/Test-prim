@@ -1,13 +1,13 @@
 {
-  "name": "Test prim — LUMINA / KASANE / RELAY / SYNC",
+  "name": "Test prim — AIゲームギャラリー",
   "short_name": "Test prim",
-  "description": "Test prim の実験ギャラリー。GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE、玄人コードの RELAY、Minimax M3.1 のリズム×防衛 SYNC — 共鳴を遊べます。",
+  "description": "七作者・九つのAI作品を遊び比べる実験ギャラリー。LUMINA、KASANE、RELAY、SYNC、HELIX、AFTERTIDE、LUNA、REPRISE、SKYWARDを収録。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",
   "background_color": "#071525",
   "theme_color": "#071525",
-  "orientation": "portrait-primary",
+  "orientation": "any",
   "lang": "ja",
   "icons": [
     {

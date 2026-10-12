@@ -1,14 +1,21 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v12";
+const CACHE = "test-prim-gallery-v17";
 const ASSETS = [
-  "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css",
+  "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
+  "./helix-sim.js", "./helix.js",
   "./sol/index.html", "./sol/tide.css", "./sol/sim.js", "./sol/levels.js",
   "./sol/sea.js", "./sol/audio.js", "./sol/game.js", "./sol/entry.js",
   "./luna/index.html", "./luna/luna.css", "./luna/luna.js",
   "./echo/index.html", "./echo/echo.css", "./echo/sim.js", "./echo/levels.js",
   "./echo/audio.js", "./echo/render.js", "./echo/game.js",
+  "./sol/works.html", "./sol/works.css",
+  "./sol/skyward/index.html", "./sol/skyward/skyward.css", "./sol/skyward/sim.js",
+  "./sol/skyward/scene.js", "./sol/skyward/hud.js", "./sol/skyward/audio.js", "./sol/skyward/game.js",
+  "./sol/skyward/vendor/three.module.js",
+  "./gpt6-sol/index.html", "./gpt6-sol/reprise.css", "./gpt6-sol/rules.js",
+  "./gpt6-sol/levels.js", "./gpt6-sol/sound.js", "./gpt6-sol/game.js",
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {
