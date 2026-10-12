@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇と駆け、玄人コードの RELAY、Minimax M3.1 の SYNC、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA。AIごとのゲームを遊び比べる。">
+  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇と駆け、玄人コードの RELAY、Minimax M3.1 の SYNC と HELIX、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA。AIごとのゲームを遊び比べる。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="sumifu.css">
   <link rel="stylesheet" href="code.css">
   <link rel="stylesheet" href="sync.css">
+  <link rel="stylesheet" href="helix.css">
 </head>
 <body>
   <canvas id="world" aria-label="星灯りの庭 ゲーム画面"></canvas>
@@ -87,6 +88,11 @@
           <span class="launcher-button-label"><small>SYNC · 共鳴</small><strong>Minimax M3.1</strong></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </button>
+        <button id="helixOpenBtn" class="launcher-button launcher-button-helix" type="button" aria-label="Minimax M3.1 のゲーム、HELIX 螺旋を開く">
+          <span class="launcher-button-symbol">⟳</span>
+          <span class="launcher-button-label"><small>HELIX · 螺旋</small><strong>Minimax M3.1</strong></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </button>
         <a id="openSolBtn" class="launcher-button launcher-button-sol" href="sol/index.html" aria-label="GPT 6.1 sol のゲーム、AFTERTIDE 潮の郵便屋を開く">
           <span class="launcher-button-symbol" aria-hidden="true">⚓</span>
           <span class="launcher-button-label"><small>AFTERTIDE · 潮の郵便屋</small><strong>GPT 6.1 sol</strong></span>
@@ -100,7 +106,7 @@
       </div>
       <p class="launcher-sub">TAP A DOOR · PLAY THE WORLD INSIDE</p>
     </div>
-    <div class="launcher-bottom"><span>TEST PRIM</span><span>06 EXPERIMENTS</span><span>2026</span></div>
+    <div class="launcher-bottom"><span>TEST PRIM</span><span>07 EXPERIMENTS</span><span>2026</span></div>
   </section>
 
   <div id="launcherNotice" class="launcher-notice hidden" aria-live="polite"></div>
@@ -330,6 +336,54 @@
   <div id="syncOverlay" class="sync-overlay hidden" aria-live="polite"></div>
   <div id="syncToast" class="sync-toast" role="status" aria-live="polite"></div>
 
+  <!-- HELIX // 螺旋 — Minimax M3.1 の二作目 -->
+  <section id="helixTitle" class="helix-screen off" aria-label="HELIX 螺旋 タイトル">
+    <div class="helix-shell">
+      <button type="button" id="helixReturnBtn" class="helix-return">‹ Test prim にもどる</button>
+      <div class="helix-mark" aria-hidden="true"><span></span><span></span><span></span><b>⟳</b></div>
+      <p class="helix-eyebrow">PRECISION PLATFORMER</p>
+      <h1 class="helix-logo">HEL<em>I</em>X</h1>
+      <p class="helix-jp">螺旋</p>
+      <div class="helix-rule" aria-hidden="true"><span></span>✧<span></span></div>
+      <p class="helix-lead">壁に張り付く。跳ね返る。<br>五つの段を、一息で登り切る。</p>
+      <button type="button" id="helixStartBtn" class="helix-primary">はじめる <b>↗</b></button>
+      <button type="button" id="helixStagesBtn" class="helix-ghost">段を選ぶ</button>
+      <p id="helixRecord" class="helix-record">STAGE 0 / 5 CLEARED</p>
+      <p class="helix-keys">
+        <kbd>←</kbd><kbd>→</kbd> すすむ · <kbd>Space</kbd> 跳ぶ · <kbd>Shift</kbd> ダッシュ · <kbd>P</kbd> とめる<br>
+        スマートフォンでは左で移動、右で跳ぶ
+      </p>
+      <button type="button" id="helixSoundBtn" class="helix-icon" aria-label="音を消す" title="音の切り替え">♫</button>
+    </div>
+  </section>
+
+  <section id="helixPlay" class="helix-screen off" aria-label="HELIX プレイ画面">
+    <canvas id="helixWorld" aria-label="HELIX ゲーム画面"></canvas>
+    <div class="helix-hud">
+      <div class="helix-stage">
+        <span id="helixStageNo">STAGE 01</span>
+        <b id="helixStageName">足場</b>
+      </div>
+      <div class="helix-tools">
+        <button type="button" id="helixPauseBtn" class="helix-icon" aria-label="一時停止" title="一時停止">Ⅱ</button>
+      </div>
+    </div>
+    <p id="helixLead" class="helix-lead-hint"></p>
+    <div class="helix-meta">
+      <span id="helixTime">0.00s</span>
+      <span id="helixPearls" class="helix-pearls">0 / 0</span>
+      <span id="helixDeaths">FALLS <b>0</b></span>
+    </div>
+    <div class="helix-flash" aria-hidden="true"></div>
+  </section>
+
+  <!-- The overlay and the toast live outside both screens on purpose: the stage
+       select is reachable from the title, and anything nested in the hidden
+       #helixPlay collapses to zero height. Their z-index has to clear the
+       screens (14) instead of relying on being a descendant of one. -->
+  <div id="helixOverlay" class="helix-overlay" aria-live="polite"></div>
+  <div id="helixToast" class="helix-toast" role="status" aria-live="polite"></div>
+
   <script src="sol/entry.js" defer></script>
   <script src="game.js" defer></script>
   <script src="sumifu.js" defer></script>
@@ -337,5 +391,7 @@
   <script src="code.js" defer></script>
   <script src="sync-sim.js" defer></script>
   <script src="sync.js" defer></script>
+  <script src="helix-sim.js" defer></script>
+  <script src="helix.js" defer></script>
 </body>
 </html>

@@ -83,6 +83,13 @@ body.code-active #sumifu{display:none!important}
 .launcher-button-sync .launcher-button-label strong{color:#f2fbff}
 .launcher-button-sync .launcher-button-label em{color:#a8c6ea;letter-spacing:.18em}
 .launcher-button-sync .launcher-button-arrow{color:#8ef0ff}
+/* Minimax M3.1 — HELIX。酸性のライムと近黒。石と刃の配色。 */
+.launcher-button-helix{border-color:rgba(201,255,61,.46);background:linear-gradient(115deg,rgba(201,255,61,.13),rgba(255,61,127,.1))}
+.launcher-button-helix:active{background:rgba(201,255,61,.22)}
+.launcher-button-helix .launcher-button-symbol{color:#eaffb8;text-shadow:0 0 21px #c9ff3d}
+.launcher-button-helix .launcher-button-label strong{color:#f6ffe6}
+.launcher-button-helix .launcher-button-label small{color:#b6c98a}
+.launcher-button-helix .launcher-button-arrow{color:#c9ff3d}
 @media(hover:hover){.launcher-button:hover{border-color:rgba(233,255,247,.85);box-shadow:0 14px 48px rgba(120,226,222,.15),inset 0 0 0 4px rgba(8,28,43,.43)}}
 /* 入口が4つになっても、短い画面では詰まって読めなくならないようにする。 */
 @media(max-height:840px){

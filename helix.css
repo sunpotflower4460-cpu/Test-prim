@@ -1,0 +1,539 @@
+/* HELIX // 螺旋 — Minimax M3.1
+ * Near-black, acid lime and magenta. Deliberately none of the palette the other
+ * works use: LUMINA is mint on deep teal, KASANE is ink on warm paper, RELAY is
+ * a grey terminal, SYNC is cyan over violet.
+ */
+
+.helix-screen {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  display: none;
+  flex-direction: column;
+  overflow: hidden;
+  background: #05060a;
+  color: #eef2f6;
+  font-family: "Helvetica Neue", "Hiragino Kaku Gothic ProN", "Yu Gothic", "Noto Sans JP", system-ui, sans-serif;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+body.helix-active .helix-screen {
+  display: flex;
+}
+
+/* helix.js swaps the title and play screens by toggling "off". This selector
+   has to out-rank "body.helix-active .helix-screen", which is (0,2,1) because
+   the body state is itself a class — a plain ".helix-screen.off" at (0,2,0)
+   loses, and the title draws on top of a live stage. */
+body.helix-active .helix-screen.off { display: none; }
+
+body.helix-active #world,
+body.helix-active #codeWorld,
+body.helix-active #syncWorld,
+body.helix-active #launcher {
+  display: none;
+}
+
+/* ---------------------------------------------------------------- title -- */
+
+#helixTitle {
+  align-items: center;
+  /* Centring with justify-content pushed a too-tall column above the scroll
+   * origin, so on a landscape phone the return button — the only way out of
+   * this screen — sat at a negative offset and could not be clicked at all.
+   * The shell centres itself with auto margins instead, which fall back to the
+   * top edge once the free space runs out. */
+  justify-content: flex-start;
+  padding: 26px 22px calc(26px + env(safe-area-inset-bottom));
+  text-align: center;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background:
+    radial-gradient(circle at 50% 34%, rgba(201, 255, 61, .09), transparent 46%),
+    radial-gradient(circle at 18% 78%, rgba(255, 61, 127, .1), transparent 52%),
+    #05060a;
+}
+
+/* The title column is taller than a landscape phone. Shrink the mark and the
+ * gaps rather than letting the top of the page disappear. */
+@media (max-height: 640px) {
+  .helix-mark { width: 62px; height: 62px; margin-top: 8px; }
+  .helix-mark span:nth-child(2) { inset: 10px; }
+  .helix-mark span:nth-child(3) { inset: 20px; }
+  .helix-mark b { font-size: 22px; }
+  .helix-logo { font-size: clamp(36px, 11vw, 50px); }
+  .helix-shell { gap: 9px; }
+  .helix-primary, .helix-ghost { padding: 11px 22px; min-width: 200px; }
+  .helix-keys { line-height: 1.7; }
+  .helix-return { top: -20px; }
+}
+
+.helix-shell {
+  position: relative;
+  width: min(430px, 100%);
+  /* auto margins centre the column when it fits and pin it to the top when it
+   * does not, which is the behaviour justify-content:center cannot provide */
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+}
+
+.helix-return {
+  position: absolute;
+  top: -6px;
+  left: 0;
+  padding: 7px 12px;
+  border: 1px solid rgba(238, 242, 246, .18);
+  border-radius: 2px;
+  background: transparent;
+  color: rgba(238, 242, 246, .62);
+  font-size: 11px;
+  letter-spacing: .12em;
+  cursor: pointer;
+}
+
+.helix-return:hover { color: #c9ff3d; border-color: rgba(201, 255, 61, .5); }
+
+.helix-mark {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  margin-top: 22px;
+}
+
+.helix-mark span {
+  position: absolute;
+  inset: 0;
+  border: 1.5px solid rgba(201, 255, 61, .34);
+  border-radius: 50%;
+}
+
+.helix-mark span:nth-child(2) {
+  inset: 14px;
+  border-color: rgba(255, 61, 127, .34);
+  border-radius: 50% 50% 50% 4px;
+}
+
+.helix-mark span:nth-child(3) {
+  inset: 28px;
+  border-color: rgba(238, 242, 246, .2);
+}
+
+.helix-mark b {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 30px;
+  color: #c9ff3d;
+  text-shadow: 0 0 18px rgba(201, 255, 61, .55);
+}
+
+.helix-eyebrow {
+  margin: 0;
+  font-size: 10px;
+  letter-spacing: .38em;
+  color: rgba(238, 242, 246, .5);
+  text-transform: uppercase;
+}
+
+.helix-logo {
+  margin: 0;
+  font-size: clamp(46px, 15vw, 72px);
+  font-weight: 700;
+  letter-spacing: .06em;
+  line-height: .95;
+  color: #eef2f6;
+}
+
+.helix-logo em {
+  font-style: normal;
+  color: #c9ff3d;
+}
+
+.helix-jp {
+  margin: 0;
+  font-size: 15px;
+  letter-spacing: .5em;
+  text-indent: .5em;
+  color: rgba(238, 242, 246, .7);
+}
+
+.helix-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  color: rgba(201, 255, 61, .4);
+}
+
+.helix-rule span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(201, 255, 61, .45), transparent); }
+
+.helix-lead {
+  margin: 0;
+  font-size: 13.5px;
+  line-height: 1.95;
+  color: rgba(238, 242, 246, .74);
+  white-space: pre-line;
+}
+
+.helix-primary,
+.helix-ghost {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 220px;
+  padding: 14px 26px;
+  border-radius: 2px;
+  font-size: 14px;
+  letter-spacing: .1em;
+  cursor: pointer;
+  transition: background .16s ease, color .16s ease, border-color .16s ease;
+}
+
+.helix-primary {
+  border: 1px solid #c9ff3d;
+  background: #c9ff3d;
+  color: #05060a;
+  font-weight: 700;
+}
+
+.helix-primary b { font-size: 16px; }
+
+.helix-primary:hover { background: #e0ff7a; border-color: #e0ff7a; }
+
+.helix-ghost {
+  border: 1px solid rgba(238, 242, 246, .2);
+  background: transparent;
+  color: rgba(238, 242, 246, .68);
+}
+
+.helix-ghost:hover { border-color: rgba(255, 61, 127, .6); color: #ff3d7f; }
+
+.helix-record {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: rgba(238, 242, 246, .42);
+}
+
+.helix-keys {
+  margin: 4px 0 0;
+  font-size: 11px;
+  line-height: 2;
+  color: rgba(238, 242, 246, .4);
+}
+
+.helix-keys kbd {
+  display: inline-block;
+  min-width: 20px;
+  margin: 0 1px;
+  padding: 2px 5px;
+  border: 1px solid rgba(238, 242, 246, .22);
+  border-radius: 2px;
+  font: inherit;
+  font-size: 10px;
+  color: rgba(238, 242, 246, .72);
+}
+
+/* ----------------------------------------------------------------- play -- */
+
+/* Visibility is owned entirely by .helix-screen and .off. An earlier
+   "body.helix-active #helixPlay { display: block }" looked equivalent but an
+   ID selector outranks every class rule, so it kept re-showing the play screen
+   while the title was up. Only positioning is set here. */
+body.helix-active #helixPlay {
+  position: absolute;
+  inset: 0;
+}
+
+#helixWorld {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+}
+
+.helix-hud {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: calc(10px + env(safe-area-inset-top)) 12px 10px;
+  pointer-events: none;
+}
+
+.helix-stage {
+  font-size: 11px;
+  letter-spacing: .2em;
+  color: rgba(238, 242, 246, .72);
+}
+
+.helix-stage b {
+  display: block;
+  margin-top: 3px;
+  font-size: 13px;
+  letter-spacing: .08em;
+  color: #c9ff3d;
+}
+
+.helix-tools { display: flex; gap: 6px; pointer-events: auto; }
+
+.helix-icon {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(238, 242, 246, .18);
+  border-radius: 2px;
+  background: rgba(5, 6, 10, .55);
+  color: rgba(238, 242, 246, .8);
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.helix-icon:hover { border-color: #c9ff3d; color: #c9ff3d; }
+
+.helix-meta {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(10px + env(safe-area-inset-bottom));
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+  letter-spacing: .14em;
+  color: rgba(238, 242, 246, .44);
+  pointer-events: none;
+}
+
+.helix-meta b { color: #ff3d7f; font-weight: 600; }
+
+/* Stage flavour text. It appears once when the stage opens and fades, so it
+   never sits in the player's eyeline while they are reading terrain. */
+.helix-lead-hint {
+  position: absolute;
+  top: calc(58px + env(safe-area-inset-top));
+  left: 0;
+  right: 0;
+  z-index: 2;
+  margin: 0;
+  padding: 0 22px;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1.9;
+  letter-spacing: .08em;
+  white-space: pre-line;
+  color: rgba(238, 242, 246, .72);
+  pointer-events: none;
+  opacity: 0;
+}
+
+.helix-lead-hint.show { animation: helix-lead-fade 3.6s ease forwards; }
+
+@keyframes helix-lead-fade {
+  0% { opacity: 0; transform: translateY(-4px); }
+  12% { opacity: 1; transform: translateY(0); }
+  72% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .helix-lead-hint.show { animation: none; opacity: 1; }
+}
+
+.helix-pearls { letter-spacing: .3em; color: #c9ff3d; }
+
+.helix-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  background: #ff3d7f;
+  opacity: 0;
+  transition: opacity .45s ease;
+}
+
+/* --------------------------------------------------------------- overlay -- */
+
+.helix-overlay {
+  position: fixed;
+  inset: 0;
+  /* Both screens sit at 14; these two now stand beside them rather than inside,
+   * so they have to out-rank that layer themselves. */
+  z-index: 20;
+  display: none;
+  padding: 22px;
+  /* Same reasoning as #helixTitle: the stage-select card outgrows a landscape
+   * phone, and a centred overflow would hide its own buttons above the top. */
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: rgba(4, 5, 9, .82);
+  backdrop-filter: blur(3px);
+}
+
+.helix-overlay.on { display: flex; }
+
+/* Body-level siblings now, so they need the same scope guard the keyboard
+ * handlers carry: nothing of HELIX may stay painted over the launcher. */
+body:not(.helix-active) .helix-overlay,
+body:not(.helix-active) .helix-toast { display: none; }
+
+.helix-card {
+  width: min(400px, 100%);
+  margin: auto;
+  padding: 26px 22px;
+  border: 1px solid rgba(238, 242, 246, .14);
+  border-radius: 3px;
+  background: linear-gradient(180deg, rgba(14, 17, 24, .96), rgba(6, 8, 12, .96));
+  text-align: center;
+}
+
+.helix-card.wide { width: min(560px, 100%); }
+
+.helix-kicker {
+  margin: 0 0 8px;
+  font-size: 10px;
+  letter-spacing: .34em;
+  color: rgba(238, 242, 246, .42);
+}
+
+.helix-card h2 {
+  margin: 0 0 4px;
+  font-size: 22px;
+  letter-spacing: .06em;
+}
+
+.helix-card p {
+  margin: 8px 0 0;
+  font-size: 13px;
+  line-height: 1.85;
+  color: rgba(238, 242, 246, .74);
+  white-space: pre-line;
+}
+
+.helix-grade {
+  margin: 12px 0 2px;
+  font-size: 40px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  color: #c9ff3d;
+  text-shadow: 0 0 24px rgba(201, 255, 61, .35);
+}
+
+.helix-sub {
+  margin: 0;
+  font-size: 11px;
+  letter-spacing: .18em;
+  color: rgba(238, 242, 246, .5);
+}
+
+.helix-stats {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  margin: 18px 0 4px;
+}
+
+.helix-stats div { display: flex; flex-direction: column; gap: 4px; }
+
+.helix-stats strong {
+  font-size: 20px;
+  color: #eef2f6;
+}
+
+.helix-stats span {
+  font-size: 9.5px;
+  letter-spacing: .16em;
+  color: rgba(238, 242, 246, .42);
+}
+
+.helix-stages {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 8px;
+  margin: 18px 0 6px;
+}
+
+.helix-stage-btn {
+  padding: 12px 4px;
+  border: 1px solid rgba(238, 242, 246, .16);
+  border-radius: 2px;
+  background: transparent;
+  color: rgba(238, 242, 246, .8);
+  font-size: 12px;
+  letter-spacing: .08em;
+  cursor: pointer;
+}
+
+.helix-stage-btn:hover:not(:disabled) { border-color: #c9ff3d; color: #c9ff3d; }
+.helix-stage-btn:disabled { opacity: .3; cursor: default; }
+
+.helix-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.helix-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 46px;
+  z-index: 21;
+  transform: translateX(-50%);
+  padding: 8px 16px;
+  border: 1px solid rgba(238, 242, 246, .16);
+  border-radius: 2px;
+  background: rgba(5, 6, 10, .9);
+  font-size: 11.5px;
+  letter-spacing: .1em;
+  color: #eef2f6;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .18s ease;
+}
+
+.helix-toast.on { opacity: 1; }
+
+@media (max-width: 380px), (max-height: 620px) {
+  .helix-mark { width: 68px; height: 68px; margin-top: 12px; }
+  .helix-mark b { font-size: 22px; }
+  .helix-lead { font-size: 12.5px; line-height: 1.8; }
+  .helix-primary { min-width: 190px; padding: 12px 20px; }
+  .helix-card { padding: 20px 16px; }
+}
+
+/* A landscape phone is 375px tall, and the block above matched it and won on
+ * order, so the primary button still landed just below the fold. This one is
+ * last so the very short case actually wins, and the mark shrinks to match the
+ * rings drawn inside it. */
+@media (max-height: 460px) {
+  .helix-mark { width: 46px; height: 46px; margin-top: 2px; }
+  .helix-mark span:nth-child(2) { inset: 7px; }
+  .helix-mark span:nth-child(3) { inset: 15px; }
+  .helix-mark b { font-size: 16px; }
+  .helix-logo { font-size: clamp(30px, 9vw, 40px); }
+  .helix-shell { gap: 6px; }
+  .helix-lead { font-size: 12px; line-height: 1.5; }
+  .helix-primary, .helix-ghost { padding: 9px 20px; min-width: 190px; }
+  .helix-keys { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .helix-mark span { animation: none !important; }
+}

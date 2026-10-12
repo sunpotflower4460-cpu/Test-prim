@@ -21,6 +21,8 @@ jobs:
           node --check code.js
           node --check sync-sim.js
           node --check sync.js
+          node --check helix-sim.js
+          node --check helix.js
           node --check sol/entry.js
           node --check sol/sim.js
           node --check sol/levels.js
@@ -55,4 +57,4 @@ jobs:
       - name: Japanese text scans
         run: |
           python3 tools/jp-scan.py --self-test
-          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js sol/entry.js sol/sim.js sol/levels.js sol/sea.js sol/audio.js sol/game.js sol/index.html sol/tide.css luna/luna.js luna/index.html luna/luna.css echo/sim.js echo/levels.js echo/audio.js echo/render.js echo/game.js echo/index.html echo/echo.css oriko/optics.js oriko/levels.js oriko/game.js oriko/index.html oriko/oriko.css mikan/phys.js mikan/levels.js mikan/game.js mikan/index.html mikan/mikan.css hebi/sim.js hebi/levels.js hebi/game.js hebi/index.html hebi/hebi.css kake/sim.js kake/levels.js kake/game.js kake/index.html kake/kake.css grok/index.html grok/shelf.css sw.js index.html style.css README.md manifest.webmanifest
+          python3 tools/jp-scan.py game.js sumifu.js code.js code-sim.js sync.js sync-sim.js helix.js helix-sim.js helix.css tools/helix-levels.cjs tests/helix.test.cjs sol/entry.js sol/sim.js sol/levels.js sol/sea.js sol/audio.js sol/game.js sol/index.html sol/tide.css luna/luna.js luna/index.html luna/luna.css echo/sim.js echo/levels.js echo/audio.js echo/render.js echo/game.js echo/index.html echo/echo.css oriko/optics.js oriko/levels.js oriko/game.js oriko/index.html oriko/oriko.css mikan/phys.js mikan/levels.js mikan/game.js mikan/index.html mikan/mikan.css hebi/sim.js hebi/levels.js hebi/game.js hebi/index.html hebi/hebi.css kake/sim.js kake/levels.js kake/game.js kake/index.html kake/kake.css grok/index.html grok/shelf.css sw.js index.html style.css README.md manifest.webmanifest

@@ -12,7 +12,7 @@
 > - GPT6 CHAT — LUMINA（星灯りの庭）
 > - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）、HEBI（蛇）、KAKE（駆け）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）・ ECHO（きろくの協力者）
-> - Minimax M3.1 — SYNC（共鳴）
+> - Minimax M3.1 — SYNC（共鳴）・ HELIX（螺旋）
 > - GPT 6.1 sol — AFTERTIDE（潮の郵便屋）
 > - GPT 6 Luna — LUNA（星環航路）
 
@@ -329,6 +329,45 @@ Minimax M3.1 を遊ぶ → **「Minimax M3.1」** を選ぶ → **SYNC 共鳴** 
 
 ---
 
+## ⟳ Minimax M3.1 第二作 | HELIX — 螺旋
+
+**壁に張り付いて跳ね返る。五つの段を、一息で登り切る。**
+
+精密な足場アクション。足場は読めば必ず届きますが、読む前に跳べば落ちます。
+
+- **5つの段**：足場 → 壁沿い → 往来 → 灯火 → 峰
+- **手感**：コヨーテタイム、先行入力、可変ジャンプ、壁沿い、壁跳び、ダッシュ
+- **番人**：上下に往復する。軌道が点線で描かれる
+- **真珠**：取らなくても先に進める
+- **音**：Web Audioで生成。外部ライブラリなし
+- **スマホ**：左半分か移動、右半分が跳ぶとダッシュ
+
+### ▶ ゲームを開く
+
+**[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
+
+### あそびかた
+
+| 操作 | スマートフォン | PC |
+| --- | --- | --- |
+| 移動 | 左半分のタップ位置 | ← → / A D |
+| 跳ぶ | 右半分タップ | Space / ↑ / W / Z |
+| ダッシュ | 右半分タップ | Shift / X / K |
+| 一時停止 | 右上の Ⅱ | P / Esc |
+
+### ステージが解けることの証明
+
+各段には 0 死でクリアする入力スクリプトが同梱されています。`tests/helix.test.cjs` が Node 上で再生し、終点への到達を確認します。`window.__helix.replayScript()` は同じスクリプトをブラウザ側の実入力で再生します。
+
+スクリプトは手で書いたものではありません。`tools/helix-solve.cjs` が実シミュレーション上で beam search で見つけ、`runScript` で一度再生して確かめてから保存します。段の地形だけ書き換えると（`tools/helix-levels.cjs` の矩形を動かして）、解けなくなった瞬間にテストが落ちます。
+
+```bash
+node tools/helix-author.cjs --seconds=170   # 全段のスクリプトを作り直す
+node tools/helix-levels.cjs --check          # 段を描いて検証する
+node --test tests/helix.test.cjs             # 保存済みスクリプトを再生
+```
+
+---
 ## ⚓ GPT 6.1 sol 作品 | AFTERTIDE — 潮の郵便屋
 
 **海の向こうに、待っている人がいる。**
@@ -426,6 +465,8 @@ node --check code-sim.js
 node --check code.js
 node --check sync-sim.js
 node --check sync.js
+node --check helix-sim.js
+node --check helix.js
 node --check sol/sim.js
 node --check sol/levels.js
 node --check sol/sea.js

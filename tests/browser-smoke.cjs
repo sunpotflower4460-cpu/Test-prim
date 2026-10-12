@@ -25,7 +25,7 @@ const targets = [
       await page.route("https://fonts.gstatic.com/**", route => route.abort());
       await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
       await page.locator("#launcher").waitFor({ state: "visible" });
-      for (const [door, title, back] of [["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"]]) {
+      for (const [door, title, back] of [["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"],["helixOpenBtn","helixTitle","helixReturnBtn"]]) {
         await page.locator("#" + door).press("Enter");
         await page.locator("#" + title).waitFor({state:"visible"});
         assert.ok(!(await page.locator("#home").isVisible()), "Enter opens only the selected game");
@@ -73,8 +73,8 @@ const targets = [
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
         entryLabels,
-        ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna"],
-        "launcher lists the six entries in order"
+        ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna"],
+        "launcher lists the seven entries in order"
       );
       const launcherFit = await page.evaluate(() => ({
         viewport: window.innerWidth,
@@ -510,6 +510,73 @@ const targets = [
       await page.locator("#syncReturnBtn").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       assert.ok(!(await page.locator("#syncTitle").isVisible()), "sync title hides after leaving");
+
+      // HELIX // 螺旋（Minimax M3.1 の二作目）。入口、描画、実入力でのクリアまで通す。
+      await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      const helixLabels = await page.locator("#helixOpenBtn .launcher-button-label strong").innerText();
+      assert.equal(helixLabels, "Minimax M3.1", "HELIX の入口は Minimax M3.1");
+      await page.locator("#helixOpenBtn").click();
+      await page.locator("#helixTitle").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#helixTitle h1").innerText(), "HELIX");
+      assert.ok(!(await page.locator("#helixPlay").isVisible()), "タイトル中はプレイ画面が見えない");
+
+      // The return button is the only way off the title screen, so check it here
+      // rather than after five stages: a centred column that overflows above the
+      // scroll origin left this unclickable on a landscape phone.
+      await page.locator("#helixReturnBtn").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      assert.ok(!(await page.locator("#helixTitle").isVisible()), "returns to the launcher from a fresh title");
+      await page.locator("#helixOpenBtn").click();
+      await page.locator("#helixTitle").waitFor({ state: "visible" });
+
+      // Stage select is opened from the title, so its overlay cannot live inside
+      // the hidden play screen: nested there it rendered at zero height.
+      await page.locator("#helixStagesBtn").click();
+      await page.locator("#helixOverlay").waitFor({ state: "visible" });
+      assert.equal(await page.locator("#helixOverlay .helix-stage-btn").count(), 5, "五つの段が並ぶ");
+      assert.ok(await page.locator("#helixOverlay .helix-card").isVisible(), "段選択のカードが見えている");
+      assert.ok(!(await page.locator("#helixOverlay").innerText()).includes("undefined"),
+        "段選択のカードに未定義の文字列が出ない");
+      await page.locator("#helixOverlay .helix-ghost").click();
+      await page.locator("#helixTitle").waitFor({ state: "visible" });
+
+      await page.locator("#helixStartBtn").click();
+      await page.locator("#helixPlay").waitFor({ state: "visible" });
+      assert.ok(!(await page.locator("#helixTitle").isVisible()), "プレイ中はタイトルが見えない");
+      assert.equal(await page.locator("#helixStageNo").innerText(), "STAGE 01");
+
+      // 画面が実際に描かれていること。真っ白や単色で塗られていないか。
+      await page.waitForTimeout(250);
+      const painted = await page.evaluate(() => window.__helix.painted());
+      assert.ok(painted.samples > 0, "キャンバスが実寸である");
+      assert.ok(painted.lime > 50,
+        "ステージの足場（ライム）が描かれている: " + JSON.stringify(painted));
+
+      // 一時停止 → 再開
+      await page.locator("#helixPauseBtn").click();
+      await page.locator("#helixOverlay").waitFor({ state: "visible" });
+      await page.locator("#helixOverlay .helix-primary").click();
+      await page.locator("#helixOverlay").waitFor({ state: "hidden" });
+
+      // 添えられたスクリプトを、プレイヤーと同じ入力経路で再生してクリアする。
+      for (let stage = 0; stage < 5; stage++) {
+        const result = await page.evaluate((i) => window.__helix.replayScript(i), stage);
+        assert.ok(result.finished,
+          "STAGE " + (stage + 1) + " をブラウザ側の入力でクリアできない");
+        assert.equal(result.deaths, 0, "STAGE " + (stage + 1) + " で死んだ");
+        await page.locator("#helixOverlay").waitFor({ state: "visible" });
+        await page.waitForTimeout(500);
+      }
+      // the last stage ends on the epilogue, not on stage select
+      assert.match(await page.locator("#helixOverlay h2").innerText(), /SUMMIT|峰/);
+      await page.locator("#helixOverlay .helix-ghost").click();
+      await page.locator("#helixTitle").waitFor({ state: "visible" });
+      assert.match(await page.locator("#helixRecord").innerText(), /SUMMIT REACHED/);
+
+      await page.locator("#helixReturnBtn").click();
+      await page.locator("#launcher").waitFor({ state: "visible" });
+      assert.ok(!(await page.locator("#helixTitle").isVisible()), "helix title hides after leaving");
 
       // AFTERTIDE lives on a separate page so the other games' inputs and audio remain isolated.
       await page.locator("#openSolBtn").click();

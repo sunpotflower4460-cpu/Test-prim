@@ -13,7 +13,7 @@ import sys
 
 ROOT = "."
 HTML = "index.html"
-CSS_FILES = ["style.css", "sumifu.css", "code.css", "sync.css"]
+CSS_FILES = ["style.css", "sumifu.css", "code.css", "sync.css", "helix.css"]
 JS_FILES = ["game.js", "sumifu.js", "code.js", "sync.js"]
 VOID = {"meta", "link", "br", "hr", "img", "input", "source",
         "area", "base", "col", "embed", "param", "track", "wbr"}
