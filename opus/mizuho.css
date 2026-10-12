@@ -296,6 +296,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .coach-step { margin: 0 0 3px; font: 700 10px var(--sans); letter-spacing: .16em; color: #8a6a2a; }
 .coach-text { margin: 0; font-size: 13.5px; line-height: 1.8; letter-spacing: .03em; }
 .coach-text b { color: #8a3d1c; }
+.coach-text small { display: block; margin-top: 2px; font-size: 11.5px; color: #7a6e5c; }
 .coach-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
 .coach-actions:empty { display: none; }
 .coach-actions button { padding: 7px 14px; border-radius: 3px; font-size: 12px; letter-spacing: .1em; border: 1px solid rgba(42, 38, 32, .25); background: rgba(255, 255, 255, .5); color: var(--ink); }
@@ -318,3 +319,13 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .coach { padding: 8px 12px; }
   .coach-text { font-size: 12.5px; line-height: 1.7; }
 }
+
+/* the top displays explain themselves when tapped */
+[data-explain] { cursor: pointer; }
+.stat[data-explain]:active { transform: scale(.97); }
+.stat-soil { position: relative; }
+.soil-delta { position: absolute; right: 12px; top: calc(100% + 2px); font: 700 13px var(--sans); opacity: 0; pointer-events: none; text-shadow: 0 1px 4px rgba(0, 0, 0, .6); }
+.soil-delta.up { color: #d6b37a; }
+.soil-delta.down { color: #b9e0a0; }
+.soil-delta.show { animation: soil-delta 1.4s ease-out; }
+@keyframes soil-delta { 0% { opacity: 0; transform: translateY(6px); } 15% { opacity: 1; transform: none; } 70% { opacity: 1; } 100% { opacity: 0; transform: translateY(-14px); } }

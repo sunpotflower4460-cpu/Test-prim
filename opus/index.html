@@ -36,7 +36,7 @@
         <h1 class="title-logo">MIZUHO</h1>
         <p class="title-kanji" aria-label="瑞穂">瑞<br>穂</p>
       </div>
-      <p class="title-lead">山の斜面に、水の段を。<br>崩れた畦を盛り、土を均して、<br>もう一度、この谷に稲を。</p>
+      <p class="title-lead">山の斜面に、水の段を。<br>崩れた田のふちに土を盛り、斜面を平らにして、<br>もう一度、この谷に稲を。</p>
       <div class="title-actions">
         <button type="button" class="primary" data-action="select" id="startBtn"><span>田をひらく</span><b aria-hidden="true">↗</b></button>
         <button type="button" class="quiet" data-action="how">あそびかた</button>
@@ -66,7 +66,7 @@
         <span id="hudNo">第一の谷</span>
         <strong id="hudName">一枚目</strong>
       </div>
-      <div class="almanac" id="almanac" aria-label="暦">
+      <div class="almanac" id="almanac" role="button" tabindex="0" data-explain="almanac" aria-label="暦（タップで説明）">
         <svg viewBox="0 0 64 64" aria-hidden="true">
           <circle class="alm-bg" cx="32" cy="32" r="26"/>
           <path class="alm-seg alm-early" id="almEarly"/>
@@ -80,9 +80,9 @@
       </div>
     </header>
     <div class="hud-stats">
-      <div class="stat stat-rice" id="statRice" aria-label="収穫の見込みと目標"><small id="riceLabel">見込み</small><b id="riceNow">0</b><span class="goal-sep">/</span><small>目標</small><b id="riceGoal">6</b><em>俵</em></div>
-      <div class="stat stat-soil" id="statSoil"><small>籠の土</small><div class="soil-bar"><i id="soilFill"></i></div><b id="soilNum">0</b></div>
-      <div class="stat stat-houses" id="statHouses" aria-label="家"></div>
+      <div class="stat stat-rice" id="statRice" role="button" tabindex="0" data-explain="rice" aria-label="収穫の見込みと目標（タップで説明）"><small id="riceLabel">見込み</small><b id="riceNow">0</b><span class="goal-sep">/</span><small>目標</small><b id="riceGoal">6</b><em>俵</em></div>
+      <div class="stat stat-soil" id="statSoil" role="button" tabindex="0" data-explain="soil" aria-label="手持ちの土（タップで説明）"><small>手持ちの土</small><div class="soil-bar"><i id="soilFill"></i></div><b id="soilNum">0</b><span class="soil-delta" id="soilDelta" aria-hidden="true"></span></div>
+      <div class="stat stat-houses" id="statHouses" role="button" tabindex="0" data-explain="houses" aria-label="家（タップで説明）"></div>
     </div>
     <section class="coach" id="coach" hidden aria-live="polite">
       <p class="coach-step" id="coachStep"></p>

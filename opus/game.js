@@ -369,6 +369,46 @@
       <div class="dialog-actions"><button type="button" class="accent" data-dialog="begin">谷に入る</button></div>`, { begin: () => { closeModal(); coachStart(lv); hintAt("start"); } });
   }
 
+  // ---- the screen explains itself ---------------------------------------------------------------
+  const EXPLAIN = {
+    rice: () => `<b>見込み</b>：いま苗を植えられる田の量（俵）。これが<b>目標</b>の ${state.level.goal} 俵に届いたら「田植えをする」。田植えのあとは、育っている稲の量。<b>俵</b>はお米の量の単位（田 8 マスで 1 俵）。`,
+    soil: () => `<b>手持ちの土</b>：「掘る」と増え、「盛る」と減る土の量。0 だと盛れないので、どこかを掘って手に入れる。「均す」は高い所の土を低い所へ回す。`,
+    houses: () => `<b>家</b>：一軒でも水に浸かると、その谷はひらけない。雨の水が集まる低い所に家があるときは、掘って水の逃げ道をつくろう。`,
+    almanac: () => `<b>暦</b>：田植えまでは春のまま止まっている。田植えのあと針が一周すると秋の収穫。色は 初夏・梅雨・盛夏・秋。`
+  };
+  const TOOL_TIP = {
+    heap: "<b>盛る</b>：なぞった所に土を盛り上げる（手持ちの土を使う）。田のふちに土手をつくって、水をせき止める。",
+    dig: "<b>掘る</b>：なぞった所を掘る（手持ちの土が増える）。水の通り道や、水を逃がす出口をつくる。",
+    level: "<b>均す</b>：指を置いた所の高さに、まわりを平らに揃える。斜面に田の段をつくる。",
+    look: "<b>眺める</b>：なぞると景色が動く。土は動かない。"
+  };
+  document.addEventListener("click", e => {
+    const el = e.target.closest("[data-explain]");
+    if (!el || state.screen !== "play") return;
+    audio.unlock(); audio.event("click");
+    hint(EXPLAIN[el.dataset.explain](), 9);
+  });
+  document.addEventListener("keydown", e => {
+    const el = e.target.closest && e.target.closest("[data-explain]");
+    if (el && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); e.stopPropagation(); el.click(); }
+  }, true);
+  // after each stroke, the soil count shows what it gained or spent
+  function soilDelta(d) {
+    const el = $("#soilDelta");
+    if (Math.abs(d) < 0.5) return;
+    el.textContent = (d > 0 ? "+" : "−") + Math.round(Math.abs(d));
+    el.className = "soil-delta " + (d > 0 ? "up" : "down");
+    void el.offsetWidth; el.classList.add("show");
+  }
+  function soilEmpty() {
+    for (const sel of ['.tool[data-tool="dig"]', "#statSoil"]) {
+      const el = document.querySelector(sel);
+      if (!el) continue;
+      el.classList.add("coach-pulse");
+      setTimeout(() => { if (!state.coach || state.coach.steps[state.coach.i].target !== sel) el.classList.remove("coach-pulse"); }, 2600);
+    }
+  }
+
   // ---- coach: the tutorial, one step at a time -------------------------------------------------
   function coachStart(lv) {
     state.coach = null; state.strokes = {};
@@ -616,7 +656,7 @@
     openDialog(`
       <p class="eyebrow">EPILOGUE</p>
       <h2>瑞穂</h2>
-      <p class="poem">崩れた畦をひとつ盛ったところから、<br>八つの谷に、水の段ができました。<br><br>水は上の田から下の田へ、<br>一枚ずつを満たして、海へ帰っていきます。<br>来年の春も、同じ水が来ます。</p>
+      <p class="poem">崩れた田のふちに土をひと盛りしたところから、<br>八つの谷に、水の段ができました。<br><br>水は上の田から下の田へ、<br>一枚ずつを満たして、海へ帰っていきます。<br>来年の春も、同じ水が来ます。</p>
       <p class="keys">穂 ${st} / ${Levels.LEVELS.length * 3}</p>
       <div class="dialog-actions"><button type="button" class="accent" data-dialog="title">おわり</button></div>`, { title: () => { state.titleWorld = null; enterTitle(); } });
   }
@@ -705,7 +745,7 @@
       return;
     }
     const t = e.target.closest(".tool[data-tool]");
-    if (t) { audio.unlock(); audio.event("select"); setTool(t.dataset.tool); }
+    if (t) { audio.unlock(); audio.event("select"); setTool(t.dataset.tool); if (state.screen === "play") hint(TOOL_TIP[t.dataset.tool], 6); }
   });
   document.querySelectorAll("[data-action=sound]").forEach(b => b.classList.toggle("muted", !audio.enabled));
 
@@ -737,7 +777,7 @@
     const hit = R.pick(p.x, p.y);
     if (!hit) { state.gesture = { pan: true }; return; }
     Sim.beginStroke(state.world, state.tool, hit.x, hit.y);
-    state.sculpt = { id: e.pointerId, x: p.x, y: p.y, target: state.world.stroke.target };
+    state.sculpt = { id: e.pointerId, x: p.x, y: p.y, target: state.world.stroke.target, basket: state.world.basket };
     state.hover = hit;
   });
   view.addEventListener("pointermove", e => {
@@ -761,7 +801,9 @@
   function endPointer(e) {
     state.pointers.delete(e.pointerId);
     if (state.sculpt && state.sculpt.id === e.pointerId) {
+      const before = state.sculpt.basket;
       const st = Sim.endStroke(state.world); state.sculpt = null; state.lastStrokeEnd = state.time;
+      soilDelta(state.world.basket - before); updateHud(true);
       if (st && st.moved > 0.3) state.strokes[st.tool] = true;
       if (e.pointerType !== "mouse") state.hover = null;
     }
@@ -1013,13 +1055,13 @@
     state.lastSuitable = w.counts.suitable;
     // explain standing water that will not take seedlings, once each, after the player has worked the soil
     if (!w.started && w.undoStack.length && state.screen === "play") {
-      if (w.counts.deep >= 12 && !state.hintsShown.has("why-deep")) { state.hintsShown.add("why-deep"); hint("水が<b>深すぎる</b>所には、苗は植わらない。畦の一か所を軽く<b>掘って</b>、水位を下げよう。", 8); }
-      else if (w.counts.flow >= 16 && !state.hintsShown.has("why-flow") && state.time - (state.lastStrokeEnd || 0) > 6) { state.hintsShown.add("why-flow"); hint("<b>流れている</b>水には、苗は植わらない。平らに均して、縁に畦を<b>盛ろう</b>。", 8); }
-      else if (w.counts.rock >= 12 && !state.hintsShown.has("why-rock")) { state.hintsShown.add("why-rock"); hint("むき出しの<b>岩</b>には根が張らない。籠の土を<b>盛って</b>覆おう。", 8); }
+      if (w.counts.deep >= 12 && !state.hintsShown.has("why-deep")) { state.hintsShown.add("why-deep"); hint("水が<b>深すぎる</b>所には、苗は植わらない。田のふちを一か所だけ軽く<b>掘って</b>、水を少し逃がそう。", 8); }
+      else if (w.counts.flow >= 16 && !state.hintsShown.has("why-flow") && state.time - (state.lastStrokeEnd || 0) > 6) { state.hintsShown.add("why-flow"); hint("<b>流れている</b>水には、苗は植わらない。「均す」で平らにして、ふちに土を<b>盛って</b>水をせき止めよう。", 8); }
+      else if (w.counts.rock >= 12 && !state.hintsShown.has("why-rock")) { state.hintsShown.add("why-rock"); hint("むき出しの<b>岩</b>には根が張らない。手持ちの土を<b>盛って</b>覆おう。", 8); }
     }
     if (w.started && !w.finished) {
-      if (w.counts.parched >= 10 && !state.hintsShown.has("parched")) { state.hintsShown.add("parched"); audio.event("warn"); hint("田が<b>乾いて</b>苗がしおれはじめた。上から水を引くか、水口を少し<b>掘って</b>水を落とそう。", 8); }
-      if (w.counts.drowning >= 10 && !state.hintsShown.has("drowning")) { state.hintsShown.add("drowning"); audio.event("warn"); hint("水が<b>深すぎて</b>苗が沈んでいる。畦の低い所を<b>掘って</b>、水を逃がそう。", 8); }
+      if (w.counts.parched >= 10 && !state.hintsShown.has("parched")) { state.hintsShown.add("parched"); audio.event("warn"); hint("田が<b>乾いて</b>苗がしおれはじめた。上の田やため池から、ふちを少し<b>掘って</b>水を流そう。", 8); }
+      if (w.counts.drowning >= 10 && !state.hintsShown.has("drowning")) { state.hintsShown.add("drowning"); audio.event("warn"); hint("水が<b>深すぎて</b>苗が沈んでいる。田のふちを少し<b>掘って</b>、水を逃がそう。", 8); }
     }
     const soaking = w.houses.some(h => !h.damaged && h.soak > 0);
     if (soaking && !state.warned) { state.warned = true; audio.event("warn"); hintAt("warn"); if (!state.hintsShown.has("warn")) hint("家に水が迫っている。<b>掘って</b>、水の道を逸らそう。", 6); state.hintsShown.add("warn"); }
@@ -1056,8 +1098,8 @@
             audio.event(state.tool, { amount: moved * 8 });
             if (Math.random() < 0.6 && !reduceMotion) spawn({ kind: "dust", x: hit.x + (Math.random() - 0.5) * 2, y: Sim.sampleGround(w, hit.x, hit.y) + 0.1, z: hit.y + (Math.random() - 0.5) * 2, vx: (Math.random() - 0.5), vy: 1.5 + Math.random() * 2, vz: (Math.random() - 0.5), life: 0.6, age: 0, col: state.tool === "dig" ? "120,90,60" : "150,115,75" });
             for (const m of state.level.marks || []) if (Math.hypot(hit.x - m.x, hit.y - m.y) < m.r + 1) state.marksDone.add(m);
-          } else if (state.tool === "heap" && w.basket < 0.05) { if (!state.emptyWarned) { toast("籠が空。どこかを掘って土を得よう"); state.emptyWarned = true; } }
-          else if ((state.tool === "dig") && w.basket >= w.cap - 0.05) { if (!state.fullWarned) { toast("籠がいっぱい。どこかに盛ろう"); state.fullWarned = true; } }
+          } else if (state.tool === "heap" && w.basket < 0.05) { if (!state.emptyWarned) { toast("手持ちの土がない。まず「掘る」でどこかを掘ろう"); soilEmpty(); state.emptyWarned = true; } }
+          else if ((state.tool === "dig") && w.basket >= w.cap - 0.05) { if (!state.fullWarned) { toast("手持ちの土がいっぱい。どこかに「盛る」で使おう"); state.fullWarned = true; } }
         }
       }
       if (!state.sculpt) { state.emptyWarned = false; state.fullWarned = false; }
