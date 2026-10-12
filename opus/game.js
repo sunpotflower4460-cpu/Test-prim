@@ -14,7 +14,12 @@
   const save = (() => {
     let data = { unlocked: 0, stars: {}, best: {}, sound: true, plays: 0 };
     try { const raw = localStorage.getItem(SAVE_KEY); if (raw) data = Object.assign(data, JSON.parse(raw)); } catch (e) { /* private mode */ }
-    if (typeof data.unlocked !== "number" || data.unlocked < 0) data.unlocked = 0;
+    if (typeof data.unlocked !== "number" || !(data.unlocked >= 0)) data.unlocked = 0;
+    const plain = v => v && typeof v === "object" && !Array.isArray(v);
+    if (!plain(data.stars)) data.stars = {};
+    if (!plain(data.best)) data.best = {};
+    for (const k of Object.keys(data.stars)) if (typeof data.stars[k] !== "number") delete data.stars[k];
+    for (const k of Object.keys(data.best)) if (typeof data.best[k] !== "number") delete data.best[k];
     data.unlocked = Math.min(data.unlocked, Levels.LEVELS.length - 1);
     return {
       data,
@@ -25,9 +30,11 @@
   // A valley in progress survives closing the page.
   const SESSION_KEY = "mizuho-opus55-session";
   const session = {
-    read() { try { const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } },
-    write(w) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(Sim.serialize(w))); } catch (e) { /* storage full or blocked */ } },
-    clear() { try { localStorage.removeItem(SESSION_KEY); } catch (e) { /* blocked */ } }
+    // one slot per valley, so leaving one half-built never costs another
+    all() { try { const raw = localStorage.getItem(SESSION_KEY); const o = raw ? JSON.parse(raw) : {}; return o && typeof o === "object" && !Array.isArray(o) && !o.id ? o : {}; } catch (e) { return {}; } },
+    read(id) { const o = this.all()[id]; return o && o.id === id ? o : null; },
+    write(w) { const o = this.all(); o[w.level.id] = Sim.serialize(w); try { localStorage.setItem(SESSION_KEY, JSON.stringify(o)); } catch (e) { /* storage full or blocked */ } },
+    clear(id) { const o = this.all(); delete o[id]; try { localStorage.setItem(SESSION_KEY, JSON.stringify(o)); } catch (e) { /* blocked */ } }
   };
 
   // ---- renderer and sound --------------------------------------------------------------
@@ -227,6 +234,7 @@
 
   function enterSelect() {
     closeModal();
+    if (state.world && state.world !== state.titleWorld) state.world.hold = true; // only the water keeps moving behind the list
     state.showcase = true;
     show("select");
     const list = $("#valleyList");
@@ -245,18 +253,18 @@
       b.appendChild(cv);
       const best = save.data.best[lv.id];
       b.insertAdjacentHTML("beforeend", `<div class="valley-body"><span class="valley-no">第${KANJI_NO[i]}の谷 · VALLEY ${String(i + 1).padStart(2, "0")}</span><span class="valley-name">${lv.name}<small>${lv.kana}</small></span><p class="valley-poem">${locked ? "まだ、霧の向こう。" : lv.poem.join("<br>")}</p><span class="valley-meta"><span>目標 ${lv.goal} 俵${best !== undefined ? "　·　最高 " + best + " 俵" : ""}</span><span class="valley-stars">${"<span>★</span>".repeat(stars)}${"<span class=\"off\">★</span>".repeat(3 - stars)}</span></span></div>`);
-      const saved = !locked && session.read();
-      if (saved && saved.id === lv.id) b.querySelector(".valley-no").insertAdjacentHTML("beforeend", "<em class=\"resume-tag\">つづき</em>");
+      const saved = !locked && session.read(lv.id);
+      if (saved) b.querySelector(".valley-no").insertAdjacentHTML("beforeend", "<em class=\"resume-tag\">つづき</em>");
       b.addEventListener("click", () => {
         audio.unlock(); audio.event("select");
-        const now = session.read();
-        if (now && now.id === lv.id) {
+        const now = session.read(lv.id);
+        if (now) {
           openDialog(`
             <p class="eyebrow">第${KANJI_NO[i]}の谷 · ${lv.name}</p>
             <h2>つづきから？</h2>
             <p>${now.started ? "一年の途中" : "田植えの前"}で手を止めた谷があります。</p>
             <div class="dialog-actions"><button type="button" class="accent" data-dialog="resume">つづきから</button><button type="button" data-dialog="fresh">はじめから</button></div>`,
-          { resume: () => { closeModal(); startLevel(i, now); }, fresh: () => { closeModal(); session.clear(); startLevel(i); } });
+          { resume: () => { closeModal(); startLevel(i, now); }, fresh: () => { closeModal(); session.clear(lv.id); startLevel(i); } });
         } else startLevel(i);
       });
       li.appendChild(b); list.appendChild(li);
@@ -324,13 +332,14 @@
     const lv = Levels.LEVELS[i];
     state.levelIndex = i; state.level = lv;
     const restored = saved ? Sim.restore(lv, saved) : null;
-    if (restored) { R.setWorld(restored); state.world = restored; } else { state.world = loadWorld(lv); if (!saved) session.clear(); }
+    if (restored) { R.setWorld(restored); state.world = restored; } else { state.world = loadWorld(lv); if (!saved) session.clear(lv.id); }
     state.lastSessionSave = state.time;
     state.showcase = false;
     state.cam = playCam(state.world); state.camGoal = null;
     state.paused = false; state.speed = 1; state.harvestClock = 0; state.resultShown = false;
     state.hintsShown = new Set(); state.warned = false; state.marksDone = new Set(); state.particles.length = 0;
     state.sculpt = null; state.seasonId = "spring";
+    clearTimeout(hintTimer); clearTimeout(tipTimer); $("#hint").classList.remove("show");
     const tools = lv.tools || ["heap", "dig", "level"];
     document.querySelectorAll(".tool[data-tool]").forEach(b => {
       const t = b.dataset.tool;
@@ -399,7 +408,7 @@
   }
 
   // ---- hints and toasts --------------------------------------------------------------------
-  let hintTimer = null;
+  let hintTimer = null, tipTimer = null;
   function hint(text, seconds) {
     const el = $("#hint");
     el.innerHTML = text;
@@ -458,7 +467,7 @@
   }
 
   function pauseMenu() {
-    if (state.screen !== "play" || modalOpen()) return;
+    if (state.screen !== "play" || modalOpen() || (state.world && state.world.finished)) return;
     const lv = state.level;
     openDialog(`
       <p class="eyebrow">第${KANJI_NO[state.levelIndex]}の谷 · ${lv.name}</p>
@@ -472,24 +481,31 @@
         <button type="button" data-dialog="select">谷の暦へ</button>
       </div>`, {
       resume: closeModal,
-      retry: () => { closeModal(); session.clear(); startLevel(state.levelIndex); },
+      retry: () => { closeModal(); session.clear(state.level.id); startLevel(state.levelIndex); },
       select: () => { keepSession(); enterSelect(); },
       sound: () => { toggleSound(); closeModal(); pauseMenu(); },
       how: () => howTo(() => { closeModal(); pauseMenu(); })
     });
   }
 
-  function resultDialog() {
-    const w = state.world, lv = state.level, r = Sim.result(w);
-    session.clear();
-    const id = lv.id, i = state.levelIndex;
-    const prev = save.data.stars[id] || 0;
+  // The harvest is kept the moment the year ends, whatever happens to the dialog.
+  function recordResult(w) {
+    if (state.recorded === w) return;
+    state.recorded = w;
+    const lv = w.level, r = Sim.result(w), id = lv.id, i = Levels.LEVELS.indexOf(lv);
+    session.clear(id);
+    if (i < 0) return;
     if (r.ok) {
-      save.data.stars[id] = Math.max(prev, r.stars);
+      save.data.stars[id] = Math.max(save.data.stars[id] || 0, r.stars);
       save.data.unlocked = Math.max(save.data.unlocked, Math.min(Levels.LEVELS.length - 1, i + 1));
     }
     save.data.best[id] = Math.max(save.data.best[id] || 0, r.bales);
     save.write();
+  }
+  function resultDialog() {
+    const w = state.world, lv = state.level, r = Sim.result(w);
+    recordResult(w);
+    const i = state.levelIndex;
     const last = i === Levels.LEVELS.length - 1;
     const stars = `<p class="result-stars" aria-label="穂 ${r.stars} / 3">${"★".repeat(r.stars)}<span class="off">${"★".repeat(3 - r.stars)}</span></p>`;
     const stats = `<div class="result-stats"><div><b>${r.bales}</b>収穫（俵）</div><div><b>${r.goal}</b>目標</div><div><b>${w.houses.length - r.damaged}/${w.houses.length}</b>無事な家</div></div>`;
@@ -568,7 +584,7 @@
     toast("田植え。一年がはじまる");
     burstPlanting(w);
     hintAt("planted");
-    if (!save.data.speedTip) { save.data.speedTip = true; save.write(); setTimeout(() => { if (state.screen === "play" && !state.hintsShown.has("planted")) hint("一年が流れはじめた。右の <b>▸</b> で早送りできる。梅雨の雨と夏の日照りに気をつけて。", 8); }, 2600); }
+    if (!save.data.speedTip) { save.data.speedTip = true; save.write(); const planted = w; tipTimer = setTimeout(() => { if (state.screen === "play" && state.world === planted && !state.hintsShown.has("planted")) hint("一年が流れはじめた。右の <b>▸</b> で早送りできる。梅雨の雨と夏の日照りに気をつけて。", 8); }, 2600); }
     updateHud(true);
   }
   function rotate(dir) {
@@ -583,12 +599,14 @@
   // Move the point the camera looks at across the ground, in screen directions.
   function pan(dx, dy) {
     const c = state.cam, w = state.world;
-    const k = c.dist * 0.0021;
+    const k = c.dist * 0.0011; // the ground under the finger follows it about one to one
     const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw);
-    c.target[0] = Math.max(0, Math.min(w.W - 1, c.target[0] - (dx * cy - dy * sy / Math.max(0.35, Math.sin(c.pitch))) * k));
-    c.target[2] = Math.max(0, Math.min(w.H - 1, c.target[2] - (-dx * sy - dy * cy / Math.max(0.35, Math.sin(c.pitch))) * k * -1));
+    const f = 1 / Math.max(0.35, Math.sin(c.pitch));
+    c.target[0] = Math.max(0, Math.min(w.W - 1, c.target[0] - (dx * cy + dy * sy * f) * k));
+    c.target[2] = Math.max(0, Math.min(w.H - 1, c.target[2] - (-dx * sy + dy * cy * f) * k));
   }
   function undo() {
+    if (state.sculpt && state.world) { Sim.endStroke(state.world); state.sculpt = null; }
     if (state.world && Sim.undo(state.world)) { audio.event("click"); toast("ひとつ戻した"); }
   }
   function toggleSpeed() {
@@ -717,7 +735,10 @@
   document.addEventListener("keydown", e => {
     if (e.target.closest && e.target.closest("input,textarea")) return;
     if (modalOpen()) {
-      if (e.key === "Escape" && state.screen === "play" && !state.world.finished) closeModal();
+      if (e.key === "Escape" && state.screen === "play" && !state.world.finished) {
+        const def = dialogActions.begin || dialogActions.resume || dialogActions.wait || dialogActions.ok;
+        if (def) def(); else closeModal();
+      }
       return;
     }
     if (state.screen !== "play") return;
@@ -752,8 +773,8 @@
   const keepSession = () => { const w = state.world; if (state.screen === "play" && w && !w.finished && (w.undoStack.length || w.started)) session.write(w); };
   window.addEventListener("pagehide", keepSession);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { keepSession(); audio.suspend(); if (state.screen === "play" && state.world && !state.world.finished) state.paused = true; }
-    else audio.resume();
+    if (document.hidden) { keepSession(); audio.suspend(); if (state.screen === "play" && state.world && state.world.started && !state.world.finished && !state.paused) { state.paused = true; state.autoPaused = true; } }
+    else { audio.resume(); if (state.autoPaused) { state.autoPaused = false; toast("時を止めている（▶で再開）"); updateHud(true); } }
   });
   window.addEventListener("blur", () => { if (state.sculpt) { Sim.endStroke(state.world); state.sculpt = null; } state.pointers.clear(); state.pinch = null; state.gesture = null; });
 
@@ -947,8 +968,11 @@
     const w = state.world;
     if (!w) return;
     // adaptive resolution: if frames run long for a while, render fewer pixels
-    state.slowFor = dt > 0.026 ? (state.slowFor || 0) + dt : Math.max(0, (state.slowFor || 0) - dt * 0.5);
-    if (state.slowFor > 2 && (state.quality || 1) > 0.5) { state.quality = (state.quality || 1) * 0.8; state.slowFor = 0; }
+    // (30 Hz displays are fine; only frames well past that count as slow)
+    state.slowFor = dt > 0.045 ? (state.slowFor || 0) + dt : Math.max(0, (state.slowFor || 0) - dt * 0.5);
+    state.fastFor = dt < 0.03 ? (state.fastFor || 0) + dt : 0;
+    if (state.slowFor > 2 && (state.quality || 1) > 0.55) { state.quality = (state.quality || 1) * 0.85; state.slowFor = 0; }
+    if (state.fastFor > 6 && (state.quality || 1) < 1) { state.quality = Math.min(1, state.quality / 0.85); state.fastFor = 0; }
     const dpr = Math.max(0.75, Math.min(window.devicePixelRatio || 1, view.clientWidth * view.clientHeight > 900000 ? 1.5 : 2) * (state.quality || 1));
 
     // simulation
@@ -972,6 +996,7 @@
       handleEvents(w);
       watchSeasons(w);
       if (w.finished) {
+        recordResult(w);
         state.harvestClock += dt;
         if (state.harvestClock < dt * 1.5) { audio.event("harvest"); toast("収穫の秋"); }
         // gold motes rise where the sickle passes

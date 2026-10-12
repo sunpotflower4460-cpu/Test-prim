@@ -57,6 +57,7 @@
   const COMMON = `
 precision highp float;
 precision highp int;
+precision highp sampler2D;
 uniform mat4 uVP;
 uniform vec3 uCam;
 uniform vec3 uSun;
@@ -112,7 +113,7 @@ vec3 grade(vec3 c){
 vec3 applyFog(vec3 col, vec3 p){
   float dist=length(p-uCam);
   float f=1.-exp(-dist*uFogDen);
-  float below=smoothstep(-1.,-14.,p.y);
+  float below=(1.-smoothstep(-14.,-1.,p.y));
   return grade(mix(col,uFog,clamp(f+below*.85,0.,1.)));
 }
 `;
@@ -224,19 +225,19 @@ void main(){
     float ringW=abs(d-m.z*(.82+.18*sin(uTime*3.)));
     vec3 mc=m.w>.5?vec3(.45,.75,1.):vec3(1.,.86,.5);
     float sp=m.w>.5?7.:3.;
-    lit+=mc*(smoothstep(.22,.0,ringW)*.75+smoothstep(m.z,0.,d)*.12)*(.6+.4*sin(uTime*sp));
+    lit+=mc*((1.-smoothstep(.0,.22,ringW))*.75+smoothstep(m.z,0.,d)*.12)*(.6+.4*sin(uTime*sp));
   }
   // brush
   if(uCursor.w>.5){
     float d=length(wp-uCursor.xy);
     float r=uCursor.z;
     vec3 tc=uCursor2.x<.5?vec3(1.,.78,.42):uCursor2.x<1.5?vec3(.55,.8,1.):vec3(.92,1.,.88);
-    float ring=smoothstep(.14,.0,abs(d-r));
-    float fill=smoothstep(r,r*.2,d)*.10;
+    float ring=(1.-smoothstep(.0,.14,abs(d-r)));
+    float fill=(1.-smoothstep(r*.2,r,d))*.10;
     lit=mix(lit,tc,ring*.8+fill);
     if(uCursor2.x>1.5){
       // leveling: the contour at the target height shows how far the flat will reach
-      float c=smoothstep(.07,.0,abs(vPos.y-uCursor2.y))*smoothstep(r*2.6,r,d);
+      float c=(1.-smoothstep(.0,.07,abs(vPos.y-uCursor2.y)))*smoothstep(r*2.6,r,d);
       lit=mix(lit,vec3(1.),c*.7);
     }
   }
@@ -316,7 +317,7 @@ void main(){
     vec2 ci=floor(rp); vec2 cf=fract(rp)-.5;
     float rt=fract(uTime*.9+hash12(ci)*7.);
     float rr=length(cf+(vec2(hash12(ci+3.1),hash12(ci+7.7))-.5)*.5);
-    float ringv=sin((rr-rt*.5)*40.)*smoothstep(.5,.0,abs(rr-rt*.45)*6.)*(1.-rt);
+    float ringv=sin((rr-rt*.5)*40.)*(1.-smoothstep(.0,.5,abs(rr-rt*.45)*6.))*(1.-rt);
     g+=vec2(ringv)*uRain*.8;
   }
   n=normalize(n+vec3(g.x,0.,g.y)*amp);
@@ -340,7 +341,7 @@ void main(){
   col=mix(col,col*1.12+vec3(.02,.03,.04),smoothstep(.3,1.4,speed)*(1.-calm));
   // white water where it falls fast
   float foam=smoothstep(2.2,4.5,speed)*smoothstep(.02,.12,d)*(.45+.55*vnoise(vPos.xz*5.-vVel*uTime*1.5));
-  float edge=smoothstep(.03,.0,d)*.18*vnoise(vPos.xz*9.+uTime);
+  float edge=(1.-smoothstep(.0,.03,d))*.18*vnoise(vPos.xz*9.+uTime);
   col=mix(col,vec3(.93,.96,.98)*(uSunCol*.4+.65),clamp(foam+edge,0.,1.)*.8);
   float alpha=smoothstep(.003,.02,d)*clamp(.66+d*2.5+fres*.3+smoothstep(.3,1.2,speed)*.2,0.,1.);
   alpha=max(alpha,clamp(foam,0.,.9));
@@ -511,7 +512,7 @@ void main(){
       col=mix(m,col,fi*.15);
     }
   }
-  if(d.y<-.02) col=mix(col,uFog,smoothstep(-.02,-.2,d.y));
+  if(d.y<-.02) col=mix(col,uFog,(1.-smoothstep(-.2,-.02,d.y)));
   // a sea of clouds far below the floating valley
   if(d.y<0.){
     vec3 o=uCam;
@@ -523,7 +524,7 @@ void main(){
       vec3 lit=mix(uFog*.92,mix(uFog,vec3(1.),.45)*(.85+.25*uSunCol),top);
       float shade=1.-smoothstep(.55,.95,c)*.12;
       float fade=exp(-t*.004);
-      col=mix(col,lit*shade,clamp(fade*1.2,0.,1.)*smoothstep(0.,-.12,d.y));
+      col=mix(col,lit*shade,clamp(fade*1.2,0.,1.)*(1.-smoothstep(-.12,0.,d.y)));
     }
   }
   col=grade(col);

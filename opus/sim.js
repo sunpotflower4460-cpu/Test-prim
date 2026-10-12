@@ -293,7 +293,7 @@
         else if (k === 1) { if (x === W - 1) continue; n = i + 1; }
         else if (k === 2) { if (y === 0) continue; n = i - W; }
         else { if (y === H - 1) continue; n = i + W; }
-        if (flags[n] & (F_HOUSE | F_SEA)) continue;
+        if (flags[n] & (F_LOCK | F_SEA)) continue; // nothing slides where the player cannot dig it out
         const diff = ground[i] - ground[n];
         if (diff > talus) {
           const m = Math.min(soil, (diff - talus) * K.SLUMP_RATE);
