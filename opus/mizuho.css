@@ -209,6 +209,16 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .hud-title strong { font-size: 15px; }
   .title-kanji { right: -30px; font-size: 17px; }
 }
+@media (max-width: 380px) {
+  .title-top .byline { display: none; }
+  .title-top { grid-template-columns: 1fr auto; }
+  .title-foot span:last-child { display: none; }
+  .back-link { white-space: nowrap; }
+}
+@media (max-height: 700px) and (orientation: portrait) {
+  .side-tools { top: calc(max(14px, env(safe-area-inset-top)) + 182px); transform: none; gap: 6px; }
+  .side-tools .round.small { width: 34px; height: 34px; font-size: 14px; }
+}
 @media (max-height: 640px) and (orientation: portrait) {
   .title-lead { margin: 10px 0 12px; line-height: 1.85; }
   .title-logo { font-size: 54px; }

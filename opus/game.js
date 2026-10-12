@@ -203,6 +203,7 @@
         w.t = 0.9; w.festival = true;
       }
       state.titleWorld = w;
+      state.lanterns = null;
     }
     const w = state.titleWorld;
     R.setWorld(w);
@@ -213,7 +214,7 @@
     const st = Object.values(save.data.stars).reduce((a, b) => a + b, 0);
     const cleared = Object.keys(save.data.stars).length;
     $("#titleRecord").textContent = cleared ? `ひらいた谷 ${cleared} / ${Levels.LEVELS.length}　·　穂 ${st} / ${Levels.LEVELS.length * 3}` : "谷は、まだ眠っている。";
-    $("#startBtn span").textContent = cleared ? "つづきの谷へ" : "田をひらく";
+    $("#startBtn span").textContent = cleared >= Levels.LEVELS.length ? "谷の暦をひらく" : cleared ? "つづきの谷へ" : "田をひらく";
   }
 
   function enterSelect() {
@@ -762,6 +763,10 @@
       const c = pick();
       spawn({ kind: "tombo", x: c.x, y: w.ground[c.i] + 1.5 + Math.random() * 2, z: c.z, life: 8, age: 0, dir: Math.random() * 6.28, ph: Math.random() * 6 });
     }
+    if (w.festival && !state.lanterns) {
+      state.lanterns = [];
+      for (let i = 0; i < w.N && state.lanterns.length < 70; i += 7) if ((w.flags[i] & Sim.F_ROCK) && Math.random() < 0.55) state.lanterns.push({ x: i % w.W, z: (i / w.W) | 0, y: w.ground[i] + 0.55, ph: Math.random() * 6 });
+    }
     if (season === "night" && Math.random() < dt * 4) {
       const c = pick();
       if (w.plant[c.i] === Sim.RIPE) spawn({ kind: "mote", x: c.x, y: w.ground[c.i] + 0.6, z: c.z, vy: 0.3 + Math.random() * 0.5, life: 3, age: 0, col: "255,220,140" });
@@ -770,6 +775,19 @@
   function drawFx(env, dt) {
     const W = view.clientWidth, H = view.clientHeight;
     fx.clearRect(0, 0, W, H);
+    // paper lanterns along the ridges on the harvest night
+    if (state.world && state.world.festival && state.lanterns && state.screen !== "play") {
+      const scale = Math.max(0.5, Math.min(2, 50 / state.cam.dist));
+      for (const l of state.lanterns) {
+        const s = R.project(l.x, l.y, l.z);
+        if (!s) continue;
+        const fl = 0.8 + 0.2 * Math.sin(state.time * 3 + l.ph) * Math.sin(state.time * 1.7 + l.ph * 2);
+        const r = 17 * scale;
+        const g = fx.createRadialGradient(s.x, s.y, 0, s.x, s.y, r);
+        g.addColorStop(0, `rgba(255,226,160,${0.95 * fl})`); g.addColorStop(0.25, `rgba(255,170,80,${0.55 * fl})`); g.addColorStop(1, "rgba(255,140,60,0)");
+        fx.fillStyle = g; fx.beginPath(); fx.arc(s.x, s.y, r, 0, Math.PI * 2); fx.fill();
+      }
+    }
     const ps = state.particles;
     let j = 0;
     for (let i = 0; i < ps.length; i++) {
