@@ -203,6 +203,8 @@
     const portrait = view.clientHeight > view.clientWidth;
     state.cam.dist *= portrait ? 1.12 : 1.55;
     state.cam.shiftY = portrait ? 0.3 : 0.2;
+    // wide screens: the words on the left, the valley on the right
+    if (view.clientWidth >= 900 && !portrait && view.clientHeight >= 560) { state.cam.shiftX = 0.34; state.cam.shiftY = 0.05; state.cam.dist *= 0.97; }
     state.camGoal = null;
     const st = Object.values(save.data.stars).reduce((a, b) => a + b, 0);
     const cleared = Object.keys(save.data.stars).length;
@@ -237,42 +239,51 @@
     $("#selectProgress").textContent = `穂 ${total} / ${Levels.LEVELS.length * 3}　·　ひらいた谷 ${Object.keys(save.data.stars).length} / ${Levels.LEVELS.length}`;
   }
 
-  // A small shaded relief of the valley, drawn once per card.
+  // A shaded relief of the valley at the card's own resolution, drawn once per card.
   const thumbCache = new Map();
   function drawThumb(cv, lv) {
-    let img = thumbCache.get(lv.id);
     const ctx = cv.getContext("2d");
+    let img = thumbCache.get(lv.id);
     if (!img) {
       const w = Sim.create(lv);
-      const S = 4, W = w.W, H = w.H;
-      const tmp = document.createElement("canvas"); tmp.width = W * S; tmp.height = H * S;
-      const tc = tmp.getContext("2d"), id = tc.createImageData(W * S, H * S);
+      for (let k = 0; k < 6; k++) Sim.step(w, 1);
+      const TW = cv.width, TH = cv.height, W = w.W, H = w.H;
+      const s = Math.min((W - 1) / TW, (H - 1) / TH) * 0.98; // cells per pixel, cover the card
+      const ox = (W - 1 - TW * s) / 2, oy = (H - 1 - TH * s) / 2;
+      const id = ctx.createImageData(TW, TH);
+      const at = (arr, x, y) => {
+        const x0 = Math.floor(x), y0 = Math.floor(y), x1 = Math.min(x0 + 1, W - 1), y1 = Math.min(y0 + 1, H - 1), fx = x - x0, fy = y - y0;
+        return (arr[y0 * W + x0] * (1 - fx) + arr[y0 * W + x1] * fx) * (1 - fy) + (arr[y1 * W + x0] * (1 - fx) + arr[y1 * W + x1] * fx) * fy;
+      };
       let mn = Infinity, mx = -Infinity;
       for (let i = 0; i < w.N; i++) { mn = Math.min(mn, w.ground[i]); mx = Math.max(mx, w.ground[i]); }
-      for (let y = 0; y < H * S; y++) for (let x = 0; x < W * S; x++) {
-        const cx = Math.min(W - 1, (x / S) | 0), cy = Math.min(H - 1, (y / S) | 0), i = cy * W + cx;
-        const gx = w.ground[Math.min(i + 1, cy * W + W - 1)] - w.ground[Math.max(i - 1, cy * W)];
-        const gy = w.ground[Math.min(i + W, w.N - 1)] - w.ground[Math.max(i - W, 0)];
-        const sh = Math.max(0.35, Math.min(1.3, 0.85 - gx * 0.35 - gy * 0.45));
-        const hgt = (w.ground[i] - mn) / (mx - mn + 1e-6);
-        let r = (92 + 40 * hgt) * sh, g = (122 + 38 * hgt) * sh, b = (74 + 20 * hgt) * sh;
-        if (w.ground[i] - w.bed[i] < 0.12) { r = g = b = (140 + 40 * hgt) * sh; }
-        if (w.flags[i] & Sim.F_HOUSE) { r = 150; g = 110; b = 70; }
-        const d = w.water[i];
-        if (d > 0.01 || (w.flags[i] & (Sim.F_RIVER | Sim.F_SEA))) { const a = Math.min(0.85, 0.4 + d); r = r * (1 - a) + 70 * a; g = g * (1 - a) + 130 * a; b = b * (1 - a) + 170 * a; }
-        if (w.flags[i] & Sim.F_SPRING) { r = 220; g = 240; b = 255; }
-        const o = (y * W * S + x) * 4;
-        id.data[o] = r; id.data[o + 1] = g; id.data[o + 2] = b; id.data[o + 3] = 255;
+      for (let py = 0; py < TH; py++) for (let px = 0; px < TW; px++) {
+        const x = ox + px * s, y = oy + py * s;
+        const g = at(w.ground, x, y), e = 0.6;
+        const gx = at(w.ground, Math.min(W - 1, x + e), y) - at(w.ground, Math.max(0, x - e), y);
+        const gy = at(w.ground, x, Math.min(H - 1, y + e)) - at(w.ground, x, Math.max(0, y - e));
+        const sh = Math.max(0.45, Math.min(1.35, 0.92 - gx * 0.5 - gy * 0.62));
+        const hgt = (g - mn) / (mx - mn + 1e-6);
+        const i = Math.round(y) * W + Math.round(x);
+        let r = 86 + 46 * hgt, gg = 128 + 40 * hgt, b = 66 + 18 * hgt;
+        const soil = at(w.ground, x, y) - at(w.bed, x, y);
+        if (soil < 0.15 || (w.flags[i] & Sim.F_ROCK)) { r = 150 + 30 * hgt; gg = 146 + 28 * hgt; b = 134 + 24 * hgt; }
+        r *= sh; gg *= sh; b *= sh;
+        // contour lines every unit of height, like an old survey map
+        const f = g - Math.floor(g);
+        if (f < 0.07) { r *= 0.82; gg *= 0.84; b *= 0.8; }
+        const d = at(w.water, x, y);
+        if (d > 0.01 || (w.flags[i] & Sim.F_SEA)) { const a = Math.min(0.9, 0.5 + d * 1.5); r = r * (1 - a) + 92 * a; gg = gg * (1 - a) + 150 * a; b = b * (1 - a) + 190 * a; }
+        if (w.flags[i] & Sim.F_HOUSE) { r = 176; gg = 128; b = 82; }
+        if (w.flags[i] & Sim.F_SPRING) { r = 235; gg = 248; b = 255; }
+        // vignette
+        const vx = px / TW - 0.5, vy = py / TH - 0.5, v = 1 - (vx * vx + vy * vy) * 0.9;
+        const o = (py * TW + px) * 4;
+        id.data[o] = r * v; id.data[o + 1] = gg * v; id.data[o + 2] = b * v; id.data[o + 3] = 255;
       }
-      tc.putImageData(id, 0, 0);
-      img = tmp; thumbCache.set(lv.id, img);
+      img = id; thumbCache.set(lv.id, img);
     }
-    ctx.fillStyle = "#2b3d50"; ctx.fillRect(0, 0, cv.width, cv.height);
-    const s = Math.max(cv.width / img.width, cv.height / img.height);
-    ctx.drawImage(img, (cv.width - img.width * s) / 2, (cv.height - img.height * s) / 2, img.width * s, img.height * s);
-    const grd = ctx.createLinearGradient(0, cv.height * 0.5, 0, cv.height);
-    grd.addColorStop(0, "rgba(16,24,38,0)"); grd.addColorStop(1, "rgba(16,24,38,.55)");
-    ctx.fillStyle = grd; ctx.fillRect(0, 0, cv.width, cv.height);
+    ctx.putImageData(img, 0, 0);
   }
 
   function startLevel(i) {
@@ -516,6 +527,7 @@
     Sim.start(w);
     state.paused = false;
     audio.event("plant");
+    toast("田植え。一年がはじまる");
     burstPlanting(w);
     hintAt("planted");
     updateHud(true);
@@ -620,7 +632,7 @@
   function endPointer(e) {
     state.pointers.delete(e.pointerId);
     if (state.sculpt && state.sculpt.id === e.pointerId) {
-      Sim.endStroke(state.world); state.sculpt = null;
+      Sim.endStroke(state.world); state.sculpt = null; state.lastStrokeEnd = state.time;
       if (e.pointerType !== "mouse") state.hover = null;
     }
     if (state.pointers.size < 2) state.pinch = null;
@@ -723,6 +735,10 @@
       const c = pick();
       if (w.water[c.i] > 0.02) spawn({ kind: "firefly", x: c.x, y: w.ground[c.i] + w.water[c.i] + 0.4 + Math.random() * 1.2, z: c.z, life: 4 + Math.random() * 3, age: 0, ph: Math.random() * 6, dx: Math.random() - 0.5, dz: Math.random() - 0.5 });
     }
+    if ((season === "early" || season === "summer") && Math.random() < dt * 0.25 && state.particles.filter(p => p.kind === "sagi").length < 3) {
+      const c = pick();
+      if (w.plant[c.i] === Sim.GROWING && w.water[c.i] > 0.03) spawn({ kind: "sagi", x: Math.round(c.x), y: w.ground[c.i] + w.water[c.i], z: Math.round(c.z), life: 16 + Math.random() * 10, age: 0, ph: Math.random() * 6, face: Math.random() < 0.5 ? -1 : 1, fly: 0 });
+    }
     if (season === "autumn" && Math.random() < dt * 1.2) {
       const c = pick();
       spawn({ kind: "tombo", x: c.x, y: w.ground[c.i] + 1.5 + Math.random() * 2, z: c.z, life: 8, age: 0, dir: Math.random() * 6.28, ph: Math.random() * 6 });
@@ -778,6 +794,31 @@
           fx.strokeStyle = `rgba(240,240,240,${0.55 * a})`; fx.lineWidth = 1;
           fx.beginPath(); fx.moveTo(1 * scale, 0); fx.lineTo(3 * scale, (4 + flap * 2) * scale); fx.moveTo(1 * scale, 0); fx.lineTo(3 * scale, -(4 + flap * 2) * scale); fx.stroke();
           fx.restore();
+        } else if (p.kind === "sagi") {
+          // a little egret wading in the paddy; near the end of its stay it lifts off
+          const left = p.life - p.age;
+          if (left < 3) { p.fly += dt; p.y += dt * (1.5 + p.fly * 2); p.x += p.face * dt * 3; }
+          const a = Math.min(1, p.age * 2, left);
+          const sc = scale * 1.15;
+          fx.save(); fx.translate(s.x, s.y); fx.scale(p.face * sc, sc); fx.globalAlpha = a;
+          if (p.fly > 0) {
+            const flap = Math.sin(p.age * 14) * 5;
+            fx.fillStyle = "#f7f6f0";
+            fx.beginPath(); fx.ellipse(0, -2, 5, 2, 0, 0, Math.PI * 2); fx.fill();
+            fx.beginPath(); fx.moveTo(-2, -2); fx.lineTo(1, -8 - flap); fx.lineTo(3, -2); fx.fill();
+            fx.strokeStyle = "#f7f6f0"; fx.lineWidth = 1.2; fx.beginPath(); fx.moveTo(4, -2); fx.lineTo(7, -4); fx.stroke();
+          } else {
+            const bob = Math.sin(p.age * 1.3 + p.ph) > 0.85 ? 2 : 0; // now and then it dips its bill
+            fx.strokeStyle = "#2b2a26"; fx.lineWidth = 0.9;
+            fx.beginPath(); fx.moveTo(-1, 0); fx.lineTo(-1, -5); fx.moveTo(1, 0); fx.lineTo(1, -5); fx.stroke();
+            fx.fillStyle = "#f7f6f0";
+            fx.beginPath(); fx.ellipse(0, -7, 3.6, 2.4, -0.3, 0, Math.PI * 2); fx.fill();
+            fx.strokeStyle = "#f7f6f0"; fx.lineWidth = 1.5;
+            fx.beginPath(); fx.moveTo(2, -8); fx.quadraticCurveTo(4, -11, 2.6, -13 + bob); fx.stroke();
+            fx.strokeStyle = "#3a3934"; fx.lineWidth = 0.8;
+            fx.beginPath(); fx.moveTo(2.6, -13 + bob); fx.lineTo(5.4, -12.4 + bob * 1.4); fx.stroke();
+          }
+          fx.restore(); fx.globalAlpha = 1;
         } else if (p.kind === "dust") {
           p.y += p.vy * dt; p.vy -= 6 * dt; p.x += p.vx * dt; p.z += p.vz * dt;
           fx.fillStyle = `rgba(${p.col},${0.9 * (1 - k)})`; fx.fillRect(s.x - 1.5 * scale, s.y - 1.5 * scale, 3 * scale, 3 * scale);
@@ -808,6 +849,12 @@
     }
     if (!w.started && w.counts.suitable >= Sim.K.CELLS_PER_BALE && state.lastSuitable < Sim.K.CELLS_PER_BALE && w.undoStack.length) hintAt("suitable");
     state.lastSuitable = w.counts.suitable;
+    // explain standing water that will not take seedlings, once each, after the player has worked the soil
+    if (!w.started && w.undoStack.length && state.screen === "play") {
+      if (w.counts.deep >= 12 && !state.hintsShown.has("why-deep")) { state.hintsShown.add("why-deep"); hint("水が<b>深すぎる</b>所には、苗は植わらない。畦の一か所を軽く<b>掘って</b>、水位を下げよう。", 8); }
+      else if (w.counts.flow >= 16 && !state.hintsShown.has("why-flow") && state.time - (state.lastStrokeEnd || 0) > 6) { state.hintsShown.add("why-flow"); hint("<b>流れている</b>水には、苗は植わらない。平らに均して、縁に畦を<b>盛ろう</b>。", 8); }
+      else if (w.counts.rock >= 12 && !state.hintsShown.has("why-rock")) { state.hintsShown.add("why-rock"); hint("むき出しの<b>岩</b>には根が張らない。籠の土を<b>盛って</b>覆おう。", 8); }
+    }
     const soaking = w.houses.some(h => !h.damaged && h.soak > 0);
     if (soaking && !state.warned) { state.warned = true; audio.event("warn"); hintAt("warn"); if (!state.hintsShown.has("warn")) hint("家に水が迫っている。<b>掘って</b>、水の道を逸らそう。", 6); state.hintsShown.add("warn"); }
     if (!soaking) state.warned = false;
@@ -885,6 +932,7 @@
     const showCursor = state.screen === "play" && state.hover && state.tool !== "look" && !w.finished && !modalOpen();
     env.cursor = showCursor ? { x: state.hover.x, y: state.hover.y, r: SIZES[state.size], visible: true, tool: state.tool, target: state.sculpt && state.tool === "level" ? w.stroke && w.stroke.target : Sim.sampleGround(w, state.hover.x, state.hover.y) } : null;
     env.marks = state.screen === "play" && !w.started ? (state.level.marks || []).filter(m => !state.marksDone.has(m)) : [];
+    if (state.screen === "play") for (const h of w.houses) if (!h.damaged && (h.soak > 0 || (h.depth || 0) > Sim.K.HOUSE_FLOOD * 0.5)) env.marks = env.marks.concat([{ x: h.x + h.w / 2 - 0.5, y: h.y + h.h / 2 - 0.5, r: Math.max(h.w, h.h) * 0.9, danger: 1 }]);
     env.showSuit = state.screen === "play" && !w.started ? 1 : 0;
     R.render(state.cam, env, dt);
 

@@ -220,7 +220,9 @@ void main(){
     vec4 m=uMarks[i];
     float d=length(wp-m.xy);
     float ringW=abs(d-m.z*(.82+.18*sin(uTime*3.)));
-    lit+=vec3(1.,.86,.5)*(smoothstep(.22,.0,ringW)*.75+smoothstep(m.z,0.,d)*.12)*(.6+.4*sin(uTime*3.));
+    vec3 mc=m.w>.5?vec3(.45,.75,1.):vec3(1.,.86,.5);
+    float sp=m.w>.5?7.:3.;
+    lit+=mc*(smoothstep(.22,.0,ringW)*.75+smoothstep(m.z,0.,d)*.12)*(.6+.4*sin(uTime*sp));
   }
   // brush
   if(uCursor.w>.5){
@@ -245,7 +247,7 @@ ${COMMON}
 layout(location=0) in vec2 aCell;
 uniform sampler2D uA;
 uniform sampler2D uC;
-out vec3 vPos; out float vDepth; out vec2 vVel; out vec3 vN; out vec2 vRice; out float vLightW; out vec3 vPlant;
+out vec3 vPos; out float vDepth; out vec2 vVel; out vec3 vN; out vec2 vRice; out float vLightW; out vec3 vPlant; out float vDry; out float vSuit;
 uniform sampler2D uL;
 vec2 S(ivec2 c){ c=clamp(c,ivec2(0),ivec2(uGrid)-1); vec4 a=texelFetch(uA,c,0); return vec2(a.r+a.g,a.g); }
 void main(){
@@ -254,6 +256,7 @@ void main(){
   float d=a.g;
   // dry cells tuck the surface under the ground so shorelines meet cleanly
   float surf=a.r+d;
+  vDry=d<0.004?1.:0.;
   if(d<0.004){
     // borrow the level of the wettest neighbour so the edge of a pond is flat
     float best=-1e9;
@@ -268,7 +271,8 @@ void main(){
   vN=normalize(vec3(hl-hr,2.,hd-hu));
   vPos=vec3(aCell.x,surf,aCell.y);
   vDepth=d;
-  vRice=texelFetch(uC,c,0).rg;
+  vec4 pc=texelFetch(uC,c,0);
+  vRice=pc.rg; vSuit=pc.a;
   vPlant=plantWeights(vRice.x);
   vLightW=texelFetch(uL,c,0).r;
   vVel=a.ba;
@@ -277,8 +281,9 @@ void main(){
 
   const WATER_FS = `#version 300 es
 ${COMMON}
-in vec3 vPos; in float vDepth; in vec2 vVel; in vec3 vN; in vec2 vRice; in float vLightW; in vec3 vPlant;
+in vec3 vPos; in float vDepth; in vec2 vVel; in vec3 vN; in vec2 vRice; in float vLightW; in vec3 vPlant; in float vDry; in float vSuit;
 uniform float uRain;
+uniform float uShowSuit;
 uniform vec3 uWaterDeep; uniform vec3 uWaterShallow;
 out vec4 frag;
 vec2 ripple(vec2 p, float t){
@@ -288,7 +293,8 @@ vec2 ripple(vec2 p, float t){
 }
 void main(){
   float d=vDepth;
-  if(d<0.003) discard;
+  // no sheets of water hung between a dry ridge and the paddy below it
+  if(d<0.003 || vDry>.5) discard;
   vec3 n=normalize(vN);
   float speed=length(vVel);
   vec2 flow=vVel*.6;
@@ -332,6 +338,12 @@ void main(){
   col=mix(col,vec3(.93,.96,.98)*(uSunCol*.4+.65),clamp(foam+edge,0.,1.)*.8);
   float alpha=smoothstep(.003,.02,d)*clamp(.66+d*2.5+fres*.3+smoothstep(.3,1.2,speed)*.2,0.,1.);
   alpha=max(alpha,clamp(foam,0.,.9));
+  // water that will take seedlings shimmers pale green until planting
+  if(uShowSuit>0.){
+    float sg=smoothstep(.5,1.4,vSuit);
+    float pulse=.6+.4*sin(uTime*2.4+vPos.x*.35+vPos.z*.25);
+    col=mix(col,vec3(.72,.95,.55),sg*.32*pulse*uShowSuit);
+  }
   // rice standing in the paddy covers the water in rows
   vec4 rc=riceCarpet(vPlant,vRice.y,vPos.xz);
   if(rc.a>0.){
@@ -427,13 +439,16 @@ layout(location=2) in float aPart;   // 0 trunk, 1 crown
 layout(location=3) in vec4 aInst;    // x, z, scale, kind
 layout(location=4) in float aHue;
 uniform sampler2D uA;
+uniform sampler2D uB;
+uniform sampler2D uC;
 uniform vec3 uLeaf[4];   // sugi, broadleaf, sakura, maple
 out vec3 vPos; out vec3 vN; out vec3 vCol;
 void main(){
   ivec2 c=clamp(ivec2(aInst.xy+.5),ivec2(0),ivec2(uGrid)-1);
   vec4 a=texelFetch(uA,c,0);
   float s=aInst.z;
-  if(a.g>.35) s=0.;
+  // trees give way to worked ground, standing water and fields
+  if(a.g>.05 || texelFetch(uB,c,0).b>.25 || texelFetch(uC,c,0).r>.5) s=0.;
   vec3 p=aPos*s;
   float sway=sin(uTime*1.1+aInst.x*.7+aInst.y*.3)*.05*max(aPos.y,0.)*aPart;
   p.x+=sway;
@@ -878,8 +893,8 @@ void main(){
           if (xx < 0 || yy < 0 || xx >= W || yy >= H) continue;
           occ += Math.max(0, ground[yy * W + xx] - ground[i]) / Math.hypot(ox, oy); n++;
         }
-        const ao = 1 - Math.min(0.45, occ / n * 0.5);
-        L[i] = (0.25 + 0.75 * lit) * ao;
+        const ao = 1 - Math.min(0.3, occ / n * 0.32);
+        L[i] = (0.42 + 0.58 * lit) * ao;
       }
       gl.bindTexture(gl.TEXTURE_2D, res.texL);
       gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, W, H, gl.RED, gl.FLOAT, L);
@@ -942,6 +957,8 @@ void main(){
       // lift the view on screen (the HUD and title copy sit below it)
       const sy = cam.shiftY || 0;
       proj[1] += sy * proj[3]; proj[5] += sy * proj[7]; proj[9] += sy * proj[11]; proj[13] += sy * proj[15];
+      const sx = cam.shiftX || 0;
+      proj[0] += sx * proj[3]; proj[4] += sx * proj[7]; proj[8] += sx * proj[11]; proj[12] += sx * proj[15];
       R.vp = M.mul(proj, view);
       R.invVP = M.invert(R.vp);
       R.cam = cam;
@@ -993,7 +1010,7 @@ void main(){
       gl.uniform4f(pr.u.uCursor2, cur.tool === "dig" ? 1 : cur.tool === "level" ? 2 : 0, cur.target || 0, 0, 0);
       const marks = env.marks || [];
       const mk = new Float32Array(16);
-      marks.slice(0, 4).forEach((m, i) => mk.set([m.x, m.y, m.r, 0], i * 4));
+      marks.slice(0, 4).forEach((m, i) => mk.set([m.x, m.y, m.r, m.danger ? 1 : 0], i * 4));
       gl.uniform4fv(pr.u.uMarks, mk); gl.uniform1f(pr.u.uMarkCount, Math.min(4, marks.length));
       gl.uniform1f(pr.u.uShowSuit, env.showSuit || 0);
       gl.uniform3f(pr.u.uSkirtNormal, 0, 1, 0);
@@ -1013,7 +1030,7 @@ void main(){
       }
       // trees
       pr = progs.tree; gl.useProgram(pr.p); setCommon(pr, env);
-      bindTex(pr, "uA", 0, res.texA);
+      bindTex(pr, "uA", 0, res.texA); bindTex(pr, "uB", 1, res.texB); bindTex(pr, "uC", 2, res.texC);
       gl.uniform3fv(pr.u.uLeaf, env.leaves.flat());
       for (const k of ["sugi", "broad"]) {
         const t = res.treeVAO[k];
@@ -1031,6 +1048,7 @@ void main(){
       pr = progs.water; gl.useProgram(pr.p); setCommon(pr, env);
       bindTex(pr, "uA", 0, res.texA); bindTex(pr, "uC", 2, res.texC); bindTex(pr, "uL", 3, res.texL);
       gl.uniform1f(pr.u.uRain, env.rain || 0);
+      gl.uniform1f(pr.u.uShowSuit, env.showSuit || 0);
       gl.uniform3fv(pr.u.uWaterDeep, env.waterDeep); gl.uniform3fv(pr.u.uWaterShallow, env.waterShallow);
       gl.enable(gl.BLEND); gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
       gl.depthMask(false);

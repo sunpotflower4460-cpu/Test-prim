@@ -86,7 +86,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .valley-stars { color: var(--gold); letter-spacing: .12em; font-size: 13px; }
 .valley-stars .off { color: rgba(243, 236, 220, .22); }
 .valley.locked { opacity: .45; }
-.valley.locked canvas { filter: grayscale(.8) brightness(.6); }
+.valley.locked canvas { filter: grayscale(.85) brightness(.55) blur(1.5px); }
 .valley.current { border-color: rgba(226, 189, 98, .6); }
 .valley:active { transform: scale(.985); }
 .select-foot { text-align: center; font-size: 11px; line-height: 2; letter-spacing: .08em; color: rgba(243, 236, 220, .6); margin: 18px 0 8px; }
@@ -242,6 +242,17 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 @media (min-width: 900px) {
   .valley-list { grid-template-columns: repeat(4, minmax(0, 1fr)); width: min(1100px, 100%); }
   .title-lead { font-size: 15px; }
+}
+@media (min-width: 900px) and (orientation: landscape) and (min-height: 560px) {
+  .title::before { background: linear-gradient(90deg, rgba(12, 20, 34, .78) 0%, rgba(12, 20, 34, .42) 34%, rgba(12, 20, 34, 0) 58%), linear-gradient(180deg, rgba(12, 20, 34, 0) 70%, rgba(12, 20, 34, .5)); }
+  .title-body { position: absolute; left: max(56px, 6vw); top: 50%; transform: translateY(-46%); margin: 0; align-items: flex-start; text-align: left; max-width: 480px; }
+  .title-mark { align-items: flex-start; }
+  .title-logo { margin-left: 0; font-size: clamp(76px, 7.6vw, 112px); }
+  .title-kanji { right: -46px; }
+  .title-lead { font-size: 15.5px; margin: 22px 0 26px; }
+  .title-actions { align-items: flex-start; }
+  .title-actions .quiet { padding-left: 4px; }
+  .title-record { text-align: left; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }

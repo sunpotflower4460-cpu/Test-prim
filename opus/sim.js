@@ -327,9 +327,21 @@
     if (!isFlat(w, i)) return false;
     return stillness(w, i) < K.STILL;
   }
+  // Why standing water is not a paddy yet: it lets the game explain itself.
+  function whyNot(w, i) {
+    const d = w.water[i];
+    if (d < K.PLANT_MIN) return null;
+    if (w.flags[i] & (F_HOUSE | F_RIVER | F_SPRING | F_SEA)) return null;
+    if (w.ground[i] - w.bed[i] < 0.12 || (w.flags[i] & F_ROCK)) return "rock";
+    if (!isFlat(w, i)) return null;
+    if (d > K.PLANT_MAX) return "deep";
+    if (stillness(w, i) >= K.STILL) return "flow";
+    return null;
+  }
   function updateRice(w, dt) {
     const { N, plant, grow, stress, suit, water } = w;
-    let suitable = 0, growing = 0, ripe = 0, dead = 0;
+    let suitable = 0, growing = 0, ripe = 0, dead = 0, deep = 0, flow = 0, rock = 0;
+    const diagnose = !w.started;
     const canPlant = w.started && w.t <= K.PLANT_UNTIL;
     const rate = 1 / (K.GROW_TIME * K.YEAR);
     const lateFactor = w.started ? 1 : 0;
@@ -341,7 +353,10 @@
           suit[i] = Math.min(4, suit[i] + Math.max(dt, 0.05));
           suitable++;
           if (canPlant && suit[i] > 0.8) { plant[i] = GROWING; grow[i] = 0.02; stress[i] = 0; newly++; growing++; }
-        } else suit[i] = Math.max(0, suit[i] - Math.max(dt, 0.05) * 2);
+        } else {
+          suit[i] = Math.max(0, suit[i] - Math.max(dt, 0.05) * 2);
+          if (diagnose) { const why = whyNot(w, i); if (why === "deep") deep++; else if (why === "flow") flow++; else if (why === "rock") rock++; }
+        }
       } else if (p === GROWING) {
         const d = water[i];
         if (d >= K.GROW_MIN && d <= K.GROW_MAX) {
@@ -361,6 +376,7 @@
     }
     if (newly) w.events.push({ type: "plant", n: newly });
     w.counts.suitable = suitable; w.counts.growing = growing; w.counts.ripe = ripe; w.counts.dead = dead;
+    w.counts.deep = deep; w.counts.flow = flow; w.counts.rock = rock;
     w.counts.planted = growing + ripe;
   }
 
@@ -536,7 +552,7 @@
   return {
     K, PHASES, phaseAt, create, step, start, finish, result, forecast,
     brush, beginStroke, endStroke, undo, sampleGround, soilTotal, waterTotal,
-    rainAt, riverDepthAt, plantable, makeNoise, smooth, clamp,
+    rainAt, riverDepthAt, plantable, whyNot, makeNoise, smooth, clamp,
     NONE, GROWING, RIPE, DEAD, F_HOUSE, F_RIVER, F_LOCK, F_SPRING, F_ROCK, F_SEA
   };
 });
