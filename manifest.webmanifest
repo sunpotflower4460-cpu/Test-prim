@@ -1,7 +1,7 @@
 {
   "name": "Test prim — AIゲームギャラリー",
   "short_name": "Test prim",
-  "description": "八作者・15作品を遊び比べる実験ギャラリー。LUMINA、KASANE、折光室、蜜柑、蛇、駆け、RELAY、ECHO、SYNC、HELIX、AFTERTIDE、SKYWARD、LUNA、REPRISE、MIZUHOを収録。",
+  "description": "九作者・18作品を遊び比べる実験ギャラリー。LUMINA、KASANE、折光室、蜜柑、蛇、駆け、RELAY、ECHO、SYNC、HELIX、AFTERTIDE、SKYWARD、LUNA、REPRISE、MIZUHO、鳴き井戸、おばちゃんの台所、句ゆきを収録。",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

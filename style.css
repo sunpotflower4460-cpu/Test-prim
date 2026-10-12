@@ -267,5 +267,13 @@ body.code-active #flash,body.sync-active #flash{display:none}
 .launcher-button-opus .launcher-button-arrow{color:#f0d898}
 .launcher-button-opus:hover{box-shadow:0 13px 38px #e2bd6240,inset 0 0 0 4px #0d162670}
 .launcher-button-opus:active{background:linear-gradient(115deg,#2c4470,#4a6a54 55%,#e2bd6248)}
-/* nine doors: pairs in two columns, the last one across the whole row */
-@media(orientation:landscape) and (min-width:600px){.launcher-button-gpt6sol{grid-column:auto}.launcher-button-opus{grid-column:1/-1}}
+/* ten doors: five pairs in two columns, so no door is left alone on a row */
+@media(orientation:landscape) and (min-width:600px){.launcher-button-gpt6sol,.launcher-button-opus{grid-column:auto}}
+
+/* Haiku 5.5 — the tenth door, at the very foot of the gallery. Jade ink with a vermilion seal. */
+.launcher-button-haiku{text-decoration:none;color:inherit;border-color:#9fd8bdb8;background:linear-gradient(115deg,#1b3b33b8,#22302b66 55%,#9fd8bd26);box-shadow:0 12px 34px #9fd8bd16,inset 0 0 0 4px #0b191670}
+.launcher-button-haiku .launcher-button-symbol{font:700 27px "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;color:#d2f0e0;text-shadow:0 0 18px #9fd8bdaa;width:34px;text-align:center}
+.launcher-button-haiku .launcher-button-label small{color:#b9d6c8;letter-spacing:.18em}
+.launcher-button-haiku .launcher-button-arrow{color:#e0785e}
+.launcher-button-haiku:hover{box-shadow:0 13px 38px #9fd8bd30,inset 0 0 0 4px #0b191670}
+.launcher-button-haiku:active{background:linear-gradient(115deg,#24473f,#2f3b35 55%,#9fd8bd38)}

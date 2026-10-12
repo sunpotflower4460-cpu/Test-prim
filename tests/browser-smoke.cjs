@@ -75,8 +75,8 @@ const targets = [
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
         entryLabels,
-["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna", "GPT 6 sol", "Opus 5.5"],
-        "launcher lists the nine entries in order"
+["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna", "GPT 6 sol", "Opus 5.5", "Haiku 5.5"],
+        "launcher lists the ten entries in order"
       );
       const launcherFit = await page.evaluate(() => ({
         viewport: window.innerWidth,
@@ -125,13 +125,13 @@ const targets = [
       const layout = await page.evaluate(() => {
         const sub = document.querySelector(".launcher-sub").getBoundingClientRect();
         const bottom = document.querySelector(".launcher-bottom").getBoundingClientRect();
-        const last = document.getElementById("openOpusBtn").getBoundingClientRect();
+        const last = document.getElementById("openHaikuBtn").getBoundingClientRect();
         return { subBottom: sub.bottom, bottomTop: bottom.top, lastBeforeFooter: last.bottom <= bottom.top + 1 };
       });
       assert.ok(layout.subBottom <= layout.bottomTop + 1, "launcher footer does not overlap the last entry");
 assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
-      await page.locator("#openOpusBtn").scrollIntoViewIfNeeded();
-      assert.ok(await page.locator("#openOpusBtn").isVisible(), "the last entry is reachable by scrolling");
+      await page.locator("#openHaikuBtn").scrollIntoViewIfNeeded();
+      assert.ok(await page.locator("#openHaikuBtn").isVisible(), "the last entry is reachable by scrolling");
       // Grok の扉は作品一覧。KASANE と折光室が並び、折光室の最初の室は点灯する。
       await page.locator("#openSumifuBtn").click();
       await page.locator("#grokShelf").waitFor({ state: "visible" });
