@@ -147,6 +147,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.locator("#openOriko").click();
       await page.locator("#title").waitFor({ state: "visible" });
       assert.equal((await page.locator("#title h1").innerText()).replace(/\s/g, ""), "ORIKO");
+      // the title is in the HTML before the deferred script binds its buttons; on a slow runner wait for it
+      await page.waitForLoadState("load");
       await page.locator("#howBtn").click();
       await page.locator("#dialogTitle").waitFor({ state: "visible" });
       await page.keyboard.press("Escape");
@@ -797,6 +799,7 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       // drag, let the water stand, plant, and bring in the harvest.
       await page.locator("#openOpusBtn").click();
       await page.locator("#title").waitFor({state:"visible"});
+      await page.waitForFunction(() => window.__mizuho && window.__mizuho.state.screen === "title");
       await page.locator("#startBtn").click();
       await page.locator("#valleyList .valley").first().click();
       // the first time, grandmother's letter comes before the valley
