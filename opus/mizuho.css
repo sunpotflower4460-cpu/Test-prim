@@ -120,6 +120,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .stat b i { font-style: normal; opacity: .5; margin: 0 3px; }
 .stat em { font-style: normal; font-size: 11px; color: var(--paper-dim); }
 .stat-rice.met b { color: var(--gold-soft); }
+.stat-rice .goal-sep { opacity: .45; margin: 0 1px; }
+.stat-rice small + b + .goal-sep + small { margin-left: 2px; }
 .stat-rice.met { border-color: rgba(226, 189, 98, .55); }
 .soil-bar { width: 54px; height: 5px; border-radius: 3px; background: rgba(243, 236, 220, .14); overflow: hidden; }
 .soil-bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, #9b7449, #d6a86a); transition: width .15s; }
@@ -183,15 +185,21 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .result-stats { display: flex; justify-content: center; gap: 26px; margin: 12px 0 4px; }
 .result-stats div { display: flex; flex-direction: column; gap: 2px; font: 600 10px var(--sans); letter-spacing: .14em; color: #7a6e5c; }
 .result-stats b { font: 600 30px var(--latin); color: #2b2620; letter-spacing: .02em; }
+.guide-art { display: block; width: 100%; height: auto; margin: 6px 0 4px; background: linear-gradient(180deg, #eef3f4, #f7f1e3); border-radius: 4px; }
+.guide-text { text-align: left; font-size: 13px !important; line-height: 1.95 !important; }
+.guide-text small { display: block; margin-top: 4px; font-size: 11.5px; color: #7a6e5c; }
+.guide-dots { display: flex; justify-content: center; gap: 6px; margin-top: 10px; }
+.guide-dots i { width: 6px; height: 6px; border-radius: 50%; background: rgba(42, 38, 32, .2); }
+.guide-dots i.on { background: #233552; }
 .how-list { text-align: left; margin: 10px 0 0; padding: 0; list-style: none; display: grid; gap: 10px; }
-.how-list li { display: grid; grid-template-columns: 34px 1fr; gap: 10px; align-items: start; font-size: 12.5px; line-height: 1.85; color: #3e382e; }
-.how-list li i { font-style: normal; display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: #233552; color: #f3ecdc; font-weight: 700; font-size: 15px; }
+.how-list li { display: grid; grid-template-columns: auto 1fr; gap: 10px; align-items: start; font-size: 12.5px; line-height: 1.85; color: #3e382e; }
+.how-list li i { font-style: normal; display: grid; place-items: center; min-width: 34px; height: 34px; padding: 0 6px; border-radius: 17px; background: #233552; color: #f3ecdc; font-weight: 700; font-size: 13px; white-space: nowrap; }
 .keys { font: 600 10px var(--sans); color: #7a6e5c; letter-spacing: .06em; margin-top: 12px !important; line-height: 1.9 !important; }
 .toggle-row { display: flex; justify-content: center; gap: 8px; margin-top: 8px; }
 .toggle-row button { padding: 8px 12px; font-size: 11px; border-radius: 3px; border: 1px solid rgba(42, 38, 32, .2); background: rgba(255, 255, 255, .4); letter-spacing: .06em; color: var(--ink); }
 .toggle-row button[aria-pressed="true"] { background: #233552; color: #fbf3df; }
 
-.toast { position: fixed; left: 50%; top: 36%; transform: translate(-50%, -8px); z-index: 25; opacity: 0; pointer-events: none;
+.toast { position: fixed; left: 50%; top: 46%; transform: translate(-50%, -8px); z-index: 25; opacity: 0; pointer-events: none;
   padding: 9px 18px; border-radius: 20px; background: rgba(14, 22, 37, .86); border: 1px solid rgba(240, 216, 152, .35); color: #fff4dc; font-size: 13px; letter-spacing: .1em; white-space: nowrap; transition: opacity .3s, transform .3s; }
 .toast.show { opacity: 1; transform: translate(-50%, 0); }
 .curtain { position: fixed; inset: 0; z-index: 30; pointer-events: none; background: #0d1626; opacity: 1; transition: opacity .6s ease; }
@@ -227,8 +235,11 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .back-link { white-space: nowrap; }
 }
 @media (max-height: 700px) and (orientation: portrait) {
-  .side-tools { top: calc(max(14px, env(safe-area-inset-top)) + 182px); transform: none; gap: 6px; }
+  .side-tools { top: auto; bottom: calc(max(12px, env(safe-area-inset-bottom)) + 84px); transform: none; gap: 5px; }
   .side-tools .round.small { width: 34px; height: 34px; font-size: 14px; }
+  /* the planting button keeps clear of the column of round buttons on the right */
+  .plant-cta { padding: 0 58px 0 12px; }
+  .plant-cta .primary { width: 100%; max-width: 300px; }
 }
 @media (max-height: 640px) and (orientation: portrait) {
   .title-lead { margin: 10px 0 12px; line-height: 1.85; }
@@ -253,8 +264,8 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .tool.mini { width: 54px; }
   .tool-sep { width: auto; height: 1px; margin: 2px 8px; }
   .side-tools { right: auto; left: max(14px, env(safe-area-inset-left)); top: auto; bottom: max(12px, env(safe-area-inset-bottom)); transform: none; flex-direction: row; }
-  .plant-cta { bottom: max(12px, env(safe-area-inset-bottom)); }
-  .plant-cta .primary { height: 46px; width: min(260px, 50vw); }
+  .plant-cta { bottom: max(12px, env(safe-area-inset-bottom)); justify-content: flex-end; padding-right: calc(max(12px, env(safe-area-inset-right)) + 78px); }
+  .plant-cta .primary { height: 46px; width: min(250px, 36vw); }
   .hint { margin-top: 4px; font-size: 11.5px; padding: 6px 12px; }
   .valley-list { grid-template-columns: repeat(3, minmax(0, 1fr)); }
   .valley-poem { display: none; }
@@ -277,4 +288,33 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; transition-duration: .01ms !important; }
+}
+
+/* ---- the coach: what to do now, step by step ---- */
+.coach { align-self: center; margin: 10px 0 0; width: min(540px, 94vw); padding: 11px 14px 10px; border-radius: 6px; text-align: left;
+  background: rgba(246, 240, 226, .96); color: var(--ink); box-shadow: 0 10px 30px rgba(0, 0, 0, .28); border-left: 4px solid #c99a3a; animation: rise .35s ease backwards; }
+.coach-step { margin: 0 0 3px; font: 700 10px var(--sans); letter-spacing: .16em; color: #8a6a2a; }
+.coach-text { margin: 0; font-size: 13.5px; line-height: 1.8; letter-spacing: .03em; }
+.coach-text b { color: #8a3d1c; }
+.coach-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 6px; }
+.coach-actions:empty { display: none; }
+.coach-actions button { padding: 7px 14px; border-radius: 3px; font-size: 12px; letter-spacing: .1em; border: 1px solid rgba(42, 38, 32, .25); background: rgba(255, 255, 255, .5); color: var(--ink); }
+.coach-actions button.accent { background: #233552; border-color: #233552; color: #fbf3df; }
+.coach-actions button.skip { border: 0; background: none; color: #7a6e5c; font-size: 11px; margin-right: auto; padding-left: 0; }
+.coach:not([hidden]) ~ .hint { margin-top: 6px; }
+.coach-pulse { position: relative; animation: coach-pulse 1.3s ease-in-out infinite !important; }
+@keyframes coach-pulse { 0%, 100% { box-shadow: 0 0 0 0 rgba(240, 216, 152, .0), 0 0 0 2px rgba(240, 216, 152, .9); } 50% { box-shadow: 0 0 0 9px rgba(240, 216, 152, .28), 0 0 0 2px rgba(255, 238, 190, 1); } }
+.goal-card { display: grid; gap: 6px; margin: 12px 0 6px; text-align: left; }
+.goal-card div { display: grid; grid-template-columns: 52px 1fr; align-items: center; gap: 10px; padding: 8px 12px; background: rgba(255, 252, 244, .75); border-radius: 4px; font-size: 13px; color: #3b352c; }
+.goal-card b { display: grid; place-items: center; height: 26px; border-radius: 13px; background: #233552; color: #f3ecdc; font: 700 11px var(--sans); letter-spacing: .1em; }
+.goal-card div.house b { background: #a8433a; }
+.goal-card div.star b { background: #c6982e; }
+.side-tools .round.help { font-weight: 700; color: var(--gold-soft); border-color: rgba(226, 189, 98, .55); }
+@media (orientation: landscape) and (max-height: 520px) {
+  .coach { position: fixed; left: 50%; transform: translateX(-50%); top: calc(max(10px, env(safe-area-inset-top)) + 48px); width: min(440px, 52vw); padding: 8px 12px; margin: 0; animation: none; }
+  .coach-text { font-size: 12px; line-height: 1.65; }
+}
+@media (max-height: 640px) and (orientation: portrait) {
+  .coach { padding: 8px 12px; }
+  .coach-text { font-size: 12.5px; line-height: 1.7; }
 }

@@ -15,6 +15,7 @@
   <script src="script.js" defer></script>
   <script src="render.js" defer></script>
   <script src="audio.js" defer></script>
+  <script src="guide.js" defer></script>
   <script src="game.js" defer></script>
 </head>
 <body>
@@ -79,13 +80,19 @@
       </div>
     </header>
     <div class="hud-stats">
-      <div class="stat stat-rice" id="statRice"><small id="riceLabel">植えられる田</small><b><span id="riceNow">0</span><i>/</i><span id="riceGoal">6</span></b><em>俵</em></div>
+      <div class="stat stat-rice" id="statRice" aria-label="収穫の見込みと目標"><small id="riceLabel">見込み</small><b id="riceNow">0</b><span class="goal-sep">/</span><small>目標</small><b id="riceGoal">6</b><em>俵</em></div>
       <div class="stat stat-soil" id="statSoil"><small>籠の土</small><div class="soil-bar"><i id="soilFill"></i></div><b id="soilNum">0</b></div>
       <div class="stat stat-houses" id="statHouses" aria-label="家"></div>
     </div>
+    <section class="coach" id="coach" hidden aria-live="polite">
+      <p class="coach-step" id="coachStep"></p>
+      <p class="coach-text" id="coachText"></p>
+      <div class="coach-actions" id="coachActions"></div>
+    </section>
     <p class="hint" id="hint" role="status" aria-live="polite"></p>
 
     <div class="side-tools">
+      <button type="button" class="round small help" data-action="how" aria-label="あそびかた">?</button>
       <button type="button" class="round small" data-action="zoomin" aria-label="寄る">＋</button>
       <button type="button" class="round small" data-action="zoomout" aria-label="引く">－</button>
       <button type="button" class="round small" data-action="rotl" aria-label="左へ回る">⟲</button>

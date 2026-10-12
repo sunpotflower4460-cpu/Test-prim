@@ -44,9 +44,14 @@
         return { ground: slope - runnel, bed: slope - runnel - 2.6 };
       },
       letter: { text: "この田は、おじいさんと最後に植えた田です。<br>畦が崩れて水が逃げるたびに、もう戻らないと思っていました。<br>今年の稲の匂いは、あの年と同じです。", from: "祖母 ハル" },
-      hints: [
-        { at: "start", text: "崩れた畦（光る印）を、指でなぞって「盛る」。" },
-        { at: "suitable", text: "水が張った所に、苗が植わる。「田植え」で一年がはじまる。" }
+      // the first valley teaches by doing: one step at a time, each waits for the player
+      tutorial: [
+        { text: "泉から湧いた水が、古い田を通り抜けて<b>流れ去っています</b>。田の下側の畦（あぜ）が一か所、崩れているからです。", next: "わかった" },
+        { text: "下の道具から<b>「盛る」</b>を選ぼう。籠の土を盛り上げる道具です。", target: '.tool[data-tool="heap"]', until: "tool:heap" },
+        { text: "地面に<b>光る印</b>があります。崩れた畦です。そこを指で<b>なぞって</b>、土を盛ってふさごう。", until: "mark" },
+        { text: "畦がふさがった。水が溜まると、苗を植えられる所が<b>淡い緑に光り</b>ます。待つあいだ <b>▸</b> で早送りもできます。", target: "#speedBtn", until: "goal" },
+        { text: "上の<b>見込み</b>が<b>目標</b>に届いた。下の<b>「田植えをする」</b>を押すと、苗が植わって一年が始まります。", target: "#plantCta .primary", until: "planted" },
+        { text: "一年が流れはじめた。秋に稲が実れば収穫です。あとは見守るだけ。<b>▸</b> で早送りしてもかまいません。", target: "#speedBtn", until: "time:9" }
       ],
       marks: [{ x: 20, y: 27, r: 2 }]
     },
@@ -68,9 +73,13 @@
         return { ground: g, bed: g - 3 };
       },
       letter: { text: "斜面に段ができると、水がそこで止まって空を映します。<br>昔の人は、それを「田毎の月」と呼びました。<br>秋の夜に、見に来てください。", from: "隣の家の タキ" },
-      hints: [
-        { at: "start", text: "「均す」：なぞり始めた高さに、まわりの土を揃える。流れのそばを横になぞってみよう。" },
-        { at: "suitable", text: "段の縁が低いと、水は流れ落ちる。<b>盛る</b>で縁に畦をつくろう。" }
+      tutorial: [
+        { text: "ここには田がありません。斜面では水は止まらず、流れ落ちてしまう。田にするには<b>平らな段</b>と、そのふちの<b>畦</b>がいります。", next: "わかった" },
+        { text: "道具の<b>「均す」</b>を選ぼう。なぞり始めた高さに、まわりの土を揃える道具です。", target: '.tool[data-tool="level"]', until: "tool:level" },
+        { text: "<b>光る印</b>から指を置き、流れをまたぐように<b>横へなぞろう</b>。白い線は、揃える高さが届く所です。", until: "stroke:level" },
+        { text: "平らな段ができた。でも水は段のふちからこぼれていく。<b>「盛る」</b>を選び、段の<b>下側のふち</b>をなぞって畦をつくろう。", target: '.tool[data-tool="heap"]', until: "stroke:heap" },
+        { text: "水が溜まって淡く光る所が田になります。<b>見込み</b>が<b>目標 8 俵</b>に届くまで、段を広げたり畦を足したりしよう。足りない時は、もう一度「均す」で段を広げる。", target: "#statRice", until: "goal" },
+        { text: "目標に届いた。<b>「田植えをする」</b>を押そう。田植えのあとも土は動かせます。", target: "#plantCta .primary", until: "planted" }
       ],
       marks: [{ x: 22, y: 22, r: 2.6 }]
     }

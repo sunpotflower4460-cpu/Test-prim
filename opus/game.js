@@ -119,7 +119,7 @@
     pointers: new Map(), sculpt: null, hover: null, gesture: null,
     hintsShown: new Set(), hintTimer: 0, lastHud: 0, harvestClock: 0, resultShown: false,
     particles: [], seasonId: "spring", warned: false, prevCounts: null, time: 0, toastTimer: 0,
-    marksDone: new Set(), lastSuitable: 0
+    marksDone: new Set(), lastSuitable: 0, coach: null, strokes: {}
   };
   const SIZES = [1.6, 2.7];
 
@@ -199,7 +199,7 @@
     return cam;
   }
   function enterTitle() {
-    closeModal();
+    closeModal(); coachEnd();
     show("title");
     const lv = Levels.SHOWCASE;
     if (!state.titleWorld) {
@@ -233,7 +233,7 @@
   }
 
   function enterSelect() {
-    closeModal();
+    closeModal(); coachEnd();
     if (state.world && state.world !== state.titleWorld) state.world.hold = true; // only the water keeps moving behind the list
     state.showcase = true;
     show("select");
@@ -329,6 +329,7 @@
   }
   function startLevel(i, saved) {
     if (i === 0 && !save.data.prologue) { prologue(() => startLevel(0)); return; }
+    if (!save.data.guideSeen && !saved) { howTo(() => { closeModal(); startLevel(i); }); return; }
     const lv = Levels.LEVELS[i];
     state.levelIndex = i; state.level = lv;
     const restored = saved ? Sim.restore(lv, saved) : null;
@@ -353,15 +354,83 @@
     buildAlmanac();
     updateHud(true);
     save.data.plays++; save.write();
+    coachEnd();
     if (restored) { state.seasonId = restored.started ? Sim.phaseAt(restored.t).id : "spring"; toast("つづきから"); return; }
     openDialog(`
       <p class="eyebrow">第${KANJI_NO[i]}の谷 · VALLEY ${String(i + 1).padStart(2, "0")}</p>
       <h2>${lv.name}</h2>
       <p class="poem">${lv.poem.join("<br>")}</p>
+      <div class="goal-card">
+        <div><b>目標</b><span>秋に <strong>${lv.goal} 俵</strong> 以上を収穫する</span></div>
+        ${state.world.houses.length ? `<div class="house"><b>守る</b><span>${state.world.houses.length === 1 ? "谷の家を、水に浸さない" : `家 ${state.world.houses.length} 軒を、一軒も水に浸さない`}</span></div>` : ""}
+        <div class="star"><b>★</b><span>${lv.stars[0]} 俵で ★★、${lv.stars[1]} 俵で ★★★</span></div>
+      </div>
       <p>${lv.brief}</p>
-      <p class="keys">目標 ${lv.goal} 俵（${Sim.K.CELLS_PER_BALE} 区画で 1 俵）　·　★★ ${lv.stars[0]} 俵　·　★★★ ${lv.stars[1]} 俵</p>
-      <div class="dialog-actions"><button type="button" class="accent" data-dialog="begin">谷に入る</button></div>`, { begin: () => { closeModal(); hintAt("start"); } });
+      <div class="dialog-actions"><button type="button" class="accent" data-dialog="begin">谷に入る</button></div>`, { begin: () => { closeModal(); coachStart(lv); hintAt("start"); } });
   }
+
+  // ---- coach: the tutorial, one step at a time -------------------------------------------------
+  function coachStart(lv) {
+    state.coach = null; state.strokes = {};
+    coachTarget(null);
+    $("#coach").hidden = true;
+    if (!lv.tutorial || save.data.stars[lv.id]) return; // a valley already farmed needs no lesson
+    state.coach = { steps: lv.tutorial, i: 0, t0: state.time };
+    // a lesson that asks for a tool starts with none of the shaping tools in hand
+    if (lv.tutorial.some(st => (st.until || "").startsWith("tool:"))) setTool("look");
+    coachRender();
+  }
+  function coachTarget(sel) {
+    document.querySelectorAll(".coach-pulse").forEach(el => el.classList.remove("coach-pulse"));
+    if (sel) { const el = document.querySelector(sel); if (el) el.classList.add("coach-pulse"); }
+  }
+  function coachRender() {
+    const c = state.coach;
+    if (!c) return;
+    const step = c.steps[c.i];
+    $("#coach").hidden = false;
+    $("#coachStep").textContent = `手順 ${c.i + 1} / ${c.steps.length}`;
+    $("#coachText").innerHTML = step.text;
+    const acts = $("#coachActions");
+    acts.innerHTML = (c.i === 0 ? "<button type=\"button\" class=\"skip\" data-coach=\"skip\">説明をとじる</button>" : "") + (step.next ? `<button type="button" class="accent" data-coach="next">${step.next}</button>` : "");
+    coachTarget(step.target);
+    clearTimeout(hintTimer); $("#hint").classList.remove("show");
+  }
+  function coachAdvance() {
+    const c = state.coach;
+    if (!c) return;
+    audio.event("select");
+    c.i++; c.t0 = state.time;
+    if (c.i >= c.steps.length) { coachEnd(); return; }
+    coachRender();
+  }
+  function coachEnd() {
+    state.coach = null;
+    coachTarget(null);
+    $("#coach").hidden = true;
+  }
+  function coachCheck(w) {
+    const c = state.coach;
+    if (!c || modalOpen()) return;
+    const step = c.steps[c.i], u = step.until || "";
+    let done = false;
+    if (u.startsWith("tool:")) done = state.tool === u.slice(5);
+    else if (u.startsWith("stroke:")) done = !!state.strokes[u.slice(7)];
+    else if (u === "mark") done = (state.level.marks || []).every(m => state.marksDone.has(m)) && !state.sculpt;
+    else if (u === "goal") done = Sim.forecast(w) >= state.level.goal;
+    else if (u === "planted") done = w.started;
+    else if (u.startsWith("time:")) done = state.time - c.t0 > +u.slice(5);
+    // a later condition already met (e.g. the player planted early) skips ahead
+    if (!done && w.started && u !== "planted" && !u.startsWith("time:")) done = true;
+    if (done) coachAdvance();
+  }
+  $("#coach").addEventListener("click", e => {
+    const b = e.target.closest("button[data-coach]");
+    if (!b) return;
+    audio.unlock();
+    if (b.dataset.coach === "next") coachAdvance();
+    else { coachEnd(); toast("説明は Ⅱ や ? からいつでも"); }
+  });
 
   // ---- HUD -----------------------------------------------------------------------------------
   function arcPath(a0, a1, r) {
@@ -379,7 +448,7 @@
     const lv = state.level;
     const fc = Sim.forecast(w);
     const ripeBales = Math.floor(w.counts.ripe / Sim.K.CELLS_PER_BALE);
-    $("#riceLabel").textContent = !w.started ? "植えられる田" : w.finished ? "収穫" : w.t > 0.75 ? "実った稲" : "育つ稲";
+    $("#riceLabel").textContent = !w.started ? "見込み" : w.finished ? "収穫" : w.t > 0.75 ? "実り" : "育つ稲";
     $("#riceNow").textContent = w.finished ? ripeBales : fc;
     $("#statRice").classList.toggle("met", fc >= lv.goal);
     $("#soilNum").textContent = Math.round(w.basket);
@@ -395,7 +464,7 @@
     needle.style.transform = `rotate(${(w.started ? w.t : 0) * 360}deg)`;
     $("#almLabel").textContent = !w.started ? "春" : Sim.phaseAt(w.t).name;
     const cta = $("#plantCta");
-    const canPlant = !w.started && w.counts.suitable > 0;
+    const canPlant = !w.started && fc >= 1;
     cta.hidden = !canPlant;
     if (canPlant) {
       $("#plantCount").textContent = fc + " 俵";
@@ -417,6 +486,7 @@
     hintTimer = setTimeout(() => el.classList.remove("show"), (seconds || 7) * 1000);
   }
   function hintAt(at) {
+    if (state.coach) return;
     const lv = state.level;
     if (!lv || !lv.hints || state.hintsShown.has(at)) return;
     const h = lv.hints.find(x => x.at === at);
@@ -450,20 +520,17 @@
     if (f) f(); else closeModal();
   });
 
-  function howTo(back) {
-    openDialog(`
-      <p class="eyebrow">HOW TO FARM A VALLEY</p>
-      <h2>あそびかた</h2>
-      <ul class="how-list">
-        <li><i>盛</i><span>籠の土を盛る。崩れた畦をふさぎ、水をせき止める。</span></li>
-        <li><i>掘</i><span>土を掘って籠に入れる。水路をつけ、水を逃がす。</span></li>
-        <li><i>均</i><span>なぞり始めた高さに、まわりを揃える。斜面に平らな段をつくる。</span></li>
-        <li><i>水</i><span>平らな所に浅く溜まった水に、苗が植わる。深すぎても、流れていても植わらない。</span></li>
-        <li><i>眺</i><span>「眺める」では指でなぞると景色が動く。＋－で寄る・引く、⟲⟳でまわる。二本指でも動かせる。</span></li>
-        <li><i>暦</i><span>「田植え」をすると一年が始まる。梅雨の雨は家を濡らし、夏の日照りは田を乾かす。秋に実った稲が収穫になる。</span></li>
-      </ul>
-      <p class="keys">PC：右ドラッグでまわす、Shift＋ドラッグで動かす、ホイールで寄る<br>1 盛る · 2 掘る · 3 均す · 4 眺める · Z 戻す · Space 止める · F 早送り · Q/E まわす</p>
-      <div class="dialog-actions"><button type="button" class="accent" data-dialog="ok">わかった</button></div>`, { ok: back || closeModal });
+  // The illustrated guide. back() runs when it is closed or finished.
+  function howTo(back, start) {
+    const G = window.MizuhoGuide;
+    let i = start || 0;
+    const done = () => { save.data.guideSeen = true; save.write(); (back || closeModal)(); };
+    const render = () => openDialog(G.page(i), {
+      prev: () => { i = Math.max(0, i - 1); render(); },
+      next: () => { i = Math.min(G.count - 1, i + 1); render(); },
+      skip: done, done, ok: done
+    });
+    render();
   }
 
   function pauseMenu() {
@@ -584,7 +651,7 @@
     toast("田植え。一年がはじまる");
     burstPlanting(w);
     hintAt("planted");
-    if (!save.data.speedTip) { save.data.speedTip = true; save.write(); const planted = w; tipTimer = setTimeout(() => { if (state.screen === "play" && state.world === planted && !state.hintsShown.has("planted")) hint("一年が流れはじめた。右の <b>▸</b> で早送りできる。梅雨の雨と夏の日照りに気をつけて。", 8); }, 2600); }
+    if (!save.data.speedTip && !state.coach) { save.data.speedTip = true; save.write(); const planted = w; tipTimer = setTimeout(() => { if (state.screen === "play" && state.world === planted && !state.hintsShown.has("planted")) hint("一年が流れはじめた。右の <b>▸</b> で早送りできる。梅雨の雨と夏の日照りに気をつけて。", 8); }, 2600); }
     updateHud(true);
   }
   function rotate(dir) {
@@ -694,7 +761,8 @@
   function endPointer(e) {
     state.pointers.delete(e.pointerId);
     if (state.sculpt && state.sculpt.id === e.pointerId) {
-      Sim.endStroke(state.world); state.sculpt = null; state.lastStrokeEnd = state.time;
+      const st = Sim.endStroke(state.world); state.sculpt = null; state.lastStrokeEnd = state.time;
+      if (st && st.moved > 0.3) state.strokes[st.tool] = true;
       if (e.pointerType !== "mouse") state.hover = null;
     }
     if (state.pointers.size < 2) state.pinch = null;
@@ -1004,7 +1072,7 @@
         if (row >= 0 && row < w.H && !reduceMotion) for (let x = 0; x < w.W; x += 2) { const i = row * w.W + x; if (w.plant[i] === Sim.RIPE && Math.random() < 0.5) spawn({ kind: "mote", x, y: w.ground[i] + 0.5, z: row, vy: 0.8 + Math.random(), life: 1.6, age: 0, col: "255,214,120" }); }
         if (state.harvestClock > 4 && !state.resultShown) { state.resultShown = true; resultDialog(); }
       }
-      if (now - state.lastHud > 120) { state.lastHud = now; updateHud(); }
+      if (now - state.lastHud > 120) { state.lastHud = now; updateHud(); coachCheck(w); }
       if (!w.finished && state.time - (state.lastSessionSave || 0) > 15 && w.undoStack.length + (w.started ? 1 : 0) > 0) { state.lastSessionSave = state.time; session.write(w); }
     } else {
       // title and select: the showcase valley keeps flowing, the camera drifts

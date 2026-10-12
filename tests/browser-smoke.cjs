@@ -802,9 +802,17 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.waitForFunction(() => window.__mizuho && window.__mizuho.state.screen === "title");
       await page.locator("#startBtn").click();
       await page.locator("#valleyList .valley").first().click();
-      // the first time, grandmother's letter comes before the valley
+      // the first time, grandmother's letter and the five-page guide come before the valley
       await page.locator('#dialog [data-dialog="go"]').click();
+      for (let k = 0; k < 4; k++) await page.locator('#dialog [data-dialog="next"]').click();
+      await page.locator('#dialog [data-dialog="done"]').click();
       await page.locator('#dialog [data-dialog="begin"]').click();
+      // the coach walks a new player through the first valley, one step at a time
+      await page.locator("#coach").waitFor({ state: "visible" });
+      assert.match(await page.locator("#coachStep").innerText(), /1 \/ 6/);
+      await page.locator('#coach [data-coach="next"]').click();
+      await page.locator('.tool[data-tool="heap"]').click();
+      await page.waitForFunction(() => /3 \/ 6/.test(document.querySelector("#coachStep").textContent));
       await page.waitForFunction(() => window.__mizuho && window.__mizuho.state.screen === "play");
       await page.waitForTimeout(300);
       const aze = await page.evaluate(() => {
@@ -830,6 +838,7 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       // if the forecast dipped while the water settled, the game asks before planting
       if (await page.locator('#dialog [data-dialog="go"]').count()) await page.locator('#dialog [data-dialog="go"]').click();
       assert.ok(await page.evaluate(() => window.__mizuho.world.started && window.__mizuho.world.counts.planted > 0), "planting starts the year");
+      await page.waitForFunction(() => /6 \/ 6/.test(document.querySelector("#coachStep").textContent), null, { timeout: 5000 });
       await page.evaluate(() => { const w = window.__mizuho.world; while (!w.finished) window.MizuhoSim.step(w, 1); });
       await page.locator('#dialog [data-dialog="select"]').waitFor({ state: "visible", timeout: 20000 });
       assert.match(await page.locator("#dialogTitle, #dialog h2").first().innerText(), /実る/);
