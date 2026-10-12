@@ -173,6 +173,42 @@ test("ダッシュは一定時間だけ加速が効く", () => {
   assert.ok(s.player.vx <= sim.PHYS.run + 1, "ダッシュ後は最高速度に戻る");
 });
 
+test("同フレームで跳ぶ指定とダッシュの指定が来ても、跳躍が消えない", () => {
+  /* The right half of the screen raises jump and dash on one touch. The dash
+   * zeroes vy a few lines after the jump, so without the guard in helix-sim.js
+   * the very first tap was eaten by the dash and the player never left the
+   * floor on a phone at all. */
+  const s = makeState(arena(40, 12));
+  run(s, "", 70);                 // fall the whole way; a jump needs ground or coyote
+  assert.ok(s.player.onGround, "接地している");
+  const input = sim.makeInput("R");
+  input.jumpPressed = true;
+  input.dashPressed = true;
+  sim.update(s, DT, input);
+  assert.equal(s.player.jumps, 1, "同フレームでも跳ぶ");
+  assert.equal(s.player.dashes, 0, "同フレームのダッシュは後回しになる");
+  assert.ok(s.player.vy < 0, "上昇残っている: " + s.player.vy);
+
+  // 次のフレームでダッシュだけなら、それが効く。
+  const next = sim.makeInput("RK");
+  next.jumpPressed = false;
+  next.dashPressed = true;
+  sim.update(s, DT, next);
+  assert.equal(s.player.dashes, 1, "次のタップでダッシュする");
+  assert.ok(s.player.vx > sim.PHYS.run, "ダッシュ中は最高速度を超える");
+});
+
+test("跳んでいなければ、同フレームのダッシュは普通のまま効く", () => {
+  const s = makeState(arena(40, 12));
+  run(s, "", 70);
+  const input = sim.makeInput("RK");
+  input.jumpPressed = false;      // no jump this frame; the dash must not depend on it
+  input.dashPressed = true;
+  sim.update(s, DT, input);
+  assert.equal(s.player.dashes, 1, "ダッシュは跳ぶ指定に依存しない");
+  assert.equal(s.player.jumps, 0, "跳んでいない");
+});
+
 test("壁に触れている間は壁が検出される", () => {
   const s = makeState(arena(40, 12));
   run(s, "L", 60);

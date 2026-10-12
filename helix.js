@@ -341,6 +341,7 @@ function layoutCamera() {
     prevJump = false;
     prevDash = false;
     releaseAll();
+    lastActTap = 0;   // a tap clock from the last life must not dash the first
     layoutCamera();
     camX = state.map.pixelW * view.scale * 0.5 - view.w * 0.5;
     hideCard();
@@ -379,6 +380,7 @@ function layoutCamera() {
     mode = "off";
     state = null;
     releaseAll();
+    lastActTap = 0;
     document.body.classList.remove("helix-active", "helix-playing");
     $("helixTitle").classList.remove("off");
     $("helixPlay").classList.add("off");
@@ -575,8 +577,13 @@ function layoutCamera() {
     input.left = input.right = input.jump = input.dash = false;
   }
 
-  /* Touch: left thumb walks, right thumb jumps, dash sits under it. */
+  /* Touch: the left thumb walks, the right thumb acts. One thumb carries two
+   * verbs, so the second one is a double tap. A plain tap always jumps —
+   * otherwise a tap can only ever jump and the dash has no route at all from
+   * the ground, which is where most gaps are crossed from. */
   const touches = new Map();
+  const DOUBLE_TAP_MS = 260;
+  let lastActTap = 0;
 
   function pointerLane(x) {
     return x < view.w * 0.5 ? "move" : "act";
@@ -585,12 +592,17 @@ function layoutCamera() {
   function onPointerDown(e) {
     if (mode !== "play") return;
     e.preventDefault();
-    canvas.setPointerCapture(e.pointerId);
+    /* Capture keeps a thumb tracked past the canvas edge, but it is a request,
+     * not a fact: a pointer that already ended, or an id the browser no longer
+     * considers active, makes this throw. Uncaught, that aborts the handler
+     * before the touch is recorded and the controls go dead for good. */
+    try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* keep playing */ }
     touches.set(e.pointerId, { side: pointerLane(e.clientX), x: e.clientX });
     if (touches.size === 1) {
       const side = pointerLane(e.clientX);
       if (side === "move") { input.left = e.clientX < view.w * 0.25; input.right = e.clientX >= view.w * 0.25; }
-      else { input.jump = true; input.dash = true; }
+      else if (performance.now() - lastActTap < DOUBLE_TAP_MS) { input.dash = true; lastActTap = 0; }
+      else { input.jump = true; lastActTap = performance.now(); }
     }
   }
 

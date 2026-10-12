@@ -456,8 +456,16 @@ const targets = [
           const d = ctx.getImageData(Math.round(x * canvas.width), Math.round(y * canvas.height), 1, 1).data;
           return [d[0], d[1], d[2]];
         };
-        // Sample the four outer corners, away from the gameplay rings and hit effects.
-        const points = [[0.08, 0.12], [0.92, 0.12], [0.08, 0.88], [0.92, 0.88]].map(p => at(p[0], p[1]));
+        // Spread the samples inside the top-left corner instead of taking four
+        // points. On a wide canvas all four corner points land on the same
+        // background tone, so the old check measured where the gradient
+        // happened to fall rather than whether one exists; a corner that is
+        // itself varied is a texture whatever the aspect ratio is, and it
+        // stays clear of the rings and the hit effects in the middle.
+        const points = [];
+        for (let gy = 0; gy < 4; gy++) {
+          for (let gx = 0; gx < 4; gx++) points.push(at(0.05 + gx * 0.05, 0.06 + gy * 0.05));
+        }
         return { points, flash: window.__sync.getFlash() };
       });
       const unique = new Set(arena.points.map(p => p.join(",")));
@@ -478,7 +486,7 @@ const targets = [
       assert.ok(offers >= 2, "at least two resonances are offered");
       await page.locator("#syncOverlay .sync-offer").first().click();
       await page.waitForFunction(() => window.__sync.getChapter() === 1, null, { timeout: 5000 });
-      // どれが出たかは抽選なので、増えた数と既	extbf{に持っているもの}でないことだけを見る。
+      // どれが出たかは抽選なので、増えた数と既に持っているものでないことだけを見る。
       const chosen = await page.evaluate(() => window.__sync.getUpgrades());
       assert.equal(chosen.length, 1, "共鳴をちょうど一つ持ち歩く");
       const known = await page.evaluate(() => window.SyncSim.RESONANCES.map(r => r.id));
@@ -552,6 +560,44 @@ const targets = [
       assert.ok(painted.samples > 0, "キャンバスが実寸である");
       assert.ok(painted.lime > 50,
         "ステージの足場（ライム）が描かれている: " + JSON.stringify(painted));
+
+      // タッチ端末では、右半分の一回のタップが跳躍、連打がダッシュになる。
+      // これが崩れると序盤の梯子が一切登れなくなるので、実タッチで確認する。
+      if (target.hasTouch) {
+        const cdp = await context.newCDPSession(page);
+        const box = await page.locator("#helixWorld").boundingBox();
+        const tap = (type) => cdp.send("Input.dispatchTouchEvent", {
+          type,
+          touchPoints: type === "touchEnd" ? []
+            : [{ x: box.x + box.width * 0.78, y: box.y + box.height * 0.7, id: 1 }],
+        });
+        await page.evaluate(() => { for (let i = 0; i < 70; i++) window.__helix.tick(); });
+        const ground = await page.evaluate(() => window.__helix.getState().player.y);
+        await tap("touchStart");
+        let peak = ground;
+        for (let i = 0; i < 24; i++) {
+          await page.evaluate(() => window.__helix.tick());
+          peak = Math.min(peak, await page.evaluate(() => window.__helix.getState().player.y));
+        }
+        await tap("touchEnd");
+        const afterTap = await page.evaluate(() => {
+          const p = window.__helix.getState().player;
+          return { jumps: p.jumps, dashes: p.dashes };
+        });
+        assert.ok(ground - peak > 8, "右半分のタップで跳ぶ: " + JSON.stringify({ rise: ground - peak }));
+        assert.equal(afterTap.dashes, 0, "一回のタップでダッシュしない");
+
+        await tap("touchStart"); await tap("touchEnd"); await tap("touchStart");
+        let peakVx = 0;
+        for (let i = 0; i < 12; i++) {
+          await page.evaluate(() => window.__helix.tick());
+          peakVx = Math.max(peakVx, Math.abs(await page.evaluate(() => window.__helix.getState().player.vx)));
+        }
+        await tap("touchEnd");
+        const afterDouble = await page.evaluate(() => window.__helix.getState().player.dashes);
+        assert.equal(afterDouble, 1, "右半分の連打でダッシュする");
+        assert.ok(peakVx > 300, "ダッシュ中は最高速度を超える: " + Math.round(peakVx));
+      }
 
       // 一時停止 → 再開
       await page.locator("#helixPauseBtn").click();

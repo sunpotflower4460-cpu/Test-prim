@@ -482,6 +482,11 @@ function createState(levelIndex, rows) {
     }
 
     /* --- jump --- */
+    /* A touch on the right half raises jump and dash together, and the dash
+     * zeroes vy a few lines below — so without this guard the first tap of
+     * every attempt was swallowed by the dash and the player never left the
+     * ground. The jump owns the frame it fires on; the dash is the next tap. */
+    const jumpsAtFrameStart = p.jumps;
     if (inp.jumpPressed) p.buffer = PHYS.buffer;
     else if (p.buffer > 0) p.buffer -= dt;
 
@@ -522,7 +527,7 @@ function createState(levelIndex, rows) {
     }
 
     /* --- dash --- */
-    if (inp.dashPressed && p.dashWait <= 0) {
+    if (inp.dashPressed && p.dashWait <= 0 && p.jumps === jumpsAtFrameStart) {
       p.dashTime = PHYS.dashTime;
       p.dashWait = PHYS.dashWait;
       p.vy = 0;
