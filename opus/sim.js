@@ -254,7 +254,8 @@
     let ev = 0;
     for (let i = 0; i < N; i++) {
       let d = water[i] + rain;
-      if (d > 0) { const e = d < evap ? d : evap; d -= e; ev += e; }
+      // a running film loses little; standing water loses the full rate
+      if (d > 0) { const e = Math.min(d, evap * (d < 0.06 ? 0.25 + d * 12.5 : 1)); d -= e; ev += e; }
       water[i] = d;
     }
     w.rained += rain * N; w.evaporated += ev;

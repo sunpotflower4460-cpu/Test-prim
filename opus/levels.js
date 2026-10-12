@@ -78,7 +78,7 @@
       id: "tanada", no: 3, name: "棚田", kana: "たなだ",
       poem: ["上の田であふれた水は、", "下の田を満たす。"],
       brief: "段を重ね、上の田からあふれる水で下の田を満たす。",
-      w: 48, h: 56, seed: 37, goal: 14, stars: [18, 22],
+      w: 48, h: 56, seed: 37, goal: 16, stars: [22, 30],
       basket: 120, cap: 260,
       springs: [{ x: 24, y: 3, rate: 1.6 }],
       houses: [{ x: 39, y: 47, w: 4, h: 3, rot: 0.1 }, { x: 4, y: 49, w: 3, h: 3, rot: -0.2 }],
@@ -107,7 +107,7 @@
       springs: [{ x: 28, y: 3, rate: 1.4 }],
       houses: [{ x: 17, y: 37, w: 3, h: 3, rot: 0.15 }, { x: 24, y: 36, w: 4, h: 3 }, { x: 33, y: 35, w: 3, h: 3, rot: -0.2 }],
       edges: { s: true, e: true, w: true },
-      rain: { rainy: 0.0075, summer: 0.0004 },
+      rain: { rainy: 0.0055, summer: 0.0004 },
       terrain(x, y, n) {
         const north = (51 - y) * 0.27;
         const side = ((x - 28) / 28) ** 2 * 7;
@@ -158,7 +158,7 @@
       id: "one", no: 6, name: "尾根越え", kana: "おねごえ",
       poem: ["泉は、尾根の向こう側。", "なだらかな畑は、こちら側。"],
       brief: "西の谷の水を、尾根の鞍部を掘り抜いて東の斜面へ引く。",
-      w: 60, h: 52, seed: 67, goal: 14, stars: [20, 26],
+      w: 60, h: 52, seed: 67, goal: 14, stars: [22, 30],
       basket: 170, cap: 320,
       springs: [{ x: 12, y: 3, rate: 1.9 }],
       houses: [{ x: 48, y: 43, w: 4, h: 3, rot: 0.2 }, { x: 40, y: 46, w: 3, h: 3 }],
@@ -226,7 +226,7 @@
       id: "senmai", no: 8, name: "千枚田", kana: "せんまいだ",
       poem: ["海へ落ちる斜面に、", "千の田を。"],
       brief: "二つの泉、村、梅雨と日照り。海までの斜面いっぱいに、棚田を重ねる。",
-      w: 72, h: 84, seed: 89, goal: 32, stars: [42, 52],
+      w: 72, h: 84, seed: 89, goal: 34, stars: [46, 58],
       basket: 900, cap: 1000,
       springs: [{ x: 20, y: 3, rate: 1.8, drought: 0.5 }, { x: 52, y: 4, rate: 1.8, drought: 0.5 }],
       houses: [{ x: 60, y: 40, w: 4, h: 3, rot: -0.15 }, { x: 64, y: 46, w: 3, h: 3, rot: 0.1 }, { x: 57, y: 47, w: 3, h: 3 }, { x: 3, y: 68, w: 4, h: 3, rot: 0.2 }],

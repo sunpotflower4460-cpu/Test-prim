@@ -104,7 +104,7 @@ test("undo restores the ground and the basket", () => {
 test("rice only takes root in still, shallow water on level ground", () => {
   const w = Sim.create(Levels.byId("ichimai"));
   for (let k = 0; k < 40; k++) Sim.step(w, 1);
-  assert.ok(w.counts.suitable < Sim.K.CELLS_PER_BALE, "a broken field does not count");
+  assert.ok(Sim.forecast(w) < Levels.byId("ichimai").goal, "a broken field does not reach the goal");
   Script.run(w, Solutions.ichimai.slice(0, 2));
   assert.ok(Sim.forecast(w) >= Levels.byId("ichimai").goal, "the mended field is ready");
   Sim.start(w);

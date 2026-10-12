@@ -28,6 +28,8 @@
       [{ op: "wait", s: 80 }], year),
     tsuyu: [].concat(
       [0, 1, 2, 3, 4].map(k => ({ op: "stroke", tool: "dig", r: 2.7, path: [[31, 41], [37, 43], [37, 51.5]], speed: 4, paused: true })),
+      // lead the brook past the houses and into the drain
+      [0, 1].map(k => ({ op: "stroke", tool: "dig", r: 1.6, path: [[29, 30], [30.5, 34], [32, 38.5], [33.5, 41]], speed: 4, paused: true })),
       T(18, 38, 13, 6, { outlet: 29 }),
       T(18, 38, 21, 6),
       [{ op: "wait", s: 60 }], year),

@@ -219,13 +219,13 @@
       if (A.ctx.state === "suspended") A.ctx.resume();
       if (!A.ready) {
         A.ready = true;
-        A.nodes.master.gain.setTargetAtTime(0.9, now(), 0.6);
+        A.nodes.master.gain.setTargetAtTime(1.7, now(), 0.6);
       }
     };
     A.setEnabled = function (on) {
       A.enabled = on;
       if (!A.ctx) { if (on) A.unlock(); return; }
-      A.nodes.master.gain.setTargetAtTime(on ? 0.9 : 0, now(), 0.15);
+      A.nodes.master.gain.setTargetAtTime(on ? 1.7 : 0, now(), 0.15);
       if (on && A.ctx.state === "suspended") A.ctx.resume();
     };
     A.suspend = function () { if (A.ctx && A.ctx.state === "running") A.ctx.suspend(); };
@@ -238,7 +238,7 @@
       n.wGain.gain.setTargetAtTime(Math.min(0.16, s.flow * 0.2), t, 0.3);
       n.wBand.frequency.setTargetAtTime(700 + s.flow * 700, t, 0.5);
       n.fGain.gain.setTargetAtTime(Math.min(0.14, s.falls * 0.22), t, 0.3);
-      n.rGain.gain.setTargetAtTime(Math.min(0.32, s.rain * 0.4), t, 0.8);
+      n.rGain.gain.setTargetAtTime(Math.min(0.5, s.rain * 0.6), t, 0.8);
       n.windGain.gain.setTargetAtTime(s.season === "autumn" ? 0.06 : s.season === "rainy" ? 0.05 : 0.025, t, 1.5);
       const nx = A.next;
       const later = (key, a, b) => { nx[key] = t + a + Math.random() * (b - a); };

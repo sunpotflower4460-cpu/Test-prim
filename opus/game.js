@@ -356,9 +356,9 @@
       cta.classList.toggle("short", fc < lv.goal);
     }
     $("#undoBtn").disabled = w.undoStack.length === 0;
-    $("#speedBtn").textContent = state.paused ? "▶" : state.speed > 1 ? "▸▸" : "▸";
+    $("#speedBtn").textContent = state.paused ? "▶" : state.speed === 8 ? "»»" : state.speed === 3 ? "»" : "▸";
     $("#speedBtn").classList.toggle("fast", state.speed > 1 && !state.paused);
-    $("#speedBtn").setAttribute("aria-label", state.speed > 1 ? "ふつうの速さ" : "早送り");
+    $("#speedBtn").setAttribute("aria-label", state.paused ? "時を動かす" : state.speed === 8 ? "ふつうの速さにする" : "早送り");
   }
 
   // ---- hints and toasts --------------------------------------------------------------------
@@ -554,7 +554,8 @@
   }
   function toggleSpeed() {
     if (state.paused) { state.paused = false; }
-    else state.speed = state.speed > 1 ? 1 : 3;
+    else state.speed = state.speed === 1 ? 3 : state.speed === 3 ? 8 : 1;
+    toast(state.speed === 1 ? "ふつうの速さ" : state.speed === 3 ? "早送り ×3" : "早送り ×8");
     updateHud(true);
   }
 
@@ -869,7 +870,10 @@
     state.time += dt;
     const w = state.world;
     if (!w) return;
-    const dpr = Math.min(window.devicePixelRatio || 1, view.clientWidth * view.clientHeight > 900000 ? 1.5 : 2);
+    // adaptive resolution: if frames run long for a while, render fewer pixels
+    state.slowFor = dt > 0.026 ? (state.slowFor || 0) + dt : Math.max(0, (state.slowFor || 0) - dt * 0.5);
+    if (state.slowFor > 2 && (state.quality || 1) > 0.5) { state.quality = (state.quality || 1) * 0.8; state.slowFor = 0; }
+    const dpr = Math.max(0.75, Math.min(window.devicePixelRatio || 1, view.clientWidth * view.clientHeight > 900000 ? 1.5 : 2) * (state.quality || 1));
 
     // simulation
     if (state.screen === "play") {
@@ -954,6 +958,7 @@
   window.__mizuho = {
     get state() { return state; },
     get world() { return state.world; },
+    audio,
     startLevel, enterSelect, enterTitle, plant: () => plant(true),
     run(script) { Script.run(state.world, script); updateHud(true); },
     pickCenter() { return R.project(state.world.W / 2, Sim.sampleGround(state.world, state.world.W / 2, state.world.H / 2), state.world.H / 2); },

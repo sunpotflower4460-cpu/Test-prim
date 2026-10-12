@@ -286,10 +286,14 @@ uniform float uRain;
 uniform float uShowSuit;
 uniform vec3 uWaterDeep; uniform vec3 uWaterShallow;
 out vec4 frag;
+// cheap ripples: a few travelling waves broken up by one octave of noise
 vec2 ripple(vec2 p, float t){
-  float e=.05;
-  float a=fbm(p+t), b=fbm(p+vec2(e,0.)+t), c=fbm(p+vec2(0.,e)+t);
-  return vec2(b-a,c-a)/e;
+  vec2 g=vec2(0.);
+  g+=vec2(.8,.6)*cos(dot(p,vec2(.8,.6))*3.1+t*9.);
+  g+=vec2(-.5,.86)*cos(dot(p,vec2(-.5,.86))*4.3+t*11.)*.7;
+  g+=vec2(.96,-.28)*cos(dot(p,vec2(.96,-.28))*5.7+t*13.)*.5;
+  float n=vnoise(p*1.7+t*2.);
+  return g*.35*(.4+n);
 }
 void main(){
   float d=vDepth;
