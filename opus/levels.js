@@ -32,7 +32,7 @@
         if (inRect(x, y, field)) {
           if (ring(x, y, field)) {
             const gap = y === 27 && x >= 19 && x <= 21;
-            return { ground: floor + (gap ? 0.02 : 0.36), bed: floor - 2 };
+            return { ground: floor + (gap ? -0.3 : 0.36), bed: floor - 2 };
           }
           return { ground: floor, bed: floor - 2.2 };
         }
@@ -54,7 +54,7 @@
       id: "dan", no: 2, name: "段", kana: "だん",
       poem: ["斜面に、水は止まらない。", "平らな段をつくれば、水は休む。"],
       brief: "「均す」で斜面に平らな段を削り出し、縁に畦を盛る。",
-      w: 44, h: 44, seed: 23, goal: 6, stars: [9, 12],
+      w: 44, h: 44, seed: 23, goal: 8, stars: [12, 16],
       basket: 160, cap: 240,
       tools: ["level", "heap", "dig"],
       springs: [{ x: 22, y: 3, rate: 1.3 }],
@@ -79,7 +79,7 @@
       id: "tanada", no: 3, name: "棚田", kana: "たなだ",
       poem: ["上の田であふれた水は、", "下の田を満たす。"],
       brief: "段を重ね、上の田からあふれる水で下の田を満たす。",
-      w: 48, h: 56, seed: 37, goal: 16, stars: [22, 30],
+      w: 48, h: 56, seed: 37, goal: 20, stars: [30, 40],
       basket: 120, cap: 260,
       springs: [{ x: 24, y: 3, rate: 1.6 }],
       houses: [{ x: 39, y: 47, w: 4, h: 3, rot: 0.1 }, { x: 4, y: 49, w: 3, h: 3, rot: -0.2 }],
@@ -103,7 +103,7 @@
       id: "tsuyu", no: 4, name: "梅雨", kana: "つゆ",
       poem: ["谷の底に、三つの家。", "長雨は、低い所へ集まる。"],
       brief: "梅雨の雨は谷の底に集まる。家が浸かる前に、水の逃げ道を掘っておく。",
-      w: 56, h: 52, seed: 41, goal: 8, stars: [11, 14],
+      w: 56, h: 52, seed: 41, goal: 10, stars: [14, 18],
       basket: 140, cap: 300,
       springs: [{ x: 28, y: 3, rate: 1.4 }],
       houses: [{ x: 17, y: 37, w: 3, h: 3, rot: 0.15 }, { x: 24, y: 36, w: 4, h: 3 }, { x: 33, y: 35, w: 3, h: 3, rot: -0.2 }],
@@ -131,7 +131,7 @@
       id: "ishigaki", no: 5, name: "石垣", kana: "いしがき",
       poem: ["岩がちの斜面には、", "田を埋める土が足りない。"],
       brief: "斜面の土は薄い。谷の下の扇状地を掘って、籠に土を集めてから段を築く。",
-      w: 52, h: 56, seed: 53, goal: 10, stars: [13, 16],
+      w: 52, h: 56, seed: 53, goal: 12, stars: [18, 24],
       basket: 0, cap: 320,
       springs: [{ x: 27, y: 3, rate: 1.5 }],
       houses: [{ x: 40, y: 46, w: 4, h: 3, rot: -0.1 }],
@@ -161,7 +161,7 @@
       id: "one", no: 6, name: "尾根越え", kana: "おねごえ",
       poem: ["泉は、尾根の向こう側。", "なだらかな畑は、こちら側。"],
       brief: "西の谷の水を、尾根の鞍部を掘り抜いて東の斜面へ引く。",
-      w: 60, h: 52, seed: 67, goal: 14, stars: [22, 30],
+      w: 60, h: 52, seed: 67, goal: 18, stars: [28, 38],
       basket: 170, cap: 320,
       springs: [{ x: 12, y: 3, rate: 1.9 }],
       houses: [{ x: 48, y: 43, w: 4, h: 3, rot: 0.2 }, { x: 40, y: 46, w: 3, h: 3 }],
@@ -189,12 +189,12 @@
       id: "hideri", no: 7, name: "日照り", kana: "ひでり",
       poem: ["夏、泉は細くなる。", "春の水を、ため池に貯えておく。"],
       brief: "崩れたため池の堤を盛って春の水を貯える。夏の日照りには堤を少しずつ掘って、田へ水を落とす。",
-      w: 56, h: 60, seed: 71, goal: 15, stars: [18, 22],
+      w: 56, h: 60, seed: 71, goal: 15, stars: [19, 24],
       basket: 150, cap: 320,
       springs: [{ x: 28, y: 3, rate: 2.6, drought: 0.06 }],
       houses: [{ x: 6, y: 51, w: 4, h: 3, rot: 0.1 }],
       edges: { s: true, e: true, w: true },
-      evap: 0.0065, heat: 1.6,
+      evap: 0.0065, heat: 2.0,
       rain: { rainy: 0.0022 },
       terrain(x, y, n) {
         const slope = 2 + (59 - y) * 0.36;
@@ -229,7 +229,7 @@
       id: "senmai", no: 8, name: "千枚田", kana: "せんまいだ",
       poem: ["海へ落ちる斜面に、", "千の田を。"],
       brief: "二つの泉、村、梅雨と日照り。海までの斜面いっぱいに、棚田を重ねる。",
-      w: 72, h: 84, seed: 89, goal: 34, stars: [46, 58],
+      w: 72, h: 84, seed: 89, goal: 40, stars: [60, 80],
       basket: 900, cap: 1000,
       springs: [{ x: 20, y: 3, rate: 1.8, drought: 0.5 }, { x: 52, y: 4, rate: 1.8, drought: 0.5 }],
       houses: [{ x: 60, y: 40, w: 4, h: 3, rot: -0.15 }, { x: 64, y: 46, w: 3, h: 3, rot: 0.1 }, { x: 57, y: 47, w: 3, h: 3 }, { x: 3, y: 68, w: 4, h: 3, rot: 0.2 }],

@@ -25,7 +25,7 @@
     GROW_MIN: 0.02,
     GROW_MAX: 0.75,      // deeper than this the seedlings drown
     FLAT: 0.14,          // largest step to a neighbour that still counts as a flat paddy
-    STILL: 0.55,         // outflow per depth above which the water is a stream, not a paddy
+    STILL: 2.2,          // outflow per depth above which the water is a stream, not a paddy
     STRESS_MAX: 12,      // game seconds of drought or drowning before a plant is lost
     GROW_TIME: 0.62,     // fraction of the year a healthy plant needs to ripen
     PLANT_UNTIL: 0.3,    // late planting allowed until this point of the year
