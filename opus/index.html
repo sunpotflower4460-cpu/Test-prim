@@ -1,0 +1,116 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
+  <meta name="theme-color" content="#16233a">
+  <meta name="description" content="MIZUHO — 瑞穂。山の斜面を掘り、盛り、均して棚田をひらき、湧き水を巡らせて稲を育てる、水と土の箱庭。Opus 5.5 オリジナル作品。">
+  <title>MIZUHO — 瑞穂 | Opus 5.5</title>
+  <link rel="icon" href="../icon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Shippori+Mincho:wght@500;600;700&family=Cormorant+Garamond:wght@500;600&display=swap">
+  <link rel="stylesheet" href="mizuho.css">
+  <script src="sim.js" defer></script>
+  <script src="levels.js" defer></script>
+  <script src="script.js" defer></script>
+  <script src="render.js" defer></script>
+  <script src="audio.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <canvas id="view" aria-label="棚田の箱庭。指でなぞって土を動かします。"></canvas>
+  <canvas id="fx" aria-hidden="true"></canvas>
+  <div class="paper" aria-hidden="true"></div>
+
+  <!-- title -->
+  <section id="title" class="screen title" aria-label="MIZUHO タイトル">
+    <header class="title-top">
+      <a class="back-link" href="../index.html">‹ <span>Test prim</span></a>
+      <span class="byline">AN ORIGINAL BY OPUS 5.5</span>
+      <button type="button" class="round" data-action="sound" aria-label="音の切り替え"><span class="sound-glyph">♪</span></button>
+    </header>
+    <div class="title-body">
+      <div class="title-mark">
+        <p class="title-eyebrow">TERRACES OF WATER AND EARTH</p>
+        <h1 class="title-logo">MIZUHO</h1>
+        <p class="title-kanji" aria-label="瑞穂">瑞<br>穂</p>
+      </div>
+      <p class="title-lead">山の斜面に、水の段を。<br>崩れた畦を盛り、土を均して、<br>もう一度、この谷に稲を。</p>
+      <div class="title-actions">
+        <button type="button" class="primary" data-action="select" id="startBtn"><span>田をひらく</span><b aria-hidden="true">↗</b></button>
+        <button type="button" class="quiet" data-action="how">あそびかた</button>
+      </div>
+      <p class="title-record" id="titleRecord">谷は、まだ眠っている。</p>
+    </div>
+    <footer class="title-foot"><span>EIGHT VALLEYS · ONE YEAR EACH</span><span>NO CLOCK UNTIL YOU PLANT</span></footer>
+  </section>
+
+  <!-- valley select -->
+  <section id="select" class="screen select" hidden aria-label="谷をえらぶ">
+    <header class="sheet-head">
+      <button type="button" class="back-link" data-action="title">‹ <span>タイトル</span></button>
+      <div class="sheet-title"><p>THE ALMANAC</p><h2>谷の暦</h2></div>
+      <button type="button" class="round" data-action="sound" aria-label="音の切り替え"><span class="sound-glyph">♪</span></button>
+    </header>
+    <p class="select-progress" id="selectProgress"></p>
+    <ol class="valley-list" id="valleyList"></ol>
+    <p class="select-foot">田植えをするまで、時間は流れません。<br>水の行き先を見ながら、ゆっくり土を動かしてください。</p>
+  </section>
+
+  <!-- play -->
+  <section id="play" class="screen play" hidden aria-label="棚田">
+    <header class="hud-top">
+      <button type="button" class="round" data-action="pause" aria-label="一時停止">Ⅱ</button>
+      <div class="hud-title">
+        <span id="hudNo">第一の谷</span>
+        <strong id="hudName">一枚目</strong>
+      </div>
+      <div class="almanac" id="almanac" aria-label="暦">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <circle class="alm-bg" cx="32" cy="32" r="26"/>
+          <path class="alm-seg alm-early" id="almEarly"/>
+          <path class="alm-seg alm-rainy" id="almRainy"/>
+          <path class="alm-seg alm-summer" id="almSummer"/>
+          <path class="alm-seg alm-autumn" id="almAutumn"/>
+          <line class="alm-needle" id="almNeedle" x1="32" y1="32" x2="32" y2="9"/>
+          <circle class="alm-hub" cx="32" cy="32" r="3"/>
+        </svg>
+        <span id="almLabel">春</span>
+      </div>
+    </header>
+    <div class="hud-stats">
+      <div class="stat stat-rice" id="statRice"><small id="riceLabel">植えられる田</small><b><span id="riceNow">0</span><i>/</i><span id="riceGoal">6</span></b><em>俵</em></div>
+      <div class="stat stat-soil" id="statSoil"><small>籠の土</small><div class="soil-bar"><i id="soilFill"></i></div><b id="soilNum">0</b></div>
+      <div class="stat stat-houses" id="statHouses" aria-label="家"></div>
+    </div>
+    <p class="hint" id="hint" role="status" aria-live="polite"></p>
+
+    <div class="side-tools">
+      <button type="button" class="round small" data-action="rotl" aria-label="左へ回る">⟲</button>
+      <button type="button" class="round small" data-action="rotr" aria-label="右へ回る">⟳</button>
+      <button type="button" class="round small" data-action="speed" id="speedBtn" aria-label="早送り">▸</button>
+    </div>
+
+    <div class="plant-cta" id="plantCta" hidden>
+      <button type="button" class="primary plant" data-action="plant"><span>田植えをする</span><b id="plantCount">0 俵</b></button>
+    </div>
+
+    <nav class="toolbar" aria-label="道具">
+      <button type="button" class="tool" data-tool="heap" aria-pressed="false"><i>盛</i><span>盛る</span></button>
+      <button type="button" class="tool" data-tool="dig" aria-pressed="false"><i>掘</i><span>掘る</span></button>
+      <button type="button" class="tool" data-tool="level" aria-pressed="false"><i>均</i><span>均す</span></button>
+      <button type="button" class="tool" data-tool="look" aria-pressed="false"><i>眺</i><span>眺める</span></button>
+      <span class="tool-sep" aria-hidden="true"></span>
+      <button type="button" class="tool mini" data-action="size" id="sizeBtn" aria-label="筆の大きさ"><i id="sizeGlyph">小</i><span>大きさ</span></button>
+      <button type="button" class="tool mini" data-action="undo" id="undoBtn" aria-label="戻す"><i>↶</i><span>戻す</span></button>
+    </nav>
+  </section>
+
+  <div id="modal" class="modal" hidden>
+    <section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section>
+  </div>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <div id="curtain" class="curtain" aria-hidden="true"></div>
+  <noscript><p class="noscript">この谷をひらくには JavaScript が必要です。<a href="../index.html">Test prim へ戻る</a></p></noscript>
+</body>
+</html>
