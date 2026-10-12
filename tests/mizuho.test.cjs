@@ -111,3 +111,17 @@ test("rice only takes root in still, shallow water on level ground", () => {
   assert.ok(w.counts.planted > 0);
   for (let i = 0; i < w.N; i++) if (w.plant[i]) assert.ok(w.water[i] >= Sim.K.PLANT_MIN && w.water[i] <= Sim.K.PLANT_MAX);
 });
+
+test("a valley in progress is saved and restored, and broken saves are refused", () => {
+  const lv = Levels.byId("tanada"), w = Sim.create(lv);
+  Script.run(w, Solutions.tanada.slice(0, 6));
+  const saved = JSON.parse(JSON.stringify(Sim.serialize(w)));
+  const back = Sim.restore(lv, saved);
+  assert.ok(back);
+  assert.equal(back.basket, w.basket);
+  assert.deepEqual(Array.from(back.ground), Array.from(w.ground));
+  assert.deepEqual(Array.from(back.water), Array.from(w.water));
+  assert.equal(Sim.restore(Levels.byId("dan"), saved), null, "a save for another valley is refused");
+  assert.equal(Sim.restore(lv, Object.assign({}, saved, { ground: saved.ground.slice(0, 40) })), null, "a truncated save is refused");
+  assert.equal(Sim.restore(lv, Object.assign({}, saved, { v: 2 })), null, "an unknown version is refused");
+});

@@ -155,6 +155,7 @@ uniform vec4 uMarks[4];
 uniform float uMarkCount;
 uniform float uShowSuit;
 uniform vec3 uSkirtNormal;
+uniform float uIsSkirt;
 out vec4 frag;
 void main(){
   vec3 n=normalize(vN);
@@ -164,7 +165,7 @@ void main(){
   float det=fbm(wp*1.7);
   float fine=vnoise(wp*7.3);
   vec3 col;
-  if(vSkirt>0.5 || (gl_FrontFacing==false)){
+  if(uIsSkirt>0.5){
     // diorama cross-section: soil strata over bedrock
     float depthBelow=-vPos.y;
     float band=sin(vPos.y*5.1+fine*1.4)*.5+.5;
@@ -182,8 +183,9 @@ void main(){
   vec3 grass=mix(uGrass,uGrassDry,smoothstep(.35,.75,det)*.6);
   grass*=.86+.28*fine;
   col=grass;
-  // banks too steep for turf show their earth
-  col=mix(col,uEarth*(.85+.2*fine),smoothstep(.22,.42,slope));
+  // grassy banks; only the steepest cuts show their earth
+  col=mix(col,col*vec3(.86,.9,.8),smoothstep(.18,.4,slope));
+  col=mix(col,uEarth*(.85+.2*fine),smoothstep(.5,.72,slope));
   // stone: walls and bare rock
   if(isRock){
     // walls are textured on their face, flat rock from above
@@ -1018,10 +1020,12 @@ void main(){
       gl.uniform4fv(pr.u.uMarks, mk); gl.uniform1f(pr.u.uMarkCount, Math.min(4, marks.length));
       gl.uniform1f(pr.u.uShowSuit, env.showSuit || 0);
       gl.uniform3f(pr.u.uSkirtNormal, 0, 1, 0);
+      gl.uniform1f(pr.u.uIsSkirt, 0);
       gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); gl.frontFace(gl.CCW);
       gl.bindVertexArray(res.gridVAO);
       gl.drawElements(gl.TRIANGLES, res.gridCount, gl.UNSIGNED_INT, 0);
       gl.disable(gl.CULL_FACE);
+      gl.uniform1f(pr.u.uIsSkirt, 1);
       for (const s of res.skirts) {
         gl.uniform3fv(pr.u.uSkirtNormal, s.n);
         gl.bindVertexArray(s.vao); gl.drawArrays(gl.TRIANGLES, 0, s.count);

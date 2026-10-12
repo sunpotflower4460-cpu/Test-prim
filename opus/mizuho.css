@@ -83,6 +83,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .valley-name small { font-size: 10px; letter-spacing: .1em; color: var(--paper-dim); margin-left: 6px; font-weight: 500; }
 .valley-poem { font-size: 11px; line-height: 1.75; color: rgba(243, 236, 220, .78); margin: 2px 0 0; min-height: 3.5em; }
 .valley-meta { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; font: 600 10px var(--sans); letter-spacing: .08em; color: var(--paper-dim); }
+.resume-tag { font-style: normal; margin-left: 8px; padding: 1px 6px; border-radius: 3px; background: rgba(226, 189, 98, .22); color: var(--gold-soft); letter-spacing: .1em; }
 .valley-stars { color: var(--gold); letter-spacing: .12em; font-size: 13px; }
 .valley-stars .off { color: rgba(243, 236, 220, .22); }
 .valley.locked { opacity: .45; }
@@ -208,6 +209,9 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
   .valley-list { grid-template-columns: 1fr; }
   .hud-title strong { font-size: 15px; }
   .title-kanji { right: -30px; font-size: 17px; }
+}
+@media (max-width: 440px) and (orientation: portrait) {
+  .title-kanji { right: -6px; top: -34px; font-size: 15px; padding: 5px 4px; }
 }
 @media (max-width: 380px) {
   .title-top .byline { display: none; }

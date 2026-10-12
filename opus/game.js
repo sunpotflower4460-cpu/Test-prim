@@ -22,6 +22,14 @@
     };
   })();
 
+  // A valley in progress survives closing the page.
+  const SESSION_KEY = "mizuho-opus55-session";
+  const session = {
+    read() { try { const raw = localStorage.getItem(SESSION_KEY); return raw ? JSON.parse(raw) : null; } catch (e) { return null; } },
+    write(w) { try { localStorage.setItem(SESSION_KEY, JSON.stringify(Sim.serialize(w))); } catch (e) { /* storage full or blocked */ } },
+    clear() { try { localStorage.removeItem(SESSION_KEY); } catch (e) { /* blocked */ } }
+  };
+
   // ---- renderer and sound --------------------------------------------------------------
   const R = window.MizuhoRender.create(view);
   if (!R) {
@@ -237,7 +245,20 @@
       b.appendChild(cv);
       const best = save.data.best[lv.id];
       b.insertAdjacentHTML("beforeend", `<div class="valley-body"><span class="valley-no">第${KANJI_NO[i]}の谷 · VALLEY ${String(i + 1).padStart(2, "0")}</span><span class="valley-name">${lv.name}<small>${lv.kana}</small></span><p class="valley-poem">${locked ? "まだ、霧の向こう。" : lv.poem.join("<br>")}</p><span class="valley-meta"><span>目標 ${lv.goal} 俵${best !== undefined ? "　·　最高 " + best + " 俵" : ""}</span><span class="valley-stars">${"<span>★</span>".repeat(stars)}${"<span class=\"off\">★</span>".repeat(3 - stars)}</span></span></div>`);
-      b.addEventListener("click", () => { audio.unlock(); audio.event("select"); startLevel(i); });
+      const saved = !locked && session.read();
+      if (saved && saved.id === lv.id) b.querySelector(".valley-no").insertAdjacentHTML("beforeend", "<em class=\"resume-tag\">つづき</em>");
+      b.addEventListener("click", () => {
+        audio.unlock(); audio.event("select");
+        const now = session.read();
+        if (now && now.id === lv.id) {
+          openDialog(`
+            <p class="eyebrow">第${KANJI_NO[i]}の谷 · ${lv.name}</p>
+            <h2>つづきから？</h2>
+            <p>${now.started ? "一年の途中" : "田植えの前"}で手を止めた谷があります。</p>
+            <div class="dialog-actions"><button type="button" class="accent" data-dialog="resume">つづきから</button><button type="button" data-dialog="fresh">はじめから</button></div>`,
+          { resume: () => { closeModal(); startLevel(i, now); }, fresh: () => { closeModal(); session.clear(); startLevel(i); } });
+        } else startLevel(i);
+      });
       li.appendChild(b); list.appendChild(li);
       requestAnimationFrame(() => drawThumb(cv, lv));
     });
@@ -298,11 +319,13 @@
       <div class="letter">山の田は、もう十年も水を張っていません。<br>畦は崩れ、段は草に埋もれました。<br>それでも春になると、泉はいまも湧いています。<br>一枚でいい。もう一度、この谷に稲を。<cite>祖母 ハル</cite></div>
       <div class="dialog-actions"><button type="button" class="accent" data-dialog="go">谷へ向かう</button></div>`, { go: () => { save.data.prologue = true; save.write(); closeModal(); then(); } });
   }
-  function startLevel(i) {
+  function startLevel(i, saved) {
     if (i === 0 && !save.data.prologue) { prologue(() => startLevel(0)); return; }
     const lv = Levels.LEVELS[i];
     state.levelIndex = i; state.level = lv;
-    state.world = loadWorld(lv);
+    const restored = saved ? Sim.restore(lv, saved) : null;
+    if (restored) { R.setWorld(restored); state.world = restored; } else { state.world = loadWorld(lv); if (!saved) session.clear(); }
+    state.lastSessionSave = state.time;
     state.showcase = false;
     state.cam = playCam(state.world); state.camGoal = null;
     state.paused = false; state.speed = 1; state.harvestClock = 0; state.resultShown = false;
@@ -321,6 +344,7 @@
     buildAlmanac();
     updateHud(true);
     save.data.plays++; save.write();
+    if (restored) { state.seasonId = restored.started ? Sim.phaseAt(restored.t).id : "spring"; toast("つづきから"); return; }
     openDialog(`
       <p class="eyebrow">第${KANJI_NO[i]}の谷 · VALLEY ${String(i + 1).padStart(2, "0")}</p>
       <h2>${lv.name}</h2>
@@ -448,8 +472,8 @@
         <button type="button" data-dialog="select">谷の暦へ</button>
       </div>`, {
       resume: closeModal,
-      retry: () => { closeModal(); startLevel(state.levelIndex); },
-      select: () => enterSelect(),
+      retry: () => { closeModal(); session.clear(); startLevel(state.levelIndex); },
+      select: () => { keepSession(); enterSelect(); },
       sound: () => { toggleSound(); closeModal(); pauseMenu(); },
       how: () => howTo(() => { closeModal(); pauseMenu(); })
     });
@@ -457,6 +481,7 @@
 
   function resultDialog() {
     const w = state.world, lv = state.level, r = Sim.result(w);
+    session.clear();
     const id = lv.id, i = state.levelIndex;
     const prev = save.data.stars[id] || 0;
     if (r.ok) {
@@ -724,8 +749,10 @@
       else { const yaw = state.cam.yaw; state.cam = titleCam(state.world); state.cam.yaw = yaw; }
     }, 160);
   });
+  const keepSession = () => { const w = state.world; if (state.screen === "play" && w && !w.finished && (w.undoStack.length || w.started)) session.write(w); };
+  window.addEventListener("pagehide", keepSession);
   document.addEventListener("visibilitychange", () => {
-    if (document.hidden) { audio.suspend(); if (state.screen === "play" && state.world && !state.world.finished) state.paused = true; }
+    if (document.hidden) { keepSession(); audio.suspend(); if (state.screen === "play" && state.world && !state.world.finished) state.paused = true; }
     else audio.resume();
   });
   window.addEventListener("blur", () => { if (state.sculpt) { Sim.endStroke(state.world); state.sculpt = null; } state.pointers.clear(); state.pinch = null; state.gesture = null; });
@@ -953,6 +980,7 @@
         if (state.harvestClock > 4 && !state.resultShown) { state.resultShown = true; resultDialog(); }
       }
       if (now - state.lastHud > 120) { state.lastHud = now; updateHud(); }
+      if (!w.finished && state.time - (state.lastSessionSave || 0) > 15 && w.undoStack.length + (w.started ? 1 : 0) > 0) { state.lastSessionSave = state.time; session.write(w); }
     } else {
       // title and select: the showcase valley keeps flowing, the camera drifts
       Sim.step(w, dt);

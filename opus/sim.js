@@ -552,7 +552,50 @@
     return s;
   }
 
+  // ---- saving a valley in progress -------------------------------------------------
+  const SAVED_ARRAYS = ["ground", "water", "grow", "stress", "suit", "disturb", "wet"];
+  function b64(bytes) {
+    let s = "";
+    for (let i = 0; i < bytes.length; i += 0x8000) s += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    return typeof btoa === "function" ? btoa(s) : Buffer.from(s, "binary").toString("base64");
+  }
+  function unb64(str) {
+    const s = typeof atob === "function" ? atob(str) : Buffer.from(str, "base64").toString("binary");
+    const out = new Uint8Array(s.length);
+    for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i);
+    return out;
+  }
+  function serialize(w) {
+    const o = { id: w.level.id, v: 1, basket: w.basket, started: w.started, t: w.t, time: w.time,
+      houses: w.houses.map(h => [h.soak, h.damaged ? 1 : 0]), plant: b64(w.plant) };
+    for (const k of SAVED_ARRAYS) o[k] = b64(new Uint8Array(w[k].buffer.slice(0)));
+    return o;
+  }
+  function restore(level, o) {
+    if (!o || o.id !== level.id || o.v !== 1) return null;
+    const w = create(level);
+    try {
+      for (const k of SAVED_ARRAYS) {
+        const a = new Float32Array(unb64(o[k]).buffer);
+        if (a.length !== w.N) return null;
+        for (let i = 0; i < w.N; i++) if (!Number.isFinite(a[i])) return null;
+        w[k].set(a);
+      }
+      const p = unb64(o.plant);
+      if (p.length !== w.N) return null;
+      w.plant.set(p);
+      for (let i = 0; i < w.N; i++) if (w.ground[i] < w.bed[i] - 1e-3 || w.water[i] < 0 || w.plant[i] > DEAD) return null;
+    } catch (e) { return null; }
+    w.basket = Math.max(0, Math.min(w.cap, +o.basket || 0));
+    w.started = !!o.started; w.t = Math.max(0, Math.min(1, +o.t || 0)); w.time = +o.time || 0;
+    (o.houses || []).forEach((h, k) => { if (w.houses[k]) { w.houses[k].soak = +h[0] || 0; w.houses[k].damaged = !!h[1]; } });
+    w.terrainVersion++;
+    updateRice(w, 0);
+    return w;
+  }
+
   return {
+    serialize, restore,
     K, PHASES, phaseAt, create, step, start, finish, result, forecast,
     brush, beginStroke, endStroke, undo, sampleGround, soilTotal, waterTotal,
     rainAt, riverDepthAt, plantable, whyNot, makeNoise, smooth, clamp,
