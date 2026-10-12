@@ -341,7 +341,7 @@
   }
   function updateRice(w, dt) {
     const { N, plant, grow, stress, suit, water } = w;
-    let suitable = 0, growing = 0, ripe = 0, dead = 0, deep = 0, flow = 0, rock = 0;
+    let suitable = 0, growing = 0, ripe = 0, dead = 0, deep = 0, flow = 0, rock = 0, parched = 0, drowning = 0;
     const diagnose = !w.started;
     const canPlant = w.started && w.t <= K.PLANT_UNTIL;
     const rate = 1 / (K.GROW_TIME * K.YEAR);
@@ -370,6 +370,7 @@
           if (stress[i] < 4 && d < K.GROW_MIN) grow[i] += rate * dt * 0.6;
         }
         if (stress[i] > K.STRESS_MAX) { plant[i] = DEAD; dead++; w.events.push({ type: "wilt", i }); continue; }
+        if (stress[i] > 3) { if (water[i] < K.GROW_MIN) parched++; else if (water[i] > K.GROW_MAX) drowning++; }
         if (grow[i] >= 1) { grow[i] = 1; plant[i] = RIPE; ripe++; continue; }
         growing++;
       } else if (p === RIPE) ripe++;
@@ -378,6 +379,7 @@
     if (newly) w.events.push({ type: "plant", n: newly });
     w.counts.suitable = suitable; w.counts.growing = growing; w.counts.ripe = ripe; w.counts.dead = dead;
     w.counts.deep = deep; w.counts.flow = flow; w.counts.rock = rock;
+    w.counts.parched = parched; w.counts.drowning = drowning;
     w.counts.planted = growing + ripe;
   }
 

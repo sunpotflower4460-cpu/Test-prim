@@ -799,6 +799,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.locator("#title").waitFor({state:"visible"});
       await page.locator("#startBtn").click();
       await page.locator("#valleyList .valley").first().click();
+      // the first time, grandmother's letter comes before the valley
+      await page.locator('#dialog [data-dialog="go"]').click();
       await page.locator('#dialog [data-dialog="begin"]').click();
       await page.waitForFunction(() => window.__mizuho && window.__mizuho.state.screen === "play");
       await page.waitForTimeout(300);

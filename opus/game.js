@@ -291,7 +291,15 @@
     ctx.putImageData(img, 0, 0);
   }
 
+  function prologue(then) {
+    openDialog(`
+      <p class="eyebrow">PROLOGUE</p>
+      <h2>山の田</h2>
+      <div class="letter">山の田は、もう十年も水を張っていません。<br>畦は崩れ、段は草に埋もれました。<br>それでも春になると、泉はいまも湧いています。<br>一枚でいい。もう一度、この谷に稲を。<cite>祖母 ハル</cite></div>
+      <div class="dialog-actions"><button type="button" class="accent" data-dialog="go">谷へ向かう</button></div>`, { go: () => { save.data.prologue = true; save.write(); closeModal(); then(); } });
+  }
   function startLevel(i) {
+    if (i === 0 && !save.data.prologue) { prologue(() => startLevel(0)); return; }
     const lv = Levels.LEVELS[i];
     state.levelIndex = i; state.level = lv;
     state.world = loadWorld(lv);
@@ -535,6 +543,7 @@
     toast("田植え。一年がはじまる");
     burstPlanting(w);
     hintAt("planted");
+    if (!save.data.speedTip) { save.data.speedTip = true; save.write(); setTimeout(() => { if (state.screen === "play" && !state.hintsShown.has("planted")) hint("一年が流れはじめた。右の <b>▸</b> で早送りできる。梅雨の雨と夏の日照りに気をつけて。", 8); }, 2600); }
     updateHud(true);
   }
   function rotate(dir) {
@@ -891,6 +900,10 @@
       if (w.counts.deep >= 12 && !state.hintsShown.has("why-deep")) { state.hintsShown.add("why-deep"); hint("水が<b>深すぎる</b>所には、苗は植わらない。畦の一か所を軽く<b>掘って</b>、水位を下げよう。", 8); }
       else if (w.counts.flow >= 16 && !state.hintsShown.has("why-flow") && state.time - (state.lastStrokeEnd || 0) > 6) { state.hintsShown.add("why-flow"); hint("<b>流れている</b>水には、苗は植わらない。平らに均して、縁に畦を<b>盛ろう</b>。", 8); }
       else if (w.counts.rock >= 12 && !state.hintsShown.has("why-rock")) { state.hintsShown.add("why-rock"); hint("むき出しの<b>岩</b>には根が張らない。籠の土を<b>盛って</b>覆おう。", 8); }
+    }
+    if (w.started && !w.finished) {
+      if (w.counts.parched >= 10 && !state.hintsShown.has("parched")) { state.hintsShown.add("parched"); audio.event("warn"); hint("田が<b>乾いて</b>苗がしおれはじめた。上から水を引くか、水口を少し<b>掘って</b>水を落とそう。", 8); }
+      if (w.counts.drowning >= 10 && !state.hintsShown.has("drowning")) { state.hintsShown.add("drowning"); audio.event("warn"); hint("水が<b>深すぎて</b>苗が沈んでいる。畦の低い所を<b>掘って</b>、水を逃がそう。", 8); }
     }
     const soaking = w.houses.some(h => !h.damaged && h.soak > 0);
     if (soaking && !state.warned) { state.warned = true; audio.event("warn"); hintAt("warn"); if (!state.hintsShown.has("warn")) hint("家に水が迫っている。<b>掘って</b>、水の道を逸らそう。", 6); state.hintsShown.add("warn"); }
