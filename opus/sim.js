@@ -387,13 +387,13 @@
       w.clock -= K.DT; steps++;
       waterStep(w, K.DT, false);
       w.time += K.DT;
-      if (w.started) {
+      if (w.started && !w.hold) {
         w.t = Math.min(1, w.t + K.DT / K.YEAR);
       }
       w.slumpClock += K.DT;
       if (w.slumpClock >= 0.2) { w.slumpClock = 0; slump(w); }
       w.riceClock += K.DT;
-      if (w.riceClock >= 0.25) {
+      if (w.riceClock >= 0.25 && !w.hold) {
         const dt = w.riceClock; w.riceClock = 0;
         updateRice(w, dt); updateHouses(w, dt);
         for (let i = 0; i < w.N; i++) {

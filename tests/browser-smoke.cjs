@@ -75,8 +75,8 @@ const targets = [
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
         entryLabels,
-["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna", "GPT 6 sol"],
-        "launcher lists the eight entries in order"
+["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna", "GPT 6 sol", "Opus 5.5"],
+        "launcher lists the nine entries in order"
       );
       const launcherFit = await page.evaluate(() => ({
         viewport: window.innerWidth,
@@ -125,13 +125,13 @@ const targets = [
       const layout = await page.evaluate(() => {
         const sub = document.querySelector(".launcher-sub").getBoundingClientRect();
         const bottom = document.querySelector(".launcher-bottom").getBoundingClientRect();
-        const last = document.getElementById("openGpt6SolBtn").getBoundingClientRect();
+        const last = document.getElementById("openOpusBtn").getBoundingClientRect();
         return { subBottom: sub.bottom, bottomTop: bottom.top, lastBeforeFooter: last.bottom <= bottom.top + 1 };
       });
       assert.ok(layout.subBottom <= layout.bottomTop + 1, "launcher footer does not overlap the last entry");
 assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
-      await page.locator("#openGpt6SolBtn").scrollIntoViewIfNeeded();
-      assert.ok(await page.locator("#openGpt6SolBtn").isVisible(), "the last entry is reachable by scrolling");
+      await page.locator("#openOpusBtn").scrollIntoViewIfNeeded();
+      assert.ok(await page.locator("#openOpusBtn").isVisible(), "the last entry is reachable by scrolling");
       // Grok の扉は作品一覧。KASANE と折光室が並び、折光室の最初の室は点灯する。
       await page.locator("#openSumifuBtn").click();
       await page.locator("#grokShelf").waitFor({ state: "visible" });
@@ -791,6 +791,47 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.locator("#startBtn").click();
       assert.equal(await page.locator("#beatLabel").innerText(), "1 / 18", "reprise resumes a saved take");
       await page.locator(".return-link").click();
+      await page.locator("#launcher").waitFor({state:"visible"});
+
+      // MIZUHO (Opus 5.5): mend the broken aze of the first valley with a real
+      // drag, let the water stand, plant, and bring in the harvest.
+      await page.locator("#openOpusBtn").click();
+      await page.locator("#title").waitFor({state:"visible"});
+      await page.locator("#startBtn").click();
+      await page.locator("#valleyList .valley").first().click();
+      await page.locator('#dialog [data-dialog="begin"]').click();
+      await page.waitForFunction(() => window.__mizuho && window.__mizuho.state.screen === "play");
+      await page.waitForTimeout(300);
+      const aze = await page.evaluate(() => {
+        const w = window.__mizuho.world, S = window.MizuhoSim;
+        const a = window.__mizuho.project(18.4, S.sampleGround(w, 18.4, 27), 27), b = window.__mizuho.project(21.6, S.sampleGround(w, 21.6, 27), 27);
+        return { a, b };
+      });
+      assert.ok(aze.a && aze.b, "the broken aze is on screen");
+      await page.mouse.move(aze.a.x, aze.a.y);
+      await page.mouse.down();
+      for (let k = 1; k <= 24; k++) { await page.mouse.move(aze.a.x + (aze.b.x - aze.a.x) * k / 24, aze.a.y + (aze.b.y - aze.a.y) * k / 24); await page.waitForTimeout(25); }
+      await page.mouse.up();
+      assert.ok(await page.evaluate(() => window.__mizuho.world.undoStack.length === 1), "the drag became one stroke of 盛る");
+      await page.locator('[data-action="speed"]').click();
+      await page.waitForFunction(() => window.MizuhoSim.forecast(window.__mizuho.world) >= 6, null, { timeout: 40000 });
+      const mizuhoFit = await page.evaluate(() => ({
+        width: innerWidth, html: document.documentElement.scrollWidth,
+        toolbar: document.querySelector(".toolbar").getBoundingClientRect(), height: innerHeight
+      }));
+      assert.ok(mizuhoFit.html <= mizuhoFit.width + 1, "MIZUHO has no horizontal overflow");
+      assert.ok(mizuhoFit.toolbar.bottom <= mizuhoFit.height + 1 && mizuhoFit.toolbar.right <= mizuhoFit.width + 1, "the tools fit on screen");
+      await page.locator('[data-action="plant"]').click();
+      // if the forecast dipped while the water settled, the game asks before planting
+      if (await page.locator('#dialog [data-dialog="go"]').count()) await page.locator('#dialog [data-dialog="go"]').click();
+      assert.ok(await page.evaluate(() => window.__mizuho.world.started && window.__mizuho.world.counts.planted > 0), "planting starts the year");
+      await page.evaluate(() => { const w = window.__mizuho.world; while (!w.finished) window.MizuhoSim.step(w, 1); });
+      await page.locator('#dialog [data-dialog="select"]').waitFor({ state: "visible", timeout: 20000 });
+      assert.match(await page.locator("#dialogTitle, #dialog h2").first().innerText(), /実る/);
+      await page.locator('#dialog [data-dialog="select"]').click();
+      assert.ok(await page.locator("#valleyList .valley").nth(1).isEnabled(), "the second valley opens");
+      await page.locator('#select [data-action="title"]').click();
+      await page.locator("#title .back-link").click();
       await page.locator("#launcher").waitFor({state:"visible"});
 
       assert.deepEqual(errors, [], "no browser script errors");

@@ -259,3 +259,13 @@ body.code-active #flash,body.sync-active #flash{display:none}
 .launcher{justify-content:flex-start}
 .launcher-inner{margin-top:auto}
 .launcher-bottom{margin-bottom:auto}
+
+/* Opus 5.5 — the ninth door, at the foot of the gallery. Indigo and ripe-rice gold. */
+.launcher-button-opus{text-decoration:none;color:inherit;border-color:#e2bd62b8;background:linear-gradient(115deg,#24375ab8,#3d5a4a66 55%,#e2bd6230);box-shadow:0 12px 34px #e2bd6218,inset 0 0 0 4px #0d162670}
+.launcher-button-opus .launcher-button-symbol{font:700 27px "Hiragino Mincho ProN","Yu Mincho","Noto Serif JP",serif;color:#f6dc92;text-shadow:0 0 18px #e2bd62aa;width:34px;text-align:center}
+.launcher-button-opus .launcher-button-label small{color:#d9c9a0;letter-spacing:.2em}
+.launcher-button-opus .launcher-button-arrow{color:#f0d898}
+.launcher-button-opus:hover{box-shadow:0 13px 38px #e2bd6240,inset 0 0 0 4px #0d162670}
+.launcher-button-opus:active{background:linear-gradient(115deg,#2c4470,#4a6a54 55%,#e2bd6248)}
+/* nine doors: pairs in two columns, the last one across the whole row */
+@media(orientation:landscape) and (min-width:600px){.launcher-button-gpt6sol{grid-column:auto}.launcher-button-opus{grid-column:1/-1}}

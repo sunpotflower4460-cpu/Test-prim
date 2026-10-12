@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,viewport-fit=cover,user-scalable=no">
   <meta name="theme-color" content="#071525">
-  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇と駆け、玄人コードの RELAY、Minimax M3.1 の SYNC と HELIX、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA、GPT 6 sol の REPRISE。AIごとのゲームを遊び比べる。">
+  <meta name="description" content="Test prim — GPT6 CHAT の LUMINA、Grok 4.7 Cursor の KASANE と折光室と蜜柑と蛇と駆け、玄人コードの RELAY、Minimax M3.1 の SYNC と HELIX、GPT 6.1 sol の AFTERTIDE、GPT 6 Luna の LUNA、GPT 6 sol の REPRISE、Opus 5.5 の MIZUHO。AIごとのゲームを遊び比べる。">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Test prim">
@@ -108,10 +108,15 @@
           <span class="launcher-button-label"><small>REPRISE · ひかりの再演</small><strong>GPT 6 sol</strong></span>
           <span class="launcher-button-arrow" aria-hidden="true">↗</span>
         </a>
+        <a id="openOpusBtn" class="launcher-button launcher-button-opus" href="opus/index.html" aria-label="Opus 5.5 のゲーム、MIZUHO 瑞穂を開く">
+          <span class="launcher-button-symbol" aria-hidden="true">穂</span>
+          <span class="launcher-button-label"><small>MIZUHO · 瑞穂</small><strong>Opus 5.5</strong></span>
+          <span class="launcher-button-arrow" aria-hidden="true">↗</span>
+        </a>
       </div>
       <p class="launcher-sub">TAP A DOOR · PLAY THE WORLD INSIDE</p>
     </div>
-    <div class="launcher-bottom"><span>TEST PRIM</span><span>08 EXPERIMENTS</span><span>2026</span></div>
+    <div class="launcher-bottom"><span>TEST PRIM</span><span>09 EXPERIMENTS</span><span>2026</span></div>
   </section>
 
   <div id="launcherNotice" class="launcher-notice hidden" aria-live="polite"></div>
@@ -390,6 +395,7 @@
   <div id="helixToast" class="helix-toast" role="status" aria-live="polite"></div>
 
   <script src="sol/entry.js" defer></script>
+  <script src="opus/door.js" defer></script>
   <script src="game.js" defer></script>
   <script src="sumifu.js" defer></script>
   <script src="code-sim.js" defer></script>

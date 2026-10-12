@@ -69,6 +69,8 @@ uniform float uFogDen;
 uniform float uTime;
 uniform vec2 uGrid;
 uniform float uNight;
+uniform float uAutumn;   // 0 before the ears colour, 1 in autumn
+uniform float uFront;    // harvest: cells south of this row are cut
 float hash12(vec2 p){ vec3 p3=fract(vec3(p.xyx)*.1031); p3+=dot(p3,p3.yzx+33.33); return fract((p3.x+p3.y)*p3.z); }
 float vnoise(vec2 p){ vec2 i=floor(p), f=fract(p); vec2 u=f*f*(3.-2.*f);
   return mix(mix(hash12(i),hash12(i+vec2(1,0)),u.x),mix(hash12(i+vec2(0,1)),hash12(i+vec2(1,1)),u.x),u.y); }
@@ -81,24 +83,37 @@ vec3 skyColor(vec3 d){
   return c;
 }
 // paddy seen from afar: rows of rice whose colour follows the growth
-vec4 riceCarpet(float state, float gr, vec2 wp){
-  if(state<0.5) return vec4(0.);
-  vec3 young=vec3(.5,.74,.3), green=vec3(.2,.44,.12), turn=vec3(.6,.6,.2), gold=vec3(.88,.68,.24), dead=vec3(.46,.36,.22);
-  vec3 c=mix(young,green,smoothstep(.1,.55,gr));
-  c=mix(c,turn,smoothstep(.75,.98,gr));
-  float cover=.35+.6*smoothstep(0.,.6,gr);
-  if(state>1.5&&state<2.5){ c=gold; cover=1.; }
-  if(state>2.5){ c=dead; cover=.75; }
+// k: interpolated weights of (growing, ripe, dead) so cell edges blend cleanly
+vec4 riceCarpet(vec3 k, float gr, vec2 wp){
+  float total=k.x+k.y+k.z;
+  if(total<0.01) return vec4(0.);
+  vec3 young=vec3(.5,.74,.3), green=vec3(.2,.44,.12), turn=vec3(.55,.6,.2), gold=vec3(.88,.68,.24), dead=vec3(.46,.36,.22);
+  vec3 g=mix(young,green,smoothstep(.1,.55,gr));
+  g=mix(g,turn,smoothstep(.85,1.,gr)*uAutumn);
+  vec3 ripe=mix(mix(green,turn,.5),gold,uAutumn);
+  float cut=step(uFront,wp.y);
+  ripe=mix(ripe,vec3(.74,.64,.42),cut);
+  vec3 c=(g*k.x+ripe*k.y+dead*k.z)/total;
+  float cover=(k.x*(.35+.6*smoothstep(0.,.6,gr))+k.y*mix(1.,.55,cut)+k.z*.75)/max(total,1.);
   float rows=smoothstep(.15,.55,abs(fract(wp.x*3.)-.5)*2.);
   float hills=vnoise(wp*5.3);
-  c*=.78+.22*rows*(1.-smoothstep(.5,1.,gr)*.6)+.18*hills;
+  c*=.78+.22*rows+.18*hills;
   return vec4(c,cover*(.72+.28*rows));
+}
+vec3 plantWeights(float state){ return vec3(abs(state-1.)<.5?1.:0., abs(state-2.)<.5?1.:0., abs(state-3.)<.5?1.:0.); }
+// a gentle print-like grade: a little S-curve and saturation
+vec3 grade(vec3 c){
+  c=clamp(c,0.,1.6);
+  vec3 s=c*c*(3.-2.*clamp(c,0.,1.));
+  c=mix(c,s,.32);
+  float l=dot(c,vec3(.299,.587,.114));
+  return mix(vec3(l),c,1.16);
 }
 vec3 applyFog(vec3 col, vec3 p){
   float dist=length(p-uCam);
   float f=1.-exp(-dist*uFogDen);
   float below=smoothstep(-1.,-14.,p.y);
-  return mix(col,uFog,clamp(f+below*.85,0.,1.));
+  return grade(mix(col,uFog,clamp(f+below*.85,0.,1.)));
 }
 `;
 
@@ -111,12 +126,13 @@ uniform sampler2D uB;
 uniform sampler2D uC;
 uniform sampler2D uL;
 uniform float uBase;
-out vec3 vPos; out vec3 vN; out vec4 vB; out vec4 vC; out float vWater; out float vLight; out float vSkirt; out float vBed;
+out vec3 vPos; out vec3 vN; out vec4 vB; out vec4 vC; out float vWater; out float vLight; out float vSkirt; out float vBed; out vec3 vPlant;
 float G(ivec2 c){ c=clamp(c,ivec2(0),ivec2(uGrid)-1); return texelFetch(uA,c,0).r; }
 void main(){
   ivec2 c=ivec2(aCell);
   vec4 a=texelFetch(uA,c,0);
   vB=texelFetch(uB,c,0); vC=texelFetch(uC,c,0);
+  vPlant=plantWeights(vC.r);
   float hl=G(c-ivec2(1,0)), hr=G(c+ivec2(1,0)), hd=G(c-ivec2(0,1)), hu=G(c+ivec2(0,1));
   vN=normalize(vec3(hl-hr,2.,hd-hu));
   float y=a.r;
@@ -131,7 +147,7 @@ void main(){
 
   const TERRAIN_FS = `#version 300 es
 ${COMMON}
-in vec3 vPos; in vec3 vN; in vec4 vB; in vec4 vC; in float vWater; in float vLight; in float vSkirt; in float vBed;
+in vec3 vPos; in vec3 vN; in vec4 vB; in vec4 vC; in float vWater; in float vLight; in float vSkirt; in float vBed; in vec3 vPlant;
 uniform vec3 uGrass; uniform vec3 uGrassDry; uniform vec3 uEarth; uniform vec3 uStone; uniform vec3 uMud;
 uniform vec4 uCursor;   // x, z, radius, visible
 uniform vec4 uCursor2;  // tool(0 heap,1 dig,2 level), target height, pulse, unused
@@ -157,7 +173,7 @@ void main(){
     col=mix(soilC,rockC,step(vPos.y,vBed));
     col*=mix(.55,1.,smoothstep(-8.,2.,vPos.y));
     vec3 sn=uSkirtNormal;
-    float lam=max(dot(sn,uSun),0.)*.6+.42;
+    float lam=max(dot(sn,uSun),0.)*.55+.62;
     col*=lam*mix(vec3(.75,.8,.95),uSunCol,.5);
     frag=vec4(applyFog(col,vPos),1.);
     return;
@@ -170,7 +186,8 @@ void main(){
   col=mix(col,uEarth*(.85+.2*fine),smoothstep(.22,.42,slope));
   // stone: walls and bare rock
   if(isRock){
-    vec2 q=wp*vec2(2.2,3.1);
+    // walls are textured on their face, flat rock from above
+    vec2 q=slope>.45?vec2((wp.x+wp.y)*2.2,vPos.y*3.4):wp*vec2(2.2,3.1);
     float cell=hash12(floor(q+vec2(floor(q.y)*.5,0.)));
     vec2 f=fract(q+vec2(floor(q.y)*.5,0.));
     float mortar=smoothstep(.0,.12,min(min(f.x,1.-f.x),min(f.y,1.-f.y)));
@@ -183,8 +200,8 @@ void main(){
   col*=mix(1.,.66,clamp(wet,0.,1.));
   float sub=smoothstep(.0,.06,vWater);
   col=mix(col,uMud*(.8+.3*fine),sub*.85);
-  vec4 rc=riceCarpet(vC.r,vC.g,wp);
-  col=mix(col,rc.rgb,rc.a*(1.-sub*.0));
+  vec4 rc=riceCarpet(vPlant,vC.g,wp);
+  col=mix(col,rc.rgb,rc.a*smoothstep(.8,.96,n.y));
   // light
   float lam=max(dot(n,uSun),0.);
   float sh=vLight;
@@ -228,7 +245,7 @@ ${COMMON}
 layout(location=0) in vec2 aCell;
 uniform sampler2D uA;
 uniform sampler2D uC;
-out vec3 vPos; out float vDepth; out vec2 vVel; out vec3 vN; out vec2 vRice; out float vLightW;
+out vec3 vPos; out float vDepth; out vec2 vVel; out vec3 vN; out vec2 vRice; out float vLightW; out vec3 vPlant;
 uniform sampler2D uL;
 vec2 S(ivec2 c){ c=clamp(c,ivec2(0),ivec2(uGrid)-1); vec4 a=texelFetch(uA,c,0); return vec2(a.r+a.g,a.g); }
 void main(){
@@ -252,6 +269,7 @@ void main(){
   vPos=vec3(aCell.x,surf,aCell.y);
   vDepth=d;
   vRice=texelFetch(uC,c,0).rg;
+  vPlant=plantWeights(vRice.x);
   vLightW=texelFetch(uL,c,0).r;
   vVel=a.ba;
   gl_Position=uVP*vec4(vPos,1.);
@@ -259,7 +277,7 @@ void main(){
 
   const WATER_FS = `#version 300 es
 ${COMMON}
-in vec3 vPos; in float vDepth; in vec2 vVel; in vec3 vN; in vec2 vRice; in float vLightW;
+in vec3 vPos; in float vDepth; in vec2 vVel; in vec3 vN; in vec2 vRice; in float vLightW; in vec3 vPlant;
 uniform float uRain;
 uniform vec3 uWaterDeep; uniform vec3 uWaterShallow;
 out vec4 frag;
@@ -306,15 +324,16 @@ void main(){
   col+=uSunCol*spec;
   // a running brook glints
   float glint=smoothstep(.75,.95,vnoise(vPos.xz*6.-vVel*uTime*.9))*smoothstep(.4,1.5,speed);
-  col+=vec3(.9,.95,1.)*glint*.35;
+  col+=vec3(.9,.95,1.)*glint*.32;
+  col=mix(col,col*1.12+vec3(.02,.03,.04),smoothstep(.3,1.4,speed)*(1.-calm));
   // white water where it falls fast
   float foam=smoothstep(2.2,4.5,speed)*smoothstep(.02,.12,d)*(.45+.55*vnoise(vPos.xz*5.-vVel*uTime*1.5));
   float edge=smoothstep(.03,.0,d)*.18*vnoise(vPos.xz*9.+uTime);
   col=mix(col,vec3(.93,.96,.98)*(uSunCol*.4+.65),clamp(foam+edge,0.,1.)*.8);
-  float alpha=smoothstep(.003,.025,d)*clamp(.62+d*2.5+fres*.3,0.,1.);
+  float alpha=smoothstep(.003,.02,d)*clamp(.66+d*2.5+fres*.3+smoothstep(.3,1.2,speed)*.2,0.,1.);
   alpha=max(alpha,clamp(foam,0.,.9));
   // rice standing in the paddy covers the water in rows
-  vec4 rc=riceCarpet(floor(vRice.x+.5),vRice.y,vPos.xz);
+  vec4 rc=riceCarpet(vPlant,vRice.y,vPos.xz);
   if(rc.a>0.){
     vec3 amb=uSkyTop*.6+uGroundAmb*.4;
     vec3 riceLit=rc.rgb*(amb*.55+uSunCol*(.35+.65*vLightW)*.8);
@@ -333,7 +352,6 @@ layout(location=2) in float aCellIdx;
 uniform sampler2D uA;
 uniform sampler2D uC;
 uniform sampler2D uL;
-uniform float uHarvest;
 out vec3 vCol; out vec3 vPos; out float vLight;
 void main(){
   int idx=int(aCellIdx+.5);
@@ -344,12 +362,13 @@ void main(){
   float seed=hash12(vec2(c)+aTuft.y*13.1);
   float h=mix(.12,.78,smoothstep(0.,1.,gr))*(.8+.35*seed);
   if(state>2.5) h*=.45;
-  h*=1.-uHarvest;
+  bool cut=state>1.5&&state<2.5&&float(c.y)>uFront;
+  if(cut) h=.1;
   float t=aBlade.z;
   vec2 base=vec2(c)+aBlade.xy;
   float ang=aTuft.x+seed*6.283;
   vec2 dir=vec2(cos(ang),sin(ang));
-  float lean=(.18+.5*smoothstep(.7,1.,gr)*float(state>1.5&&state<2.5))*t*t;
+  float lean=(.18+.5*smoothstep(.7,1.,gr)*float(state>1.5&&state<2.5)*uAutumn)*t*t;
   float sway=sin(uTime*1.7+base.x*.55+base.y*.35)*.07*t*t + sin(uTime*3.1+base.x*1.3)*.025*t;
   vec2 off=dir*(lean+sway)+vec2(aBlade.w*.05*(1.-t),0.)*mat2(dir.x,dir.y,-dir.y,dir.x);
   float y=a.r+t*h-lean*.4*h;
@@ -357,7 +376,8 @@ void main(){
   vec3 young=vec3(.56,.78,.33), green=vec3(.22,.46,.14), gold=vec3(.86,.66,.22), deadc=vec3(.45,.36,.22);
   vec3 col=mix(young,green,smoothstep(.1,.55,gr));
   col=mix(col,vec3(.62,.62,.2),smoothstep(.7,.95,gr));
-  if(state>1.5&&state<2.5) col=mix(gold,vec3(.95,.8,.36),t);
+  if(state>1.5&&state<2.5) col=mix(mix(vec3(.4,.52,.16),gold,uAutumn),mix(vec3(.62,.66,.24),vec3(.95,.8,.36),uAutumn),t);
+  if(cut) col=vec3(.7,.6,.4)*(.7+.3*t);
   if(state>2.5) col=deadc;
   col=mix(col,vec3(.6,.52,.25),clamp(stress/9.,0.,1.)*.6);
   col*=.55+.6*t;
@@ -393,8 +413,8 @@ out vec4 frag;
 void main(){
   vec3 n=normalize(vN);
   float lam=max(dot(n,uSun),0.);
-  vec3 amb=mix(uGroundAmb,uSkyTop,n.y*.5+.5);
-  vec3 col=vCol.rgb*(amb*.75+uSunCol*lam*.95);
+  vec3 amb=mix(uGroundAmb*1.3,uSkyTop*.8+uSkyHorizon*.4,n.y*.5+.5);
+  vec3 col=vCol.rgb*(amb*1.05+uSunCol*lam*.85);
   col+=vec3(1.,.72,.38)*vCol.a*(.25+uNight*1.6);
   frag=vec4(applyFog(col,vPos),1.);
 }`;
@@ -432,8 +452,8 @@ out vec4 frag;
 void main(){
   vec3 n=normalize(vN);
   float lam=max(dot(n,uSun),0.)*.85+.15;
-  vec3 amb=mix(uGroundAmb,uSkyTop,n.y*.5+.5);
-  vec3 col=vCol*(amb*.7+uSunCol*lam*.85);
+  vec3 amb=mix(uGroundAmb*1.2,uSkyTop*.8+uSkyHorizon*.3,n.y*.5+.5);
+  vec3 col=vCol*(amb*.9+uSunCol*lam*.8);
   frag=vec4(applyFog(col,vPos),1.);
 }`;
 
@@ -446,6 +466,7 @@ ${COMMON}
 in vec2 vP;
 uniform mat4 uInvVP;
 uniform vec3 uMount;
+uniform float uCloudY;
 out vec4 frag;
 void main(){
   vec4 a=uInvVP*vec4(vP,-1.,1.), b=uInvVP*vec4(vP,1.,1.);
@@ -470,6 +491,21 @@ void main(){
     }
   }
   if(d.y<-.02) col=mix(col,uFog,smoothstep(-.02,-.2,d.y));
+  // a sea of clouds far below the floating valley
+  if(d.y<0.){
+    vec3 o=uCam;
+    float t=(uCloudY-o.y)/d.y;
+    if(t>0.){
+      vec2 q=(o.xz+d.xz*t)*.018+vec2(uTime*.004,uTime*.0015);
+      float c=fbm(q)*.75+fbm(q*2.3+4.)*.35;
+      float top=smoothstep(.35,.85,c);
+      vec3 lit=mix(uFog*.92,mix(uFog,vec3(1.),.45)*(.85+.25*uSunCol),top);
+      float shade=1.-smoothstep(.55,.95,c)*.12;
+      float fade=exp(-t*.004);
+      col=mix(col,lit*shade,clamp(fade*1.2,0.,1.)*smoothstep(0.,-.12,d.y));
+    }
+  }
+  col=grade(col);
   // stars on the harvest night
   if(uNight>0.){
     vec2 sp=d.xz/(d.y+.3)*40.;
@@ -884,6 +920,8 @@ void main(){
       if (u.uTime) gl.uniform1f(u.uTime, env.time);
       if (u.uGrid) gl.uniform2f(u.uGrid, R.world.W, R.world.H);
       if (u.uNight) gl.uniform1f(u.uNight, env.night || 0);
+      if (u.uAutumn) gl.uniform1f(u.uAutumn, env.autumn || 0);
+      if (u.uFront) gl.uniform1f(u.uFront, env.front === undefined ? 1e6 : env.front);
     }
     function bindTex(pr, name, unit, tex) {
       if (!pr.u[name]) return;
@@ -901,6 +939,9 @@ void main(){
       R.eye = eye;
       const view = M.lookAt(eye, cam.target, [0, 1, 0]);
       const proj = M.perspective(cam.fov, aspect, 0.5, cam.dist * 4 + 200);
+      // lift the view on screen (the HUD and title copy sit below it)
+      const sy = cam.shiftY || 0;
+      proj[1] += sy * proj[3]; proj[5] += sy * proj[7]; proj[9] += sy * proj[11]; proj[13] += sy * proj[15];
       R.vp = M.mul(proj, view);
       R.invVP = M.invert(R.vp);
       R.cam = cam;
@@ -935,6 +976,7 @@ void main(){
       gl.useProgram(pr.p); setCommon(pr, env);
       gl.uniformMatrix4fv(pr.u.uInvVP, false, R.invVP);
       gl.uniform3fv(pr.u.uMount, env.mount);
+      gl.uniform1f(pr.u.uCloudY, R.base - 10);
       gl.depthMask(false);
       gl.bindVertexArray(skyVAO); gl.drawArrays(gl.TRIANGLES, 0, 3);
       gl.depthMask(true);
@@ -982,7 +1024,6 @@ void main(){
       if (res.riceCount) {
         pr = progs.rice; gl.useProgram(pr.p); setCommon(pr, env);
         bindTex(pr, "uA", 0, res.texA); bindTex(pr, "uC", 2, res.texC); bindTex(pr, "uL", 3, res.texL);
-        gl.uniform1f(pr.u.uHarvest, env.harvest || 0);
         gl.bindVertexArray(res.riceVAO);
         gl.drawArraysInstanced(gl.TRIANGLES, 0, res.bladeVerts, res.riceCount);
       }

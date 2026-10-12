@@ -1,6 +1,6 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v17";
+const CACHE = "test-prim-gallery-v18";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
@@ -21,6 +21,8 @@ const ASSETS = [
   "./sol/skyward/vendor/three.module.js",
   "./gpt6-sol/index.html", "./gpt6-sol/reprise.css", "./gpt6-sol/rules.js",
   "./gpt6-sol/levels.js", "./gpt6-sol/sound.js", "./gpt6-sol/game.js",
+  "./opus/index.html", "./opus/mizuho.css", "./opus/sim.js", "./opus/levels.js", "./opus/script.js",
+  "./opus/render.js", "./opus/audio.js", "./opus/game.js", "./opus/door.js",
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {

@@ -43,6 +43,7 @@
         }
         return { ground: slope - runnel, bed: slope - runnel - 2.6 };
       },
+      letter: { text: "この田は、おじいさんと最後に植えた田です。<br>畦が崩れて水が逃げるたびに、もう戻らないと思っていました。<br>今年の稲の匂いは、あの年と同じです。", from: "祖母 ハル" },
       hints: [
         { at: "start", text: "崩れた畦（光る印）を、指でなぞって「盛る」。" },
         { at: "suitable", text: "水が張った所に、苗が植わる。「田植え」で一年がはじまる。" }
@@ -66,6 +67,7 @@
         const g = 3 + (43 - y) * 0.3 + n.fbm(x * 0.07, y * 0.07, 4) * 1.4 - runnel;
         return { ground: g, bed: g - 3 };
       },
+      letter: { text: "斜面に段ができると、水がそこで止まって空を映します。<br>昔の人は、それを「田毎の月」と呼びました。<br>秋の夜に、見に来てください。", from: "隣の家の タキ" },
       hints: [
         { at: "start", text: "「均す」：なぞり始めた高さに、まわりの土を揃える。流れのそばを横になぞってみよう。" },
         { at: "suitable", text: "段の縁が低いと、水は流れ落ちる。<b>盛る</b>で縁に畦をつくろう。" }
@@ -89,6 +91,7 @@
         const g = 2 + (55 - y) * 0.42 - shoulder * 0 + n.fbm(x * 0.06, y * 0.06, 4) * 1.8 - runnel + Math.abs(x - 24) * 0.04;
         return { ground: g, bed: g - 3.2 };
       },
+      letter: { text: "うえの田んぼから、したの田んぼに水がおちる音が、<br>夜ずっときこえます。カエルがたくさんいます。<br>ぼくは二十ぴき、かぞえました。", from: "湊（みなと）七さい" },
       hints: [
         { at: "start", text: "上の段からあふれる水は、下の段へ落ちる。段を重ねて、一筋の水をすべての田に通そう。" },
         { at: "suitable", text: "畦の一か所を<b>掘る</b>で軽く欠くと、そこが水口になる。水の出口を、下の田の上に。" }
@@ -115,6 +118,7 @@
         const g = 2 + north + side + ridge - notch + n.fbm(x * 0.07, y * 0.07, 4) * 1.1 - runnel;
         return { ground: g, bed: g - 3 };
       },
+      letter: { text: "長雨の夜、家の前を水が音を立てて通りすぎていきました。<br>あなたが掘った溝です。<br>三軒とも、畳が乾いています。", from: "谷の底の三軒より" },
       hints: [
         { at: "start", text: "谷の底には家がある。梅雨の雨は、まわりの斜面からここへ集まってくる。" },
         { at: "rainy", text: "梅雨。家の近くの水かさを見て、南の尾根へ<b>掘って</b>水を逃がそう。" }
@@ -144,6 +148,7 @@
         const soil = 0.35 + fan * 4.2;
         return { ground: g + fan * 0.6, bed: g + fan * 0.6 - soil };
       },
+      letter: { text: "土は運べば減る。だから昔は、一籠ずつ大事に積んだ。<br>岩の上に、よく土を載せたな。<br>石の間に根が張れば、もう崩れん。", from: "石工 源蔵" },
       hints: [
         { at: "start", text: "この斜面の土は薄く、岩はびくともしない。左下の扇状地は土が深い。<b>掘って</b>籠を満たそう。" },
         { at: "suitable", text: "籠の土で、段の低い側を埋めていく。" }
@@ -171,6 +176,7 @@
         const rocky = x < ridgeX - 3 && Math.abs(y - 13) > 4 && n.noise(x * 0.3, y * 0.3) > 0.05;
         return rocky ? { ground: g + 0.3, bed: g + 0.3, rock: true } : { ground: g, bed: g - 3 };
       },
+      letter: { text: "尾根の向こうの水がこちらに来たのは、祖父の代以来です。<br>夕方、水口の音が聞こえると、<br>みんな外に出てきて、黙って聞いています。", from: "東の斜面 佐和" },
       hints: [
         { at: "start", text: "泉の水は西の谷を流れ落ちていく。尾根の低いところ（鞍部）を<b>掘り抜けば</b>、水は東へ回る。" }
       ],
@@ -209,6 +215,7 @@
         const stored = dx < 9 && y < 18 && y > 5 ? Math.max(0, DAM - 0.05 - g) : 0;
         return { ground: g - runnel, bed: g - runnel - 3.2, water: stored };
       },
+      letter: { text: "日照りの夏に、池の水を少しずつ落とすのは、<br>昔は村の大事な役目でした。焦らず、少しずつ。<br>あなたは、それが上手です。", from: "祖母 ハル" },
       hints: [
         { at: "start", text: "泉の下の石積みは、昔のため池の堤。真ん中の崩れを<b>盛って</b>ふさぎ、春の水を貯めておこう。" },
         { at: "summer", text: "日照り。泉が細った。ため池の堤の土を少しだけ<b>掘って</b>、田へ水を落とそう。" }
@@ -238,12 +245,38 @@
         if (g < 1.2 && y > 74) return { ground: g, bed: g - 1, sea: true };
         return { ground: g, bed: g - 3 };
       },
+      letter: { text: "今年、谷に灯がともりました。<br>海から見ると、田の一枚一枚に月が映って、<br>千の月が並んでいるそうです。来年も、ここで。", from: "瑞穂の村 一同" },
       hints: [
         { at: "start", text: "最後の谷。二つの泉から海まで、水をすべて田に通してから海へ返そう。" }
       ]
     }
   ];
 
-  function byId(id) { return LEVELS.find(l => l.id === id); }
-  return { LEVELS, byId, inRect, ring };
+  // The title valley: old terraces that follow the contours of the hill,
+  // already farmed. It is a picture, not a puzzle.
+  const SHOWCASE = {
+    id: "furusato", no: 0, name: "ふるさと", kana: "ふるさと", poem: [], brief: "",
+    w: 52, h: 56, seed: 5, goal: 0, stars: [1, 2], basket: 0, cap: 0,
+    springs: [{ x: 27, y: 2, rate: 2.2 }],
+    houses: [{ x: 8, y: 47, w: 4, h: 3, rot: 0.3 }, { x: 40, y: 49, w: 4, h: 3, rot: -0.2 }, { x: 15, y: 51, w: 3, h: 3, rot: 0.1 }],
+    edges: { s: true, e: true, w: true },
+    settle: 900,
+    terrain(x, y, n) {
+      const bend = Math.sin(x * 0.11 + 0.6) * 2.4 + n.noise(x * 0.05, 3) * 3;
+      const raw = 2 + (55 - y + bend) * 0.4 + n.fbm(x * 0.05, y * 0.05, 4) * 0.8 + ((x - 27) / 10) ** 2 * 0.35;
+      const inside = Math.abs(x - 27) < 17 - (y < 12 ? (12 - y) * 0.9 : 0) && y > 6 && y < 45;
+      if (!inside) return { ground: raw + n.fbm(x * 0.13, y * 0.13, 3) * 0.6, bed: raw - 3 };
+      const STEP = 1.9;
+      const k = Math.floor(raw / STEP), floor = k * STEP;
+      // the downhill edge of each paddy carries a low ridge
+      const below = 2 + (55 - (y + 1) + bend) * 0.4 + n.fbm(x * 0.05, (y + 1) * 0.05, 4) * 0.8 + ((x - 27) / 10) ** 2 * 0.35;
+      const lip = Math.floor(below / STEP) < k ? 0.3 : 0;
+      // the riser under a ridge is a dry-stone wall that never slumps
+      if (lip) return { ground: floor + lip, bed: floor + lip, rock: true };
+      return { ground: floor, bed: floor - 2.5, water: 0.25 };
+    }
+  };
+
+  function byId(id) { return id === SHOWCASE.id ? SHOWCASE : LEVELS.find(l => l.id === id); }
+  return { LEVELS, SHOWCASE, byId, inRect, ring };
 });

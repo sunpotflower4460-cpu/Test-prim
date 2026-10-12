@@ -37,22 +37,22 @@
 
   // ---- seasons as light ---------------------------------------------------------------
   const PAL = {
-    spring: { sun: [0.62, 0.48], sunCol: [1.0, 0.92, 0.84], skyTop: [0.42, 0.6, 0.84], skyHorizon: [0.94, 0.86, 0.86], groundAmb: [0.36, 0.33, 0.3], fog: [0.84, 0.82, 0.84], fogDen: 0.0045,
+    spring: { sun: [0.62, 0.48], sunCol: [1.0, 0.92, 0.84], skyTop: [0.42, 0.6, 0.84], skyHorizon: [0.94, 0.86, 0.86], groundAmb: [0.36, 0.33, 0.3], fog: [0.84, 0.82, 0.84], fogDen: 0.00248,
       grass: [0.47, 0.6, 0.3], grassDry: [0.6, 0.6, 0.36], earth: [0.48, 0.36, 0.25], stone: [0.62, 0.6, 0.56], mud: [0.36, 0.3, 0.2], waterDeep: [0.12, 0.25, 0.3], waterShallow: [0.42, 0.5, 0.42], mount: [0.5, 0.58, 0.66],
       leaves: [[0.2, 0.32, 0.2], [0.46, 0.64, 0.32], [0.98, 0.76, 0.84], [0.56, 0.7, 0.34]], night: 0 },
-    early: { sun: [0.9, 0.5], sunCol: [1.04, 1.0, 0.92], skyTop: [0.34, 0.58, 0.9], skyHorizon: [0.82, 0.9, 0.95], groundAmb: [0.32, 0.36, 0.3], fog: [0.78, 0.86, 0.9], fogDen: 0.004,
+    early: { sun: [0.9, 0.5], sunCol: [1.04, 1.0, 0.92], skyTop: [0.34, 0.58, 0.9], skyHorizon: [0.82, 0.9, 0.95], groundAmb: [0.32, 0.36, 0.3], fog: [0.78, 0.86, 0.9], fogDen: 0.0022,
       grass: [0.36, 0.58, 0.22], grassDry: [0.5, 0.6, 0.3], earth: [0.46, 0.35, 0.24], stone: [0.6, 0.6, 0.56], mud: [0.33, 0.29, 0.2], waterDeep: [0.1, 0.24, 0.3], waterShallow: [0.38, 0.5, 0.4], mount: [0.42, 0.55, 0.62],
       leaves: [[0.18, 0.32, 0.18], [0.34, 0.56, 0.24], [0.4, 0.58, 0.3], [0.42, 0.6, 0.28]], night: 0 },
-    rainy: { sun: [0.95, 0.6], sunCol: [0.62, 0.66, 0.7], skyTop: [0.46, 0.5, 0.55], skyHorizon: [0.66, 0.7, 0.72], groundAmb: [0.34, 0.37, 0.38], fog: [0.6, 0.64, 0.66], fogDen: 0.011,
+    rainy: { sun: [0.95, 0.6], sunCol: [0.62, 0.66, 0.7], skyTop: [0.46, 0.5, 0.55], skyHorizon: [0.66, 0.7, 0.72], groundAmb: [0.34, 0.37, 0.38], fog: [0.6, 0.64, 0.66], fogDen: 0.00605,
       grass: [0.3, 0.5, 0.24], grassDry: [0.36, 0.52, 0.28], earth: [0.38, 0.3, 0.22], stone: [0.5, 0.52, 0.52], mud: [0.28, 0.26, 0.2], waterDeep: [0.12, 0.2, 0.24], waterShallow: [0.36, 0.44, 0.42], mount: [0.42, 0.47, 0.5],
       leaves: [[0.15, 0.28, 0.17], [0.28, 0.48, 0.24], [0.32, 0.5, 0.28], [0.34, 0.52, 0.26]], night: 0 },
-    summer: { sun: [1.02, 0.42], sunCol: [1.12, 1.04, 0.9], skyTop: [0.2, 0.46, 0.88], skyHorizon: [0.82, 0.9, 0.96], groundAmb: [0.3, 0.34, 0.28], fog: [0.76, 0.85, 0.92], fogDen: 0.0035,
+    summer: { sun: [1.02, 0.42], sunCol: [1.12, 1.04, 0.9], skyTop: [0.2, 0.46, 0.88], skyHorizon: [0.82, 0.9, 0.96], groundAmb: [0.3, 0.34, 0.28], fog: [0.76, 0.85, 0.92], fogDen: 0.00193,
       grass: [0.3, 0.52, 0.16], grassDry: [0.52, 0.56, 0.26], earth: [0.5, 0.38, 0.24], stone: [0.64, 0.62, 0.56], mud: [0.36, 0.3, 0.2], waterDeep: [0.08, 0.22, 0.3], waterShallow: [0.36, 0.5, 0.42], mount: [0.38, 0.52, 0.64],
       leaves: [[0.14, 0.28, 0.14], [0.26, 0.48, 0.18], [0.3, 0.5, 0.2], [0.32, 0.52, 0.2]], night: 0 },
-    autumn: { sun: [0.5, 0.36], sunCol: [1.12, 0.86, 0.6], skyTop: [0.38, 0.52, 0.78], skyHorizon: [0.98, 0.82, 0.64], groundAmb: [0.36, 0.3, 0.26], fog: [0.9, 0.8, 0.7], fogDen: 0.0045,
+    autumn: { sun: [0.5, 0.36], sunCol: [1.12, 0.86, 0.6], skyTop: [0.38, 0.52, 0.78], skyHorizon: [0.98, 0.82, 0.64], groundAmb: [0.36, 0.3, 0.26], fog: [0.9, 0.8, 0.7], fogDen: 0.00248,
       grass: [0.56, 0.54, 0.28], grassDry: [0.68, 0.56, 0.3], earth: [0.52, 0.38, 0.24], stone: [0.64, 0.6, 0.54], mud: [0.4, 0.32, 0.2], waterDeep: [0.14, 0.22, 0.3], waterShallow: [0.5, 0.48, 0.38], mount: [0.52, 0.5, 0.58],
       leaves: [[0.2, 0.3, 0.18], [0.84, 0.56, 0.2], [0.78, 0.42, 0.24], [0.86, 0.26, 0.12]], night: 0 },
-    night: { sun: [0.18, 0.2], sunCol: [0.9, 0.56, 0.4], skyTop: [0.1, 0.12, 0.24], skyHorizon: [0.62, 0.38, 0.38], groundAmb: [0.16, 0.16, 0.24], fog: [0.36, 0.28, 0.34], fogDen: 0.006,
+    night: { sun: [0.18, 0.2], sunCol: [0.9, 0.56, 0.4], skyTop: [0.1, 0.12, 0.24], skyHorizon: [0.62, 0.38, 0.38], groundAmb: [0.16, 0.16, 0.24], fog: [0.36, 0.28, 0.34], fogDen: 0.0033,
       grass: [0.4, 0.4, 0.24], grassDry: [0.5, 0.44, 0.26], earth: [0.4, 0.3, 0.22], stone: [0.5, 0.48, 0.46], mud: [0.3, 0.24, 0.18], waterDeep: [0.06, 0.08, 0.16], waterShallow: [0.3, 0.26, 0.3], mount: [0.24, 0.22, 0.32],
       leaves: [[0.14, 0.2, 0.14], [0.6, 0.38, 0.16], [0.56, 0.3, 0.2], [0.64, 0.2, 0.1]], night: 1 }
   };
@@ -68,6 +68,7 @@
   }
   function seasonOf(w) {
     if (!w) return { a: "spring", b: "spring", k: 0, id: "spring" };
+    if (w.festival) return { a: "night", b: "night", k: 0, id: "night" };
     if (!w.started) return { a: "spring", b: "spring", k: 0, id: "spring" };
     if (w.finished) return { a: "autumn", b: "night", k: Math.min(1, state.harvestClock / 4), id: "night" };
     const t = w.t, P = Sim.PHASES;
@@ -113,7 +114,42 @@
     const aspect = view.clientWidth / Math.max(1, view.clientHeight);
     const span = Math.max(w.W, w.H);
     const fit = aspect < 1 ? 1.05 / Math.max(0.5, aspect) : 1.05;
-    return { target: [w.W / 2 - 0.5, avg, w.H / 2 - 0.5 + span * 0.04], yaw: w.level.yaw || 0, pitch: w.level.pitch || 0.86, dist: span * 1.05 * fit, fov: 0.72 };
+    return { target: [w.W / 2 - 0.5, avg, w.H / 2 - 0.5 + span * 0.04], yaw: w.level.yaw || 0, pitch: w.level.pitch || 0.86, dist: span * 1.05 * fit, fov: 0.72, shiftY: aspect < 1 ? 0.06 : 0 };
+  }
+
+  // Pull the camera back until the whole block of earth sits between the HUD and the toolbar.
+  function fitCam(cam, w, insets) {
+    const cw = view.clientWidth, ch = view.clientHeight;
+    if (view.width !== cw || view.height !== ch) { view.width = cw; view.height = ch; }
+    let mn = Infinity, mx = -Infinity;
+    for (let i = 0; i < w.N; i++) { mn = Math.min(mn, w.ground[i]); mx = Math.max(mx, w.ground[i]); }
+    const pts = [];
+    for (const x of [0, w.W - 1]) for (const z of [0, w.H - 1]) for (const y of [mn - 2, mx + 1]) pts.push([x, y, z]);
+    // also the middle of each edge, at its real height
+    for (let k = 0; k <= 8; k++) {
+      const x = Math.round((w.W - 1) * k / 8), z = Math.round((w.H - 1) * k / 8);
+      pts.push([x, w.ground[x], 0], [x, w.ground[(w.H - 1) * w.W + x], w.H - 1], [0, w.ground[z * w.W], z], [w.W - 1, w.ground[z * w.W + w.W - 1], z]);
+    }
+    const fits = d => {
+      cam.dist = d; R.camera(cam);
+      for (const p of pts) {
+        const q = R.project(p[0], p[1], p[2]);
+        if (!q || q.x < insets.left || q.x > cw - insets.right || q.y < insets.top || q.y > ch - insets.bottom) return false;
+      }
+      return true;
+    };
+    let lo = Math.max(w.W, w.H) * 0.4, hi = Math.max(w.W, w.H) * 6;
+    for (let k = 0; k < 22; k++) { const m = (lo + hi) / 2; if (fits(m)) hi = m; else lo = m; }
+    cam.dist = hi;
+    return cam;
+  }
+  function playCam(w) {
+    const cam = defaultCam(w);
+    const cw = view.clientWidth, ch = view.clientHeight, landscape = cw > ch;
+    const insets = landscape ? { top: 58, bottom: 12, left: Math.min(160, cw * 0.16), right: 92 } : { top: 140, bottom: 96, left: 8, right: 8 };
+    // aim between the insets, then fit
+    cam.shiftY = landscape ? 0.06 : ((insets.bottom - insets.top) / ch);
+    return fitCam(cam, w, insets);
   }
 
   // ---- screens ----------------------------------------------------------------------------
@@ -130,17 +166,43 @@
     return w;
   }
 
-  // The title shows a finished valley, farmed by its own solution in the background.
+  // The title shows an old terraced valley, in the season of the month you open it.
+  function titleSeason() {
+    const m = new Date().getMonth();
+    if (m >= 8 && m <= 10) return { t: 0.86, grow: 1 };
+    if (m === 7) return { t: 0.55, grow: 0.7 };
+    if (m === 5 || m === 6) return { t: 0.3, grow: 0.3 };
+    return null; // spring and winter: the paddies are flooded mirrors, waiting
+  }
   function enterTitle() {
     closeModal();
     show("title");
-    const lv = Levels.byId(Levels.SHOWCASE || "ichimai");
-    const w = loadWorld(lv);
-    if (lv.solution && Script) Script.run(w, lv.solution.filter(a => a.op !== "until"));
-    if (lv.showcaseYear !== undefined) { w.started = true; w.t = lv.showcaseYear; }
+    const lv = Levels.SHOWCASE;
+    if (!state.titleWorld) {
+      const w = Sim.create(lv);
+      const season = titleSeason();
+      if (season) {
+        Sim.start(w);
+        w.t = season.t;
+        for (let i = 0; i < w.N; i++) if (w.plant[i]) { w.grow[i] = season.grow; if (season.grow >= 1) w.plant[i] = Sim.RIPE; }
+        Sim.step(w, 0.3);
+      }
+      w.hold = true;
+      // once every valley is farmed, the title is the harvest-moon night of the village
+      if (Object.keys(save.data.stars).length >= Levels.LEVELS.length) {
+        if (!season) { Sim.start(w); for (let i = 0; i < w.N; i++) if (w.plant[i]) { w.grow[i] = 1; w.plant[i] = Sim.RIPE; } }
+        w.t = 0.9; w.festival = true;
+      }
+      state.titleWorld = w;
+    }
+    const w = state.titleWorld;
+    R.setWorld(w);
     state.world = w; state.level = lv;
     state.showcase = true;
-    state.cam = defaultCam(w); state.cam.pitch = 0.62; state.cam.dist *= 0.95;
+    state.cam = defaultCam(w); state.cam.pitch = 0.46; state.cam.yaw = -0.3;
+    const portrait = view.clientHeight > view.clientWidth;
+    state.cam.dist *= portrait ? 1.12 : 1.55;
+    state.cam.shiftY = portrait ? 0.3 : 0.2;
     state.camGoal = null;
     const st = Object.values(save.data.stars).reduce((a, b) => a + b, 0);
     const cleared = Object.keys(save.data.stars).length;
@@ -218,7 +280,7 @@
     state.levelIndex = i; state.level = lv;
     state.world = loadWorld(lv);
     state.showcase = false;
-    state.cam = defaultCam(state.world); state.camGoal = null;
+    state.cam = playCam(state.world); state.camGoal = null;
     state.paused = false; state.speed = 1; state.harvestClock = 0; state.resultShown = false;
     state.hintsShown = new Set(); state.warned = false; state.marksDone = new Set(); state.particles.length = 0;
     state.sculpt = null; state.seasonId = "spring";
@@ -340,9 +402,10 @@
         <li><i>掘</i><span>土を掘って籠に入れる。水路をつけ、水を逃がす。</span></li>
         <li><i>均</i><span>なぞり始めた高さに、まわりを揃える。斜面に平らな段をつくる。</span></li>
         <li><i>水</i><span>平らな所に浅く溜まった水に、苗が植わる。深すぎても、流れていても植わらない。</span></li>
+        <li><i>眺</i><span>「眺める」では指でなぞると景色が動く。＋－で寄る・引く、⟲⟳でまわる。二本指でも動かせる。</span></li>
         <li><i>暦</i><span>「田植え」をすると一年が始まる。梅雨の雨は家を濡らし、夏の日照りは田を乾かす。秋に実った稲が収穫になる。</span></li>
       </ul>
-      <p class="keys">二本指でまわす・寄る　·　PC：右ドラッグでまわす、ホイールで寄る<br>1 盛る · 2 掘る · 3 均す · 4 眺める · Z 戻す · Space 止める · F 早送り · Q/E まわす</p>
+      <p class="keys">PC：右ドラッグでまわす、Shift＋ドラッグで動かす、ホイールで寄る<br>1 盛る · 2 掘る · 3 均す · 4 眺める · Z 戻す · Space 止める · F 早送り · Q/E まわす</p>
       <div class="dialog-actions"><button type="button" class="accent" data-dialog="ok">わかった</button></div>`, { ok: back || closeModal });
   }
 
@@ -389,13 +452,14 @@
         ${stars}${stats}
         ${lv.letter ? `<div class="letter">${lv.letter.text}<cite>${lv.letter.from}</cite></div>` : ""}
         <div class="dialog-actions">
-          ${last ? "" : "<button type=\"button\" class=\"accent\" data-dialog=\"next\">次の谷へ</button>"}
+          ${last ? "<button type=\"button\" class=\"warm\" data-dialog=\"epilogue\">村へ帰る</button>" : "<button type=\"button\" class=\"accent\" data-dialog=\"next\">次の谷へ</button>"}
           <button type="button" data-dialog="retry">もう一度</button>
           <button type="button" ${last ? "class=\"accent\"" : ""} data-dialog="select">谷の暦へ</button>
         </div>`, {
         next: () => { closeModal(); startLevel(i + 1); },
         retry: () => { closeModal(); startLevel(i); },
-        select: () => enterSelect()
+        select: () => enterSelect(),
+        epilogue: () => epilogue()
       });
     } else {
       audio.event("fail");
@@ -413,6 +477,16 @@
         select: () => enterSelect()
       });
     }
+  }
+
+  function epilogue() {
+    const st = Object.values(save.data.stars).reduce((a, b) => a + b, 0);
+    openDialog(`
+      <p class="eyebrow">EPILOGUE</p>
+      <h2>瑞穂</h2>
+      <p class="poem">崩れた畦をひとつ盛ったところから、<br>八つの谷に、水の段ができました。<br><br>水は上の田から下の田へ、<br>一枚ずつを満たして、海へ帰っていきます。<br>来年の春も、同じ水が来ます。</p>
+      <p class="keys">穂 ${st} / ${Levels.LEVELS.length * 3}</p>
+      <div class="dialog-actions"><button type="button" class="accent" data-dialog="title">おわり</button></div>`, { title: () => { state.titleWorld = null; enterTitle(); } });
   }
 
   // ---- actions -----------------------------------------------------------------------------
@@ -450,6 +524,19 @@
     if (!state.cam) return;
     state.camGoal = Object.assign({}, state.camGoal || {}, { yaw: (state.camGoal && state.camGoal.yaw !== undefined ? state.camGoal.yaw : state.cam.yaw) + dir * Math.PI / 4 });
   }
+  function zoom(f) {
+    if (!state.cam) return;
+    const goal = clampDist((state.camGoal && state.camGoal.dist) || state.cam.dist) * f;
+    state.camGoal = Object.assign({}, state.camGoal || {}, { dist: clampDist(goal) });
+  }
+  // Move the point the camera looks at across the ground, in screen directions.
+  function pan(dx, dy) {
+    const c = state.cam, w = state.world;
+    const k = c.dist * 0.0021;
+    const sy = Math.sin(c.yaw), cy = Math.cos(c.yaw);
+    c.target[0] = Math.max(0, Math.min(w.W - 1, c.target[0] - (dx * cy - dy * sy / Math.max(0.35, Math.sin(c.pitch))) * k));
+    c.target[2] = Math.max(0, Math.min(w.H - 1, c.target[2] - (-dx * sy - dy * cy / Math.max(0.35, Math.sin(c.pitch))) * k * -1));
+  }
   function undo() {
     if (state.world && Sim.undo(state.world)) { audio.event("click"); toast("ひとつ戻した"); }
   }
@@ -471,6 +558,8 @@
       else if (act === "sound") toggleSound();
       else if (act === "pause") pauseMenu();
       else if (act === "plant") plant(false);
+      else if (act === "zoomin") zoom(0.75);
+      else if (act === "zoomout") zoom(1 / 0.75);
       else if (act === "rotl") rotate(-1);
       else if (act === "rotr") rotate(1);
       else if (act === "speed") toggleSpeed();
@@ -502,9 +591,10 @@
       beginGesture();
       return;
     }
-    if (e.button === 2 || e.button === 1 || state.tool === "look" || !toolAllowed()) { state.gesture = { orbit: true, x: p.x, y: p.y }; return; }
+    if (e.button === 2) { state.gesture = { orbit: true }; return; }
+    if (e.button === 1 || e.shiftKey || state.tool === "look" || !toolAllowed()) { state.gesture = { pan: true }; return; }
     const hit = R.pick(p.x, p.y);
-    if (!hit) { state.gesture = { orbit: true, x: p.x, y: p.y }; return; }
+    if (!hit) { state.gesture = { pan: true }; return; }
     Sim.beginStroke(state.world, state.tool, hit.x, hit.y);
     state.sculpt = { id: e.pointerId, x: p.x, y: p.y, target: state.world.stroke.target };
     state.hover = hit;
@@ -523,6 +613,8 @@
       state.cam.yaw -= dx * 0.008;
       state.cam.pitch = clampPitch(state.cam.pitch + dy * 0.005);
       state.camGoal = null;
+    } else if (state.gesture && state.gesture.pan) {
+      pan(p.x - px, p.y - py);
     }
   });
   function endPointer(e) {
@@ -552,10 +644,13 @@
     state.cam.dist = clampDist(g.dist * g.d / Math.max(20, d));
     let da = ang - g.ang; while (da > Math.PI) da -= 2 * Math.PI; while (da < -Math.PI) da += 2 * Math.PI;
     state.cam.yaw = g.yaw - da;
-    state.cam.pitch = clampPitch(g.pitch + (my - g.my) * 0.005);
+    state.cam.pitch = clampPitch(g.pitch + (my - g.my) * 0.004);
+    const mx = (a.x + b.x) / 2;
+    if (g.lastMx !== undefined) pan(mx - g.lastMx, 0);
+    g.lastMx = mx;
     state.camGoal = null;
   }
-  function clampDist(d) { const w = state.world, span = Math.max(w.W, w.H); return Math.max(span * 0.35, Math.min(span * 2.6, d)); }
+  function clampDist(d) { const w = state.world, span = Math.max(w.W, w.H); return Math.max(span * 0.3, Math.min(span * 4, d)); }
   view.addEventListener("wheel", e => {
     if (state.screen !== "play") return;
     e.preventDefault();
@@ -578,6 +673,8 @@
     else if (k === "4") setTool("look");
     else if (k === "z") undo();
     else if (k === "q") rotate(-1);
+    else if (k === "+" || k === "=") zoom(0.75);
+    else if (k === "-") zoom(1 / 0.75);
     else if (k === "e") rotate(1);
     else if (k === "f") toggleSpeed();
     else if (k === "b") { state.size = 1 - state.size; $("#sizeGlyph").textContent = state.size ? "大" : "小"; }
@@ -750,7 +847,10 @@
       if (w.finished) {
         state.harvestClock += dt;
         if (state.harvestClock < dt * 1.5) { audio.event("harvest"); toast("収穫の秋"); }
-        if (state.harvestClock > 3.2 && !state.resultShown) { state.resultShown = true; resultDialog(); }
+        // gold motes rise where the sickle passes
+        const row = Math.round(w.H + 2 - Math.min(1, state.harvestClock / 2.6) * (w.H + 4));
+        if (row >= 0 && row < w.H && !reduceMotion) for (let x = 0; x < w.W; x += 2) { const i = row * w.W + x; if (w.plant[i] === Sim.RIPE && Math.random() < 0.5) spawn({ kind: "mote", x, y: w.ground[i] + 0.5, z: row, vy: 0.8 + Math.random(), life: 1.6, age: 0, col: "255,214,120" }); }
+        if (state.harvestClock > 4 && !state.resultShown) { state.resultShown = true; resultDialog(); }
       }
       if (now - state.lastHud > 120) { state.lastHud = now; updateHud(); }
     } else {
@@ -761,14 +861,25 @@
     }
 
     // camera easing
-    if (state.camGoal && state.camGoal.yaw !== undefined) {
-      const d = state.camGoal.yaw - state.cam.yaw;
-      state.cam.yaw += d * Math.min(1, dt * 8);
-      if (Math.abs(d) < 0.001) state.camGoal = null;
+    if (state.camGoal) {
+      let done = true;
+      if (state.camGoal.yaw !== undefined) {
+        const d = state.camGoal.yaw - state.cam.yaw;
+        state.cam.yaw += d * Math.min(1, dt * 8);
+        if (Math.abs(d) > 0.001) done = false;
+      }
+      if (state.camGoal.dist !== undefined) {
+        const d = state.camGoal.dist - state.cam.dist;
+        state.cam.dist += d * Math.min(1, dt * 8);
+        if (Math.abs(d) > 0.01) done = false;
+      }
+      if (done) state.camGoal = null;
     }
 
     const env = environment(w, state.time);
-    if (w.finished) env.harvest = 0;
+    env.autumn = !w.started ? 0 : w.finished ? 1 : Math.max(0, Math.min(1, (w.t - 0.64) / 0.14));
+    // the harvest sweeps up the valley from the foot, row by row
+    env.front = state.screen === "play" && w.finished ? w.H + 2 - Math.min(1, state.harvestClock / 2.6) * (w.H + 4) : 1e6;
     env.dpr = dpr;
     // cursor and marks
     const showCursor = state.screen === "play" && state.hover && state.tool !== "look" && !w.finished && !modalOpen();
