@@ -1742,7 +1742,7 @@
     else if (scene === "playing") {
       if (k === "j" || k === "z") slash();
       else if (k === "k" || k === "x") seal();
-      else if (k === " " || k === "shift") dash();
+      else if ((k === " " && !onControl) || k === "shift") dash();
       else if (k === "escape" || k === "p") pause();
     } else if (scene === "paused" && (k === "escape" || k === "p" || k === "enter")) {
       const el = $("sumifuResume"); if (el) el.click();

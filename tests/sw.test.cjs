@@ -15,10 +15,21 @@ function setup(){
   async function event(name,request){const waits=[];let response;listeners[name]({request,waitUntil:p=>waits.push(p),respondWith:p=>response=p});const result=await response;await Promise.all(waits);return result;}
   return {event,stores,online:v=>online=v,request:u=>({url:root+u,method:'GET'})};
 }
-test('every required game asset is installed for offline use',async()=>{const h=setup();await h.event('install');const assets=[...h.stores.values()][0];assert.ok(assets.size>=24);for(const path of ['luna/index.html','luna/luna.css','luna/luna.js','grok/index.html','oriko/optics.js','oriko/game.js','mikan/index.html','mikan/phys.js','mikan/game.js','hebi/index.html','hebi/sim.js','hebi/game.js','kake/index.html','kake/sim.js','kake/game.js'])assert.ok([...assets.keys()].some(url=>url.endsWith('/'+path)),'asset is precached: '+path);for(const path of ['echo/index.html','echo/echo.css','echo/sim.js','echo/levels.js','echo/audio.js','echo/render.js','echo/game.js'])assert.ok([...assets.keys()].some(url=>url.endsWith('/'+path)),'ECHO asset is precached: '+path);});
+// sw.js の ASSETS が precache の唯一の真実。得手書きの控えではなく、sw.js を読み戻す。
+function declaredAssets(){const src=fs.readFileSync(path.join(__dirname,'../sw.js'),'utf8');const block=src.match(/const ASSETS = \[([\s\S]*?)\];/);assert.ok(block,'sw.js declares ASSETS');const list=block[1].match(/"\.\/[^"]+"/g);assert.ok(list&&list.length,'ASSETS is not empty');return list.map(s=>s.slice(3,-1));}
+test('every required game asset is installed for offline use',async()=>{
+  const h=setup();await h.event('install');
+  const assets=[...h.stores.values()][0];
+  const declared=declaredAssets();
+  const urls=[...assets.keys()];
+  assert.equal(assets.size,declared.length,'the installed count matches the declared precache list');
+  for(const p of declared)assert.ok(urls.some(u=>u.endsWith('/'+p)),'asset is precached: '+p);
+  // 作品の入口。作品的取りこぼしは、この一覧に現れない。
+  for(const p of ['index.html','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','luna/index.html','sol/index.html','sol/skyward/index.html','sol/works.html','gpt6-sol/index.html'])assert.ok(urls.some(u=>u.endsWith('/'+p)),'work entry is precached: '+p);
+});
 test('offline directory URLs resolve to the installed gallery and game',async()=>{
   const h=setup();await h.event('install');
-  for(const [url,text] of [['','./index.html'],['sol/','./sol/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['mikan/','./mikan/index.html'],['hebi/','./hebi/index.html'],['kake/','./kake/index.html'],['echo/','./echo/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
+  for(const [url,text] of [['','./index.html'],['sol/','./sol/index.html'],['sol/skyward/','./sol/skyward/index.html'],['sol/works.html','./sol/works.html'],['gpt6-sol/','./gpt6-sol/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['mikan/','./mikan/index.html'],['hebi/','./hebi/index.html'],['kake/','./kake/index.html'],['echo/','./echo/index.html'],['luna/','./luna/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
   assert.equal((await h.event('fetch',h.request('missing.html'))).type,'error');
 });
 test('worker activation removes previous gallery caches and preserves unrelated apps',async()=>{

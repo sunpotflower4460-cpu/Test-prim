@@ -15,6 +15,12 @@ const ASSETS = [
   "./kake/index.html", "./kake/kake.css", "./kake/sim.js", "./kake/levels.js", "./kake/game.js",
   "./echo/index.html", "./echo/echo.css", "./echo/sim.js", "./echo/levels.js",
   "./echo/audio.js", "./echo/render.js", "./echo/game.js",
+  "./sol/works.html", "./sol/works.css",
+  "./sol/skyward/index.html", "./sol/skyward/skyward.css", "./sol/skyward/sim.js",
+  "./sol/skyward/scene.js", "./sol/skyward/hud.js", "./sol/skyward/audio.js", "./sol/skyward/game.js",
+  "./sol/skyward/vendor/three.module.js",
+  "./gpt6-sol/index.html", "./gpt6-sol/reprise.css", "./gpt6-sol/rules.js",
+  "./gpt6-sol/levels.js", "./gpt6-sol/sound.js", "./gpt6-sol/game.js",
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {

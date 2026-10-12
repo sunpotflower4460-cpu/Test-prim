@@ -8,7 +8,7 @@ const targets = [
   { name: "desktop", viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
 ];
 (async () => {
-  const browser = await chromium.launch({ headless: true, args: ["--no-sandbox"] });
+  const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--enable-unsafe-swiftshader"] });
   try {
     for (const target of targets) {
       const context = await browser.newContext({
@@ -25,6 +25,8 @@ const targets = [
       await page.route("https://fonts.gstatic.com/**", route => route.abort());
       await page.goto("http://127.0.0.1:8000/", { waitUntil: "domcontentloaded" });
       await page.locator("#launcher").waitFor({ state: "visible" });
+// Grok の扉は作品一覧へ遷移する <a> なので、この Enter ループには入らない。
+      // 下の専用検査（#grokShelf）が一覧側の 5 作品と戻り導線を確かめる。
       for (const [door, title, back] of [["openCodeBtn","codeHub","codeHubBack"],["openSyncBtn","syncTitle","syncReturnBtn"],["helixOpenBtn","helixTitle","helixReturnBtn"]]) {
         await page.locator("#" + door).press("Enter");
         await page.locator("#" + title).waitFor({state:"visible"});
@@ -73,8 +75,8 @@ const targets = [
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
         entryLabels,
-        ["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna"],
-        "launcher lists the seven entries in order"
+["GPT6 CHAT", "Grok 4.7 Cursor", "玄人コード", "Minimax M3.1", "Minimax M3.1", "GPT 6.1 sol", "GPT 6 Luna", "GPT 6 sol"],
+        "launcher lists the eight entries in order"
       );
       const launcherFit = await page.evaluate(() => ({
         viewport: window.innerWidth,
@@ -123,11 +125,13 @@ const targets = [
       const layout = await page.evaluate(() => {
         const sub = document.querySelector(".launcher-sub").getBoundingClientRect();
         const bottom = document.querySelector(".launcher-bottom").getBoundingClientRect();
-        const last = document.getElementById("openSolBtn").getBoundingClientRect();
-        return { subBottom: sub.bottom, bottomTop: bottom.top, lastVisible: last.bottom <= window.innerHeight + 1 };
+        const last = document.getElementById("openGpt6SolBtn").getBoundingClientRect();
+        return { subBottom: sub.bottom, bottomTop: bottom.top, lastBeforeFooter: last.bottom <= bottom.top + 1 };
       });
       assert.ok(layout.subBottom <= layout.bottomTop + 1, "launcher footer does not overlap the last entry");
-      assert.ok(layout.lastVisible, "the last launcher entry fits on screen");
+assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
+      await page.locator("#openGpt6SolBtn").scrollIntoViewIfNeeded();
+      assert.ok(await page.locator("#openGpt6SolBtn").isVisible(), "the last entry is reachable by scrolling");
       // Grok の扉は作品一覧。KASANE と折光室が並び、折光室の最初の室は点灯する。
       await page.locator("#openSumifuBtn").click();
       await page.locator("#grokShelf").waitFor({ state: "visible" });
@@ -587,15 +591,27 @@ const targets = [
         assert.ok(ground - peak > 8, "右半分のタップで跳ぶ: " + JSON.stringify({ rise: ground - peak }));
         assert.equal(afterTap.dashes, 0, "一回のタップでダッシュしない");
 
-        await tap("touchStart"); await tap("touchEnd"); await tap("touchStart");
+        // 連打がダッシュになる条件は、二打目が窓の中に入ること。
+        // 先に、間隔を置いた二打ではダッシュにならないことを確かめる。
+        await page.waitForTimeout(400);
+        await tap("touchStart"); await tap("touchEnd");
+        await page.waitForTimeout(400);
+        await tap("touchStart"); await page.evaluate(() => window.__helix.tick()); await tap("touchEnd");
+        const afterSlow = await page.evaluate(() => window.__helix.getState().player.dashes);
+        assert.equal(afterSlow, afterTap.dashes, "間隔を置いた二打はダッシュしない");
+
+        // 続いて窓の中に二打する。入力は一つずつ待たずにまとめて送る。
+        // 待つと通信の往復だけで間隔が伸び、窓の中であればあるべき状態が外れる。
+        await page.waitForTimeout(400);
         let peakVx = 0;
+        await Promise.all([tap("touchStart"), tap("touchEnd"), tap("touchStart")]);
         for (let i = 0; i < 12; i++) {
           await page.evaluate(() => window.__helix.tick());
           peakVx = Math.max(peakVx, Math.abs(await page.evaluate(() => window.__helix.getState().player.vx)));
         }
         await tap("touchEnd");
         const afterDouble = await page.evaluate(() => window.__helix.getState().player.dashes);
-        assert.equal(afterDouble, 1, "右半分の連打でダッシュする");
+        assert.equal(afterDouble, afterSlow + 1, "右半分の連打でダッシュする");
         assert.ok(peakVx > 300, "ダッシュ中は最高速度を超える: " + Math.round(peakVx));
       }
 
@@ -626,6 +642,46 @@ const targets = [
 
       // AFTERTIDE lives on a separate page so the other games' inputs and audio remain isolated.
       await page.locator("#openSolBtn").click();
+      await page.locator("#author").waitFor({ state: "visible" });
+      await page.getByRole("link", {name:"SKYWARD 蒼穹の帰路を開く"}).click();
+      await page.locator("#loading").waitFor({state:"hidden"});
+      await page.locator("#launchBtn").click();
+      // #flightUI は絶対配置の子だけを持つ器なので、コンテナ自身は高さ 0 になる。
+      // 見えるものを確かめるなら、器ではなく中の操作ボタンを見る。
+      await page.locator("#gunBtn").waitFor({state:"visible"});
+      assert.equal(await page.locator("#flightUI").getAttribute("hidden"), null, "flight UI is switched on");
+      await page.keyboard.down("Space");
+      await page.waitForFunction(() => Number(document.querySelector("#gunBtn small").textContent) < 650);
+      await page.keyboard.up("Space");
+      const flightFit = await page.evaluate(() => ({
+        width: innerWidth, height: innerHeight, html: document.documentElement.scrollWidth,
+        canvas: document.querySelector("#world").width,
+        controls: [...document.querySelectorAll("#flightUI button,#flightUI input")].map(el=>{
+          const r=el.getBoundingClientRect();return {id:el.id,top:r.top,bottom:r.bottom,left:r.left,right:r.right};
+        })
+      }));
+      assert.ok(flightFit.canvas>0, "3D renderer initializes");
+      assert.ok(flightFit.html<=flightFit.width+1, "flight has no horizontal overflow");
+      assert.ok(flightFit.controls.every(r=>r.left>=-1&&r.right<=flightFit.width+1&&r.top>=0&&r.bottom<=flightFit.height+1), "all flight controls fit: "+JSON.stringify(flightFit));
+      await page.locator("#gearBtn").click();
+      // updateUI は 0.1 秒周期で走るので、一度だけ読むのではなくクラスが付くまで待つ。
+      await page.waitForFunction(() => document.querySelector("#gearBtn").classList.contains("active"), null, { timeout: 2000 });
+      await page.locator("#pauseBtn").click();
+      await page.locator("#continueFlight").click();
+      assert.equal(await page.evaluate(()=>document.activeElement.id), "world", "pause resumes keyboard flight focus");
+      await page.locator("#perfBtn").click();
+      await page.locator("#setQuality").selectOption("low");
+      await page.getByRole("button", {name:"設定を保存"}).click();
+      assert.equal(await page.evaluate(()=>document.activeElement.id), "world", "settings resumes flight focus");
+      await page.locator("#helpBtn").click();
+      await page.getByRole("button", {name:"わかった、空へ"}).click();
+      await page.locator("#pauseBtn").click();
+      await page.reload();
+      await page.locator("#resumeSortie").click();
+      assert.ok(Number(await page.locator("#gunBtn small").innerText())<650, "reload restores ammunition and the same sortie");
+      await page.locator("#flightBack").click();
+      await page.locator("#author").waitFor({state:"visible"});
+      await page.getByRole("link", {name:"AFTERTIDE 潮の郵便屋を開く"}).click();
       await page.locator("#title").waitFor({ state: "visible" });
       await page.locator("#start").click();
       await page.locator('[data-ui="embark"]').click();
@@ -678,9 +734,10 @@ const targets = [
       }
       await page.locator("#chartBack").click();
       await page.locator('.title-top a').click();
+      await page.getByRole("link", {name:"‹ Test prim",exact:true}).click();
       await page.locator("#launcher").waitFor({state:"visible"});
 
-      // LUNA is the final door. Check its first authored route through a real drag
+      // Check LUNA's first authored route through a real drag
       // at every viewport size, including the smallest phone.
       await page.locator("#openLunaBtn").click();
       await page.locator("#title").waitFor({state:"visible"});
@@ -704,6 +761,36 @@ const targets = [
       assert.match(await page.locator("#mapProgress").innerText(), /1 \/ 12/);
       await page.locator('#map [data-action="title"]').click();
       await page.locator('#title .back').click();
+      await page.locator("#launcher").waitFor({state:"visible"});
+
+      // REPRISE lives on its own page. Perform the first scene with its optional
+      // fragment, then confirm that a partially recorded scene survives reload.
+      await page.locator("#openGpt6SolBtn").click();
+      await page.locator("#titleScreen").waitFor({state:"visible"});
+      await page.locator("#startBtn").click();
+      await page.locator('#dialog [data-dialog="close"]').waitFor({state:"visible"});
+      await page.locator('#dialog [data-dialog="close"]').click();
+      const repriseFit = await page.evaluate(() => ({
+        width: innerWidth, html: document.documentElement.scrollWidth,
+        board: document.querySelector("#board").getBoundingClientRect().width,
+        controls: document.querySelector(".play-lower").getBoundingClientRect().bottom,
+        height: innerHeight
+      }));
+      assert.ok(repriseFit.html <= repriseFit.width + 1, "reprise has no horizontal overflow");
+      assert.ok(repriseFit.board >= 240, "reprise board remains legible");
+      assert.ok(repriseFit.controls <= repriseFit.height + 1, "reprise controls fit on screen");
+      for (const action of "DDD") await page.locator('[data-move="' + action + '"]').click();
+      assert.ok(await page.locator("#recordBtn").isEnabled());
+      await page.locator("#recordBtn").click();
+      for (const action of "RRWRRRDDUUR") await page.locator('[data-move="' + action + '"]').click();
+      await page.locator('#dialog [data-dialog="next"]').waitFor({state:"visible"});
+      assert.match(await page.locator(".result-line").innerText(), /一歩は、消えない/);
+      await page.locator('#dialog [data-dialog="next"]').click();
+      await page.locator('[data-move="R"]').click();
+      await page.reload();
+      await page.locator("#startBtn").click();
+      assert.equal(await page.locator("#beatLabel").innerText(), "1 / 18", "reprise resumes a saved take");
+      await page.locator(".return-link").click();
       await page.locator("#launcher").waitFor({state:"visible"});
 
       assert.deepEqual(errors, [], "no browser script errors");

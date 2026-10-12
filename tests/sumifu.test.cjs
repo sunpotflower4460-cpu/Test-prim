@@ -199,3 +199,10 @@ test("keyboard activation of combat buttons performs their action",()=>{
   el('sumifuSeal').trigger('click',{detail:0});assert.ok(state.getGame().player.sealCd>0);
   el('sumifuDash').trigger('click',{detail:0});assert.ok(state.getGame().player.dashCd>0);
 });
+
+test('Space on a focused KASANE combat button does not also spend the dash',()=>{
+ const {element:el,events,state}=setup();el('openSumifuBtn').click();el('sumifuStart').click();
+ events.keydown({key:' ',repeat:false,target:{tagName:'BUTTON',id:'sumifuSlash'},preventDefault(){assert.fail('native Space must reach the slash button');}});
+ assert.equal(state.getGame().player.dashCd,0);
+ el('sumifuSlash').trigger('click',{detail:0});assert.ok(state.getGame().player.slashCd>0);
+});

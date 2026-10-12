@@ -74,3 +74,44 @@ test('AFTERTIDE leaving the completed board cancels the delayed result card',()=
   const c=h.window.audit;c.startLevel(0);for(const a of T.solve(T.parse(levels[0])))c.act(a);
   c.chart();h.flushTimers();assert.equal(c.scene(),'chart');assert.equal(c.kind(),null);
 });
+
+test('SYNC an ending queued by the final clear cannot appear after returning to the gallery',()=>{
+ const h=sync(),c=h.window.__sync;c.enter();c.start(4,[]);
+ const g=c.getGame();g.cleared=true;g.running=false;h.frame();
+ h.el('syncReturnBtn').click();assert.equal(c.getMode(),'off');
+ assert.doesNotThrow(()=>h.flushTimers());assert.equal(c.getMode(),'off');
+});
+
+function reprise(){
+ const rules=require('../gpt6-sol/rules.js'),levels=require('../gpt6-sol/levels.js');
+ const sound={effect(){},startAmbient(){},stopAmbient(){},setEnabled(){}};
+ const h=host('gpt6-sol/game.js',{globals:{RepriseRules:rules,RepriseLevels:levels,RepriseSound:sound},instrument:s=>s.replace('  title();\n})();','  window.audit={enterScene,move,record,sceneSelect,title,getModal:()=>modal,getScreen:()=>screen}; title();\n})();')});
+ h.el('board').parentElement=h.el('stage-shell');return h;
+}
+test('REPRISE all twelve scenes clear through the controller and save fragments and unlocks',()=>{
+ const h=reprise(),c=h.window.audit,rules=require('../gpt6-sol/rules.js'),levels=require('../gpt6-sol/levels.js'),route=require('./helpers/reprise-solve.cjs');
+ for(const [index,level] of levels.entries()){
+  c.enterScene(index);h.flushTimers();
+  if(c.getModal())h.el('dialog').trigger('click',{target:{closest:()=>({dataset:{dialog:'close'}})}});
+  const echoes=[];
+  for(const plate of level.plates){const path=route(level,echoes,plate);for(const action of path)c.move(action);c.record();echoes.push(path);}
+  for(const action of route(level,echoes,level.goal,true))c.move(action);
+  h.flushTimers();assert.ok(c.getModal(),'scene '+index+' displays a result');
+  const saved=JSON.parse(h.data['reprise-gpt6-sol-v1']);assert.ok(saved.completed.includes(index));assert.ok(saved.fragments.includes(index));assert.equal(saved.unlocked,Math.min(11,index+1));assert.equal(saved.session,null);
+  c.sceneSelect();
+ }
+ c.title();assert.equal(c.getScreen(),'title');
+});
+test('REPRISE closing the page after a clear cannot resurrect the finished session',()=>{
+ const h=reprise(),c=h.window.audit;c.enterScene(0);h.flushTimers();
+ h.el('dialog').trigger('click',{target:{closest:()=>({dataset:{dialog:'close'}})}});
+ for(const move of 'DDD')c.move(move);c.record();for(const move of 'RRWRRRDDUUR')c.move(move);
+ assert.equal(JSON.parse(h.data['reprise-gpt6-sol-v1']).session,null);
+ h.events.pagehide();assert.equal(JSON.parse(h.data['reprise-gpt6-sol-v1']).session,null);
+});
+
+test('REPRISE a queued first-scene tutorial cannot interrupt the next scene',()=>{
+ const h=reprise(),c=h.window.audit;c.enterScene(0);
+ for(const move of 'DDD')c.move(move);c.record();for(const move of 'RRWRRRDDUUR')c.move(move);
+ c.enterScene(1);h.flushTimers();assert.equal(c.getModal(),null);assert.equal(c.getScreen(),'play');
+});

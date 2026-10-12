@@ -1371,7 +1371,10 @@
       '<p class="sync-sub">SCORE ' + game.stats.score.toLocaleString("en-US") + "</p>" +
       statsBlock(game);
     if (last) {
-      setTimeout(showEnding, 1500);
+      const completedGame = game;
+      setTimeout(() => {
+        if (mode === "result" && game === completedGame) showEnding();
+      }, 1500);
       return;
     }
     const offers = sim.rollResonances(game, 3);
