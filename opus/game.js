@@ -174,6 +174,15 @@
     if (m === 5 || m === 6) return { t: 0.3, grow: 0.3 };
     return null; // spring and winter: the paddies are flooded mirrors, waiting
   }
+  function titleCam(w) {
+    const cam = defaultCam(w); cam.pitch = 0.46; cam.yaw = -0.3;
+    const portrait = view.clientHeight > view.clientWidth;
+    cam.dist *= portrait ? 1.12 : 1.55;
+    cam.shiftY = portrait ? 0.3 : 0.2;
+    // wide screens: the words on the left, the valley on the right
+    if (view.clientWidth >= 900 && !portrait && view.clientHeight >= 560) { cam.shiftX = 0.34; cam.shiftY = 0.05; cam.dist *= 0.97; }
+    return cam;
+  }
   function enterTitle() {
     closeModal();
     show("title");
@@ -199,12 +208,7 @@
     R.setWorld(w);
     state.world = w; state.level = lv;
     state.showcase = true;
-    state.cam = defaultCam(w); state.cam.pitch = 0.46; state.cam.yaw = -0.3;
-    const portrait = view.clientHeight > view.clientWidth;
-    state.cam.dist *= portrait ? 1.12 : 1.55;
-    state.cam.shiftY = portrait ? 0.3 : 0.2;
-    // wide screens: the words on the left, the valley on the right
-    if (view.clientWidth >= 900 && !portrait && view.clientHeight >= 560) { state.cam.shiftX = 0.34; state.cam.shiftY = 0.05; state.cam.dist *= 0.97; }
+    state.cam = titleCam(w);
     state.camGoal = null;
     const st = Object.values(save.data.stars).reduce((a, b) => a + b, 0);
     const cleared = Object.keys(save.data.stars).length;
@@ -600,7 +604,11 @@
     state.pointers.set(e.pointerId, { x: p.x, y: p.y, sx: p.x, sy: p.y, button: e.button, type: e.pointerType });
     if (state.pointers.size >= 2) {
       // a second finger turns the stroke into a camera gesture
-      if (state.sculpt) { Sim.undo(state.world); Sim.endStroke(state.world); state.sculpt = null; }
+      if (state.sculpt) {
+        const st = Sim.endStroke(state.world);
+        if (st && st.moved >= 0.01) Sim.undo(state.world); // the first finger's touch was not meant as a stroke
+        state.sculpt = null;
+      }
       beginGesture();
       return;
     }
@@ -695,6 +703,16 @@
     else if (k === "escape" || k === "p") pauseMenu();
     else return;
     audio.unlock();
+  });
+  // a turned phone or a resized window gets a freshly framed view
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => {
+      if (!state.world) return;
+      if (state.screen === "play") { const yaw = state.cam.yaw; state.cam = playCam(state.world); state.cam.yaw = yaw; state.camGoal = null; }
+      else { const yaw = state.cam.yaw; state.cam = titleCam(state.world); state.cam.yaw = yaw; }
+    }, 160);
   });
   document.addEventListener("visibilitychange", () => {
     if (document.hidden) { audio.suspend(); if (state.screen === "play" && state.world && !state.world.finished) state.paused = true; }
@@ -928,6 +946,8 @@
     }
 
     const env = environment(w, state.time);
+    // haze is about the air between us and the valley, not the valley's size
+    env.fogDen *= Math.max(0.3, Math.min(1.4, 64 / state.cam.dist));
     env.autumn = !w.started ? 0 : w.finished ? 1 : Math.max(0, Math.min(1, (w.t - 0.64) / 0.14));
     // the harvest sweeps up the valley from the foot, row by row
     env.front = state.screen === "play" && w.finished ? w.H + 2 - Math.min(1, state.harvestClock / 2.6) * (w.H + 4) : 1e6;
