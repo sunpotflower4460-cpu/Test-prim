@@ -1,6 +1,6 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v19";
+const CACHE = "test-prim-gallery-v20";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
@@ -23,6 +23,9 @@ const ASSETS = [
   "./gpt6-sol/levels.js", "./gpt6-sol/sound.js", "./gpt6-sol/game.js",
   "./opus/index.html", "./opus/mizuho.css", "./opus/sim.js", "./opus/levels.js", "./opus/script.js",
   "./opus/render.js", "./opus/audio.js", "./opus/game.js", "./opus/guide.js", "./opus/door.js",
+  "./haiku/index.html", "./haiku/works.css", "./haiku/vendor/three.module.js",
+  "./haiku/ku/index.html", "./haiku/ku/ku.css", "./haiku/ku/words.js", "./haiku/ku/sim.js",
+  "./haiku/ku/paint.js", "./haiku/ku/scene.js", "./haiku/ku/audio.js", "./haiku/ku/game.js",
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {
