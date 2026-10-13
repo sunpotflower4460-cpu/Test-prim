@@ -302,12 +302,12 @@
     const t = themes[game.stage + 1];
     sound("level"); flash(.36);
     overlayCard("CHAPTER COMPLETE", themes[game.stage].short + "に光が戻った", "守護者の星核を受け取った。<br>次は、" + t.short + "へ。",
-      '<div class="special">✧</div><p class="chapter-reward">✦ 星核の経験値 +' + game.chapterReward + '</p><button class="primary" id="nextChapter">次の世界へ <b>↗</b></button>');
+      '<div class="special">✧</div><p class="chapter-reward">✦ 星核の経験値 +' + Math.round(game.chapterReward * game.player.luck) + '</p><button class="primary" id="nextChapter">次の世界へ <b>↗</b></button>');
     bindButton("nextChapter", () => {
       game.stage++; beginChapter();
       const reward = game.chapterReward; game.chapterReward = 0;
       if (reward) addExp(reward);
-      if (scene === "playing") showToast("星核の祝福 +" + reward);
+      if (scene === "playing") showToast("星核の祝福 +" + Math.round(reward * game.player.luck));
     });
   }
 
