@@ -59,6 +59,7 @@
   let last=0,dpr=1,shake=0,hitstop=0,slow=0,cleared=false,spawnCd=0,idSerial=1,calloutTime=0,rafId=0;
   let kills=0,chain=0,bestChain=0,chainCd=0,relicCounts={},selectedRelics=[],bossPhase=0;
   let waveIndex=0,parries=0,totalElapsed=0,bossReinforcements=false;
+  let musicCountdown=.14,musicBeat=0;
   const input={keys:new Set(),stick:{x:0,y:0,id:null,cx:0,cy:0},attackHeld:false,attackTimer:0};
   const ui={gate:$("gateNumber"),name:$("gateName"),hp:$("hpBar"),hpText:$("hpText"),
     energy:$("energyBar"),energyText:$("energyText"),kills:$("killCount"),combo:$("combo"),
@@ -92,6 +93,27 @@
     else if(name==="kill"){tone(550,.19,.019,"sine",1.5);}
     else if(name==="special"){[216,324,432,648,864].forEach((f,i)=>tone(f,.76,.039,"sine",1.01,i*.065));}
     else if(name==="victory"){[432,540,648,864,1080].forEach((f,i)=>tone(f,.65,.033,"sine",1.02,i*.15));}
+  }
+  // Quiet, locally synthesized 432 Hz-reference score. Each gate plays a
+  // different sparse melody; the final guardian makes the pulse more urgent.
+  function music(dt){
+    if(scene!=="playing"||!saved.sound)return;
+    musicCountdown-=dt;
+    if(musicCountdown>0)return;
+    const climax=gate===5&&waveIndex===1;
+    musicCountdown=climax?.54:.82;
+    const roots=[216,242.45,192.43,256.87,228.88,216];
+    const patterns=[
+      [0,7,12,7,4,7,2,7],[0,3,7,10,7,3,5,7],
+      [0,7,10,12,7,5,3,7],[0,5,9,12,9,5,4,2],
+      [0,4,7,11,9,7,4,2],[0,3,7,12,10,7,5,3]
+    ];
+    const note=roots[gate]*Math.pow(2,patterns[gate][musicBeat%8]/12);
+    tone(note,.6,.008,"sine",1.004);
+    if(musicBeat%2===0)tone(roots[gate]/2,.39,climax?.015:.007,"triangle",.95);
+    if(musicBeat%4===0)tone(roots[gate]*1.5,1.9,.004,"sine",1.001);
+    if(climax&&musicBeat%2===1)tone(110,.11,.008,"triangle",.74);
+    musicBeat++;
   }
   function hud(){
     const p=player,c=colors[gate];
@@ -149,7 +171,7 @@
   }
   function beginGate(){
     scene="playing";cleared=false;time=0;stageTime=0;bossPhase=0;spawnCd=0;slow=0;hitstop=0;
-    waveIndex=0;bossReinforcements=false;
+    waveIndex=0;bossReinforcements=false;musicCountdown=.14;musicBeat=0;
     effects=[];traces=[];texts=[];shots=[];enemies=[];shake=0;
     player.x=W/2;player.y=440;player.invuln=1.2;
     player.hp=Math.min(player.maxHp,player.hp+(gate===0?0:18));
@@ -522,6 +544,7 @@
   }
   function update(dt){
     if(scene!=="playing")return;
+    music(dt);
     time+=dt;stageTime+=dt;totalElapsed+=dt;
     if(chainCd>0){chainCd-=dt;if(chainCd<=0)chain=0}
     if(calloutTime>0){calloutTime-=dt;if(calloutTime<=0)ui.callout.classList.remove("show")}
