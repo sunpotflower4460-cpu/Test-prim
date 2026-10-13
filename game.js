@@ -875,6 +875,7 @@
   function updateHud() {
     if (!game) return;
     const g = game, p = g.player;
+    ui.top.classList.toggle("low-hp", p.hp / p.maxHp < .3);
     ui.hp.style.width = (100 * p.hp / p.maxHp) + "%";
     ui.hpLabel.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
     ui.xp.style.width = (100 * clamp(g.xp / expNeed(), 0, 1)) + "%";
