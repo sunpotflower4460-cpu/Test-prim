@@ -204,7 +204,7 @@
     game.rerolls = Math.min(3, game.rerolls + (game.stage > 0 ? 1 : 0));
     game.player.hp = Math.min(game.player.maxHp, game.player.hp + 24);
     // Introduce the first shadows within view, before the timer starts to ramp.
-    const starters = game.stage === 0 ? 3 : 4;
+    const starters = game.stage === 0 ? 2 : 3;
     for (let i = 0; i < starters; i++) {
       const angle = TWO * (i + .16) / starters;
       spawnEnemy("wisp", game.player.x + Math.cos(angle) * Math.min(W * .39, 215),
@@ -380,7 +380,7 @@
     if (rings.length > 30) rings.shift();
   }
   function spawnEnemy(type, x, y) {
-    const m = { wisp: [27, 86, 8, 18], runner: [19, 136, 8, 14], brute: [95, 49, 15, 25], archer: [50, 65, 10, 22], boss: [660, 56, 35, 24] }[type];
+    const m = { wisp: [22, 76, 8, 14], runner: [19, 136, 8, 14], brute: [95, 49, 15, 25], archer: [50, 65, 10, 22], boss: [660, 56, 35, 24] }[type];
     const scale = 1 + game.stage * .45 + Math.min(1.2, game.stageTime / 140);
     const e = {
       id: game.nextId++, type, x, y, hp: m[0] * scale, maxHp: m[0] * scale,
@@ -450,7 +450,7 @@
           neighbors.forEach(other => hurtEnemy(other, 8 + game.player.echo * 9, other.x, other.y, true));
         }
       }
-      const drop = e.type === "brute" ? 9 : e.type === "archer" ? 7 : 5;
+      const drop = e.type === "brute" ? 10 : e.type === "archer" ? 8 : 6;
       game.orbs.push({ x: e.x, y: e.y, value: drop, r: e.type === "brute" ? 6 : 4, phase: rand(0, TWO), age: 0 });
       if (Math.random() < .012 && game.player.hp < game.player.maxHp * .7) game.orbs.push({ x: e.x + 14, y: e.y, value: -20, r: 7, phase: 0, age: 0 });
     } else if (Math.random() < .25) burst(x, y, 3, "#c9ffef", .35);
@@ -458,8 +458,9 @@
   function hurtPlayer(dmg, x, y) {
     const p = game.player;
     if (p.invuln > 0 || p.dashTime > 0 || scene !== "playing") return;
-    p.hp = Math.max(0, p.hp - Math.max(1, Math.round(dmg * (1 - p.ward))));
-    p.invuln = .82; shake = Math.max(shake, 10);
+    const grace = game.stage === 0 && game.stageTime < 10 ? .6 : 1;
+    p.hp = Math.max(0, p.hp - Math.max(1, Math.round(dmg * grace * (1 - p.ward))));
+    p.invuln = game.stageTime < 10 ? 1.05 : .82; shake = Math.max(shake, 10);
     ring(p.x, p.y, 42, "#ff9aaa", .24);
     burst(p.x, p.y, 13, "#ffb6bc", .85);
     rise(p.x + 8, p.y - 26, "−" + Math.round(dmg), "#ffa9ba");
@@ -650,10 +651,10 @@
     if (!g.bossSpawned && g.stageTime < 60) {
       g.spawnCd -= dt;
       if (g.spawnCd <= 0) {
-        const interval = Math.max(.34, .83 - g.stage * .13 - g.stageTime * .0062);
+        const interval = Math.max(.48, .98 - g.stage * .12 - g.stageTime * .006);
         g.spawnCd += interval;
         spawnRandom();
-        if (g.stageTime > 23 && Math.random() < .28) spawnRandom();
+        if (g.stageTime > 23 && Math.random() < .18) spawnRandom();
       }
     }
     if (!g.bossSpawned && g.stageTime >= 60) spawnBoss();
