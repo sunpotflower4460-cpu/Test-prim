@@ -128,6 +128,9 @@
     if (type === "shoot") tone(rand(440, 550), .085, "sine", .009, 1.35);
     else if (type === "hit") tone(125, .16, "triangle", .035, .55);
     else if (type === "kill") tone(470, .18, "sine", .025, 1.5);
+    else if (type === "combo") [432, 648, 864].forEach((n, i) => tone(n, .22, "sine", .022, 1.03, i * .06));
+    else if (type === "wave") { tone(216, .55, "sine", .024, 1.4); tone(432, .7, "sine", .011, 1.03, .1); }
+    else if (type === "resonance") [432, 576, 648, 864].forEach((n, i) => tone(n, .65, "sine", .03, 1.02, i * .085));
     else if (type === "pick") tone(730, .11, "sine", .016, 1.27);
     else if (type === "dash") tone(240, .24, "triangle", .045, 2.1);
     else if (type === "boss") { tone(90, 1.2, "sawtooth", .045, .7); tone(360, 1.2, "sine", .03, .5, .2); }
@@ -138,15 +141,19 @@
     if (!game || !saved.music || !audio || audio.state !== "running") return;
     if (clock < musicAt) return;
     musicAt = clock + .42;
-    const roots = [174.61, 146.83, 196][game.stage];
+    // A=432 reference; each chapter is rooted in a different register.
+    const roots = [171.44, 144.16, 192.43][game.stage];
     const patterns = [[0, 7, 12, 16, 12, 7, 4, 7], [0, 3, 7, 12, 15, 12, 7, 3], [0, 4, 9, 12, 16, 12, 9, 4]];
     const semitone = patterns[game.stage][beat % 8];
     const frequency = roots * Math.pow(2, semitone / 12);
-    tone(frequency * 2, .45, "sine", .008);
+    tone(frequency * 2, .48, "sine", game.bossSpawned ? .010 : .0075);
+    if (beat % 4 === 2) tone(frequency, .85, "triangle", .004, .995);
     if (beat % 8 === 0) {
-      tone(roots, 2.9, "sine", .018);
-      tone(roots * 1.498, 2.8, "sine", .01);
+      tone(roots, 3.25, "sine", .016);
+      tone(roots * (game.stage === 1 ? 1.2 : 1.498), 2.8, "sine", .0085);
+      tone(roots / 2, 1.8, "triangle", .005);
     }
+    if (game.bossSpawned && beat % 4 === 0) tone(roots / 2, .37, "triangle", .013, .87);
     beat++;
   }
 
@@ -202,7 +209,7 @@
       enemies: [], shots: [], hostile: [], orbs: [], kills: 0, level: 1,
       xp: 0, totalXp: 0, bossSpawned: false, bossId: null,
       spawned: 0, spawnCd: .28, nextId: 1, hudCd: 0, settled: false,
-      rerolls: 2, previousOffers: [], score: 0, combo: 0, comboTimer: 0, chapterReward: 0, bossMinionCd: 9, waveMark: 0
+      rerolls: 2, previousOffers: [], score: 0, combo: 0, bestCombo: 0, comboTimer: 0, chapterReward: 0, bossMinionCd: 9, waveMark: 0
     };
     particles.length = 0; rings.length = 0; texts.length = 0;
     musicAt = clock; beat = 0;
@@ -211,6 +218,7 @@
   }
   function beginChapter() {
     const t = themes[game.stage];
+    beat = 0; musicAt = clock;
     game.stageTime = 0; game.spawnCd = .38; game.waveMark = 0; game.bossMinionCd = 9;
     game.combo = 0; game.comboTimer = 0; game.bossSpawned = false; game.bossId = null;
     game.enemies.length = 0; game.shots.length = 0; game.hostile.length = 0;
@@ -252,12 +260,25 @@
     saved.bestLevel = Math.max(saved.bestLevel || 1, game.level);
     persist();
   }
+  function runSignature() {
+    if (!game) return "";
+    const owned = game.player.perkLevels;
+    const dominant = perks.filter(item => owned[item.id]).sort((a, b) =>
+      owned[b.id] - owned[a.id]).slice(0, 3);
+    const awakened = resonances.filter(recipe => activeResonance(game.player, recipe.id));
+    const blessings = dominant.length ? dominant.map(item =>
+      item.icon + " " + item.name + " " + owned[item.id]).join(" / ") : "まだ名もない光";
+    return '<div class="run-signature"><span class="run-signature-label">YOUR CONSTELLATION</span>' +
+      '<strong>' + blessings + '</strong>' +
+      (awakened.length ? '<span class="run-resonances">✦ ' + awakened.map(recipe => recipe.name).join(" · ") + '</span>' : '') +
+      '<span class="run-streak">最長連鎖 ×' + game.bestCombo + '</span></div>';
+  }
   function gameOver() {
     if (!game || scene !== "playing") return;
     saveProgress();
     setScene("over");
     sound("hit");
-    overlayCard("YOUR LIGHT REMAINS", "星は、消えない。", "歩いてきた光は、きっと次の旅に残っている。", '<div class="stats"><span><strong>' + (game.stage + 1) + '</strong>到達した章</span><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span></div><button class="primary" id="retry">もう一度、旅へ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
+    overlayCard("YOUR LIGHT REMAINS", "星は、消えない。", "歩いてきた光は、きっと次の旅に残っている。", '<div class="stats"><span><strong>' + (game.stage + 1) + '</strong>到達した章</span><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span></div>' + runSignature() + '<button class="primary" id="retry">もう一度、旅へ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
     bindButton("retry", startRun); bindButton("quit", backHome);
   }
   function win() {
@@ -268,7 +289,7 @@
     setScene("won");
     ui.bossbar.classList.add("hidden");
     flash(.55); sound("win");
-    overlayCard("THE STARS REMEMBER YOU", "世界に、光が戻った。", "最後の星は、ずっとあなたの中にあった。<br>そして庭は、また花を咲かせる。", '<div class="special">✦</div><div class="stats"><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span><span><strong>' + Math.floor(game.time / 60) + ':' + String(Math.floor(game.time % 60)).padStart(2, "0") + '</strong>旅の時間</span></div><button class="primary" id="retry">新しい夜明けへ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
+    overlayCard("THE STARS REMEMBER YOU", "世界に、光が戻った。", "最後の星は、ずっとあなたの中にあった。<br>そして庭は、また花を咲かせる。", '<div class="special">✦</div><div class="stats"><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span><span><strong>' + Math.floor(game.time / 60) + ':' + String(Math.floor(game.time % 60)).padStart(2, "0") + '</strong>旅の時間</span></div>' + runSignature() + '<button class="primary" id="retry">新しい夜明けへ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
     bindButton("retry", startRun); bindButton("quit", backHome);
   }
   function chapterClear() {
@@ -335,6 +356,7 @@
     const unlocked = resonances.find(recipe => !before.includes(recipe.id) && activeResonance(p, recipe.id));
     setScene("playing");
     showToast(unlocked ? "✦ 共鳴・" + unlocked.name : item.name + "  " + (n + 1) + "/" + item.max);
+    if (unlocked) sound("resonance");
     haptic(20); updateHud();
     if (game.xp >= expNeed()) {
       game.xp -= expNeed(); game.level++; levelUp();
@@ -464,9 +486,10 @@
     if (e.hp <= 0) {
       game.kills += 1; game.score += e.score * 8;
       game.combo = game.comboTimer > 0 ? game.combo + 1 : 1;
+      game.bestCombo = Math.max(game.bestCombo, game.combo);
       game.comboTimer = 3.8;
       if (game.combo > 0 && game.combo % 8 === 0 && e.type !== "boss") {
-        game.xp += 5; game.totalXp += 5;
+        game.xp += 5; game.totalXp += 5; sound("combo");
         rise(e.x, e.y - 35, "✧ CHAIN " + game.combo, "#fce2a6");
         ring(e.x, e.y, 78, "#e8d8b2", .36);
       }
@@ -720,6 +743,7 @@
     } else if (g.stageTime >= (g.waveMark + 1) * 15 && g.stageTime < 59.5) {
       g.waveMark++;
       ring(p.x, p.y, 128, themes[g.stage].orb, .62);
+      sound("wave");
       rise(p.x, p.y - 60, ["", "✦ 光のさざ波", "✧ 影の群れ", "✦ 星の気配"][g.waveMark] || "✦ 影が近づく", "#f6e5bf");
       if (g.waveMark >= 2) spawnRandom();
     }
