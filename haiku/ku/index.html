@@ -1,0 +1,172 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#f1ebdf">
+  <meta name="description" content="句ゆき — 言の葉を集めて、旅をつづける。墨絵の道を歩き、八つの宿で句を詠む静かな旅の遊び。">
+  <title>句ゆき — 言の葉の旅 | Haiku 5.5</title>
+  <link rel="icon" href="../../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="ku.css">
+  <script src="words.js" defer></script>
+  <script src="sim.js" defer></script>
+  <script src="paint.js" defer></script>
+  <script src="scene.js" defer></script>
+  <script src="audio.js" defer></script>
+  <script src="game.js" defer></script>
+</head>
+<body>
+  <a class="back" href="../index.html">‹ Haiku 5.5</a>
+
+  <main id="app" data-screen="title">
+    <section id="title" class="screen" aria-labelledby="titleHeading">
+      <canvas id="titleStage" aria-hidden="true"></canvas>
+      <div class="title-panel">
+        <h1 id="titleHeading" class="title">句ゆき</h1>
+        <p class="subtitle">言の葉を集めて、旅をつづける</p>
+        <div class="prologue">
+          <p>春の終わり、旅の支度を終えた。</p>
+          <p>背には句帳、手には杖。</p>
+          <p>道ばたには言の葉がふわりと浮き、拾えば灯のように手の中で光る。</p>
+          <p>宿々で句を請われ、句を返し、北へ。季がめぐるたびに、句集は少しずつ厚くなる。</p>
+        </div>
+        <div class="title-actions">
+          <button id="btnNew" class="btn primary" type="button">旅立つ</button>
+          <button id="btnContinue" class="btn" type="button" hidden>続きから</button>
+          <button id="btnSound" class="btn ghost" type="button" aria-pressed="true">音：入</button>
+        </div>
+        <div id="confirmNew" class="confirm" hidden>
+          <p>はじめから旅をしますか。句集の記録は消えます。</p>
+          <div class="title-actions">
+            <button id="confirmYes" class="btn" type="button">はい</button>
+            <button id="confirmNo" class="btn ghost" type="button">やめる</button>
+          </div>
+        </div>
+        <p id="titleNote" class="note" role="status"></p>
+      </div>
+    </section>
+
+    <section id="journey" class="screen" hidden aria-label="旅">
+      <canvas id="stage" aria-hidden="true"></canvas>
+
+      <header class="hud">
+        <div class="hud-title">句ゆき</div>
+        <div class="hud-right">
+          <span id="seasonBadge" class="season-badge" aria-live="polite">春</span>
+          <span id="handCount" class="hand-count" aria-live="polite">言の葉 0</span>
+          <button id="hudJournal" class="hud-btn" type="button">句帳</button>
+          <button id="hudAnthology" class="hud-btn" type="button">句集</button>
+          <button id="hudSound" class="hud-btn icon" type="button" aria-label="音の切り替え" aria-pressed="true">♪</button>
+        </div>
+        <ol id="stationDots" class="stations" aria-label="宿の進み"></ol>
+      </header>
+
+      <button id="doorBtn" class="door-btn" type="button" hidden>宿に入る</button>
+
+      <section id="dialog" class="dialog" aria-live="polite" hidden>
+        <p id="dlgSpeaker" class="speaker"></p>
+        <p id="dlgText" class="line"></p>
+        <button id="dlgNext" class="dlg-next" type="button">続ける ▾</button>
+      </section>
+    </section>
+
+    <div id="journal" class="overlay" hidden>
+      <div class="sheet journal-sheet" role="dialog" aria-modal="true" aria-labelledby="journalTitle">
+        <header class="sheet-head">
+          <div class="head-text">
+            <p id="jKicker" class="kicker"></p>
+            <h2 id="journalTitle" class="sheet-title">句帳</h2>
+          </div>
+          <div class="theme" aria-label="題と季">
+            <span class="theme-label">題</span>
+            <span id="jTheme" class="theme-word"></span>
+            <span id="jSeason" class="theme-season"></span>
+          </div>
+          <button id="jClose" class="icon-btn" type="button" aria-label="閉じる">×</button>
+        </header>
+
+        <div class="page" id="jPage">
+          <div class="line-col" data-line="0">
+            <div class="slots" id="slots0" aria-label="上の句"></div>
+            <div class="line-meta"><span class="line-label">上の句</span><span id="count0" class="count">0/5</span></div>
+          </div>
+          <div class="line-col" data-line="1">
+            <div class="slots" id="slots1" aria-label="中の句"></div>
+            <div class="line-meta"><span class="line-label">中の句</span><span id="count1" class="count">0/7</span></div>
+          </div>
+          <div class="line-col" data-line="2">
+            <div class="slots" id="slots2" aria-label="下の句"></div>
+            <div class="line-meta"><span class="line-label">下の句</span><span id="count2" class="count">0/5</span></div>
+          </div>
+        </div>
+
+        <div class="side">
+          <p id="jStatus" class="status" role="status" aria-live="polite"></p>
+
+          <div class="tray-head"><span>手の言の葉</span><span class="tray-hint">タップで行へ、ドラッグでも</span></div>
+          <div id="hand" class="hand" role="list"></div>
+
+          <footer class="sheet-actions">
+            <button id="jHint" class="btn ghost" type="button">季語を示す</button>
+            <button id="jReset" class="btn ghost" type="button">やりなおす</button>
+            <button id="jSubmit" class="btn primary" type="button" disabled>句をよむ</button>
+          </footer>
+        </div>
+      </div>
+    </div>
+
+    <div id="verdict" class="overlay" hidden>
+      <div class="sheet verdict-sheet" role="dialog" aria-modal="true" aria-labelledby="vRank">
+        <div class="verdict-top">
+          <p id="vStation" class="kicker"></p>
+          <p id="vHostName" class="host-name"></p>
+          <p id="vSays" class="host-says"></p>
+        </div>
+        <div class="verdict-body">
+          <div id="vPoem" class="poem-v" aria-label="詠んだ句"></div>
+          <div class="stamp">
+            <canvas id="vSeal" width="84" height="84" aria-hidden="true"></canvas>
+            <p id="vRank" class="rank"></p>
+          </div>
+        </div>
+        <ul id="vNotes" class="notes"></ul>
+        <div class="verdict-actions">
+          <button id="vProceed" class="btn primary" type="button">宿を発つ</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="anthology" class="overlay" hidden>
+      <div class="sheet anth-sheet" role="dialog" aria-modal="true" aria-labelledby="anthTitle">
+        <header class="sheet-head">
+          <div class="head-text">
+            <p class="kicker">旅の記録</p>
+            <h2 id="anthTitle" class="sheet-title">句集</h2>
+          </div>
+          <button id="anthClose" class="icon-btn" type="button" aria-label="閉じる">×</button>
+        </header>
+        <div id="anthList" class="anth-list"></div>
+        <footer class="sheet-actions">
+          <button id="anthBack" class="btn ghost" type="button">旅にもどる</button>
+        </footer>
+      </div>
+    </div>
+
+    <div id="ending" class="overlay" hidden>
+      <div class="sheet ending-sheet" role="dialog" aria-modal="true" aria-labelledby="endTitle">
+        <p class="kicker">八つの宿を越えて</p>
+        <h2 id="endTitle" class="ending-title">句集が完成しました</h2>
+        <div class="credits">
+          <p>句ゆき — 言の葉の旅</p>
+          <p>作：Haiku 5.5</p>
+          <p>墨の絵も、音も、すべて道の上で生まれました。</p>
+        </div>
+        <div class="verdict-actions">
+          <button id="endAnth" class="btn primary" type="button">句集を見る</button>
+          <button id="endTitleBtn" class="btn ghost" type="button">タイトルへ</button>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>
