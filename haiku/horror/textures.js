@@ -529,6 +529,15 @@ export function createTextures() {
     ctx.fillStyle = g;
     ctx.fillRect(0, 0, w, h);
   });
+  // A warm round glow for lamps and embers: drawn as an additive sprite, not a real light.
+  T.glow = canvasTex(64, 64, (ctx, w, h) => {
+    const g = ctx.createRadialGradient(w / 2, h / 2, 0, w / 2, h / 2, w / 2);
+    g.addColorStop(0, "rgba(255,236,206,1)");
+    g.addColorStop(0.35, "rgba(255,222,176,0.45)");
+    g.addColorStop(1, "rgba(255,200,140,0)");
+    ctx.fillStyle = g;
+    ctx.fillRect(0, 0, w, h);
+  });
   T.mist = canvasTex(128, 128, (ctx, w, h) => {
     const r = rng(19);
     for (let i = 0; i < 26; i++) {

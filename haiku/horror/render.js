@@ -196,35 +196,39 @@ export function createRender(canvas, world) {
   muzzle.position.set(0.2, -0.1, -0.7);
 
   // Warm sources that give the dark rooms their shapes: the lantern, the hibachi ember,
-  // the candles on the altar, the incense burner. No shadows, so they stay cheap.
-  const fillLights = [];
-  const warm = (color, intensity, distance, x, y, z) => {
-    const l = new THREE.PointLight(color, intensity, distance, 2);
-    l.position.set(x, y, z);
-    scene.add(l);
-    fillLights.push(l);
-    return l;
+  // the candles on the altar, the incense burner, and the moon through the shoji. They are
+  // soft additive glows, not real lights, so each frame stays as cheap as before.
+  const glows = [];
+  const glowAt = (color, x, y, z, size, opacity) => {
+    const m = new THREE.SpriteMaterial({ map: T.glow, color, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, opacity: 0 });
+    const sprite = new THREE.Sprite(m);
+    sprite.position.set(x, y, z);
+    sprite.scale.set(size, size, 1);
+    scene.add(sprite);
+    const g = { sprite, base: opacity };
+    glows.push(g);
+    return g;
   };
-  const props0 = world.props;
-  const byType = type => props0.find(p => p.type === type);
+  const byType = type => world.props.find(p => p.type === type);
   const andon = byType("andon");
   const hibachi = byType("hibachi");
   const butsudan = byType("butsudan");
   const tsukue = byType("tsukue");
-  const lampLight = andon ? warm(0xffb46a, 0, 5.5, andon.x, 1.0, andon.y) : null;
-  const hibachiLight = hibachi ? warm(0xff7a33, 0, 3.2, hibachi.x, 0.7, hibachi.y) : null;
+  const lampGlow = andon ? glowAt(0xffb46a, andon.x, 0.95, andon.y, 1.4, 0.5) : null;
+  const hibachiGlow = hibachi ? glowAt(0xff7a33, hibachi.x, 0.5, hibachi.y, 0.8, 0.5) : null;
   // Candles stand inside the shrine, a little in front of the frame.
-  const candleLight = butsudan ? warm(0xffc070, 0, 3.0, butsudan.x - 0.2, 1.1, butsudan.y) : null;
-  const burnerLight = tsukue ? warm(0xffa860, 0, 2.2, tsukue.x, 0.95, tsukue.y) : null;
-  // Moonlight through the shoji: a cool glow on the room side of each veranda door.
-  const shojiLights = [2.5, 6.5, 11.5].map(x => warm(0x9fb4ff, 0, 4.5, x, 1.9, 6.6));
-  const baseFill = {
-    lamp: 1.1, hibachi: 0.55, candle: 0.45, burner: 0.22, shoji: 0.7
-  };
+  const candleGlow = butsudan ? glowAt(0xffc070, butsudan.x - 0.22, 1.05, butsudan.y, 0.7, 0.45) : null;
+  const burnerGlow = tsukue ? glowAt(0xffa860, tsukue.x, 1.0, tsukue.y, 0.55, 0.35) : null;
+  // Moonlight through the shoji: a cool haze on the room side of each veranda door.
+  const shojiGlows = [2.5, 6.5, 11.5].map(x => glowAt(0x9fb4ff, x, 1.6, 6.45, 2.4, 0.14));
 
   // Lightning from the garden side: a soft fill for the whole house, and a sun with
   // shadows that falls on the garden for a moment, so the well and the trees throw shade.
-  const flashFill = warm(0xdfe8ff, 0, 20, 7.5, 2.3, 8);
+  // Both exist only during a flash, so the rest of the time they cost nothing.
+  const flashFill = new THREE.PointLight(0xdfe8ff, 0, 20, 2);
+  flashFill.position.set(7.5, 2.3, 8);
+  flashFill.visible = false;
+  scene.add(flashFill);
   const flashSun = new THREE.DirectionalLight(0xdfe8ff, 0);
   flashSun.castShadow = true;
   flashSun.shadow.mapSize.set(touch ? 512 : 1024, touch ? 512 : 1024);
@@ -236,9 +240,10 @@ export function createRender(canvas, world) {
   flashSun.shadow.camera.far = 50;
   flashSun.shadow.bias = -0.0008;
   flashSun.shadow.normalBias = 0.02;
-  scene.add(flashSun, flashSun.target);
   flashSun.position.set(8, 16, 2);
   flashSun.target.position.set(7, 0, 4);
+  flashSun.visible = false;
+  scene.add(flashSun, flashSun.target);
 
   // Beam: a soft cone along the torch axis. The edge falls off as the surface turns away
   // from the eye, and the light falls off along the length, so it has no hard rim.
@@ -498,17 +503,22 @@ export function createRender(canvas, world) {
     moon.intensity = base.moon * (1 + 3.2 * f);
     hemi.intensity = base.hemi * (1 + 2.4 * f + 1.1 * dawn);
     ambient.intensity = base.amb * (1 + 2 * f);
+    // The lightning fill and sun are only in the scene while the flash lasts.
+    const flashing = f > 0.02;
+    flashFill.visible = flashing;
+    flashSun.visible = flashing;
     flashFill.intensity = 7 * f;
     flashSun.intensity = 2.4 * f;
     st.flash = Math.max(0, st.flash - dt * 4.2);
     // The warm sources flicker a little, as a real flame does.
     const t = st.demoT;
     const fl = (k2, rate) => 0.92 + 0.08 * Math.sin(t * rate) + 0.04 * Math.sin(t * rate * 2.7 + k2);
-    if (lampLight) lampLight.intensity = baseFill.lamp * fl(1, 6.1) * (on ? 1 : 0.85);
-    if (hibachiLight) hibachiLight.intensity = baseFill.hibachi * fl(2, 8.3);
-    if (candleLight) candleLight.intensity = baseFill.candle * fl(3, 5.4);
-    if (burnerLight) burnerLight.intensity = baseFill.burner * fl(4, 3.1) * (st.smokeT > 0 ? 1.4 : 1);
-    for (const l of shojiLights) l.intensity = baseFill.shoji * (1 + 0.6 * dawn);
+    const setGlow = (g, k) => { if (g) g.sprite.material.opacity = g.base * k; };
+    setGlow(lampGlow, fl(1, 6.1) * (on ? 1 : 0.8));
+    setGlow(hibachiGlow, fl(2, 8.3));
+    setGlow(candleGlow, fl(3, 5.4));
+    setGlow(burnerGlow, fl(4, 3.1) * (st.smokeT > 0 ? 1.5 : 1));
+    for (const g of shojiGlows) setGlow(g, 1 + 0.6 * dawn);
     // The eaves water runs down.
     T.water.offset.y = -t * 0.9;
   }
