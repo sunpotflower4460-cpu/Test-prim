@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#151c29">
+<meta name="description" content="SETSUNA — 刹那の剣。攻撃を見切り、受け流し、斬り返す。六つの門を巡る剣戟アクション。">
+<title>SETSUNA — 刹那の剣 | GPT6 CHAT</title>
+<link rel="stylesheet" href="setsuna.css">
+</head>
+<body>
+<div class="app">
+<header class="header">
+<a class="back" href="index.html" aria-label="GPT6 CHAT の作品棚に戻る">← <span>THREE WORLDS</span></a>
+<a class="brand" href="index.html"><span>✧</span> GPT6 CHAT <small>/ WORK 03</small></a>
+<div class="settings">
+<button type="button" id="mute" aria-label="音を消す" aria-pressed="false">♫</button>
+<button type="button" id="motion" aria-label="動きを抑える" aria-pressed="false">◌</button>
+</div>
+</header>
+<main>
+<section class="intro">
+<div><span class="eyebrow">AN ART OF THE LAST SECOND</span><h1>SETSUNA <span>刹那</span></h1><p class="sub">刹那の剣 <b>—</b> 六つの門</p></div>
+<p class="poem">ひと呼吸の静寂。<br>その一瞬が、勝負を変える。</p>
+</section>
+<section class="play-area">
+<div class="panel">
+<div class="panel-top">
+<div class="gate"><span id="gateNumber">GATE 01 / 06</span><strong id="gateName">霞の門</strong></div>
+<div class="run-stats"><span id="killCount">浄化 0</span><span id="combo">連斬 × 0</span></div>
+</div>
+<div class="meters">
+<div class="meter-stack"><div class="meter-label"><span>生命 · LIFE</span><span id="hpText">100 / 100</span></div><div class="track hp"><div id="hpBar"></div></div></div>
+<div class="meter-stack"><div class="meter-label"><span>残響 · RESONANCE</span><span id="energyText">0 / 100</span></div><div class="track power"><div id="energyBar"></div></div></div>
+</div>
+<div class="frame">
+<canvas id="arena" width="480" height="720" tabindex="0" aria-label="剣戟アクション。WASDまたは方向キーで移動。Jキーで斬る、Kキーで受け流す、Lキーで回避。スペースで奥義。"></canvas>
+<div class="frame-top"><span id="waveLabel">第一陣</span><span id="hintLabel">敵の攻撃を見切れ</span></div>
+<div id="callout" aria-live="polite"></div>
+<div class="controls">
+<div id="pad" class="pad" role="group" aria-label="移動スティック"><div class="pad-ring"></div><div id="knob" class="pad-knob"></div></div>
+<div class="buttons">
+<button type="button" class="action attack" id="attack" aria-label="斬撃"><strong>斬</strong><span>ATTACK</span></button>
+<button type="button" class="action parry" id="parry" aria-label="受け流し"><strong>受</strong><span>PARRY</span></button>
+<button type="button" class="action dash" id="dash" aria-label="回避"><strong>避</strong><span id="dashLabel">DASH</span></button>
+<button type="button" class="action skill" id="skill" aria-label="奥義"><strong>閃</strong><span>FINISH</span></button>
+</div>
+</div>
+</div>
+<div class="game-footer"><button type="button" id="pauseBtn">Ⅱ　休息</button><span>斬るだけでは届かない。受け流す瞬間を探そう。</span><button type="button" id="helpBtn">？　操作</button></div>
+</div>
+<aside class="aside">
+<div class="insignia" aria-hidden="true"><span>間</span><i></i></div>
+<span class="section-label">THE ART OF TIMING</span>
+<h2>一瞬を、<br>自分のものに。</h2>
+<p>敵が赤く光ったら、攻撃の前触れ。<br>ぎりぎりで受け流せば、時がゆっくりになり、反撃の隙が生まれる。</p>
+<div class="lessons">
+<div><em>壱</em><strong>斬る</strong><small>前方の敵を三連撃で攻める。</small></div>
+<div><em>弐</em><strong>受け流す</strong><small>攻撃直前に押せば、敵を崩す。</small></div>
+<div><em>参</em><strong>見切る</strong><small>回避で攻撃を抜け、位置を取る。</small></div>
+<div><em>肆</em><strong>解き放つ</strong><small>残響を満たし、奥義で一掃する。</small></div>
+</div>
+<p class="keys">KEYBOARD<br>WASD / ←↑→↓ 移動<br>J 斬撃 · K 受流 · L / SHIFT 回避<br>SPACE 奥義 · P / ESC 休息</p>
+<p class="signature">「勝つためではなく、守るために。」</p>
+</aside>
+</section>
+</main>
+<footer>ONE BREATH · ONE BLADE · ONE MOMENT · 2026</footer>
+</div>
+<div id="overlay" class="overlay"><div class="dialog" id="dialog"></div></div>
+<script src="setsuna.js" defer></script>
+</body>
+</html>
