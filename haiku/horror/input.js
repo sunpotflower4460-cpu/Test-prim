@@ -16,6 +16,7 @@ export function createInput(opts) {
   let touchRun = false;
   let lockFailed = false;
   let dragging = false;
+  let expectUnlock = false;
   let stickId = null;
   let stickOx = 0;
   let stickOy = 0;
@@ -83,7 +84,10 @@ export function createInput(opts) {
   window.addEventListener("mouseup", () => { dragging = false; });
   document.addEventListener("pointerlockerror", () => { lockFailed = true; });
   document.addEventListener("pointerlockchange", () => {
-    if (!locked() && isPlaying() && opts.onLockLost) opts.onLockLost();
+    // A release we asked for is not the player leaving the game.
+    const asked = expectUnlock;
+    expectUnlock = false;
+    if (!locked() && !asked && isPlaying() && opts.onLockLost) opts.onLockLost();
   });
   window.addEventListener("mousemove", e => {
     if (!isPlaying()) return;
@@ -212,7 +216,10 @@ export function createInput(opts) {
       }
     },
     unlock() {
-      if (locked()) document.exitPointerLock();
+      if (locked()) {
+        expectUnlock = true;
+        document.exitPointerLock();
+      }
       dragging = false;
     },
     isLocked: locked,

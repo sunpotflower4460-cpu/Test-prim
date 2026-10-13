@@ -502,7 +502,9 @@ h1 {
 .choice-box p {
   margin: 0 0 12px;
   font-size: 17px;
+  line-height: 1.7;
   letter-spacing: 0.08em;
+  text-wrap: balance;
 }
 .choice-btns {
   display: flex;
@@ -555,6 +557,8 @@ h1 {
 /* ---------- size classes ---------- */
 
 @media (pointer: coarse) and (orientation: portrait) {
+  .choice { padding-bottom: calc(246px + var(--safe-b)); }
+  .choice-box { background: rgba(12, 6, 8, 0.96); }
   .hud-br {
     top: calc(120px + var(--safe-t));
     left: calc(14px + var(--safe-l));

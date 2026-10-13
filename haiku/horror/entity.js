@@ -13,16 +13,14 @@ export function createEntity(M) {
   const body = new THREE.Group();
   root.add(body);
 
-  // Hem and skirt: wet cloth falling to the ground.
-  const skirt = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.23, 0.92, 14, 1, true), M.cloth);
-  skirt.position.y = 0.46;
-  skirt.castShadow = true;
-  body.add(skirt);
-
-  const torso = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.78, 12), M.cloth);
-  torso.position.y = 1.27;
-  torso.castShadow = true;
-  body.add(torso);
+  // Yukata: one lathe profile, from a narrow hem up to the shoulders and neck.
+  const profile = [
+    [0.0, 0.0], [0.19, 0.0], [0.19, 0.04], [0.16, 0.34], [0.13, 0.7], [0.1, 0.95],
+    [0.11, 1.18], [0.15, 1.4], [0.16, 1.52], [0.12, 1.63], [0.06, 1.7], [0.0, 1.72]
+  ].map(([r, y]) => new THREE.Vector2(r, y));
+  const yukata = new THREE.Mesh(new THREE.LatheGeometry(profile, 16), M.cloth);
+  yukata.castShadow = true;
+  body.add(yukata);
 
   const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.042, 0.05, 0.16, 8), M.skin);
   neck.position.y = 1.72;
@@ -46,8 +44,10 @@ export function createEntity(M) {
   back.castShadow = true;
   head.add(back);
   // Veil over the face, and loose strands in front.
-  const veil = new THREE.Mesh(new THREE.PlaneGeometry(0.2, 0.46), M.hair);
-  veil.position.set(0, -0.1, 0.104);
+  const veil = new THREE.Mesh(new THREE.SphereGeometry(0.117, 14, 10), M.hair);
+  veil.scale.set(1.0, 1.25, 0.95);
+  veil.position.set(0, -0.06, 0.02);
+  veil.castShadow = true;
   head.add(veil);
   for (let i = 0; i < 16; i++) {
     const a = strandFrom(i * 3 + 1);

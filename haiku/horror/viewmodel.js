@@ -33,14 +33,13 @@ export function createViewModel(M, camera) {
   const pivot = new THREE.Group();
   pivot.position.set(0, 0.03, -0.11);
   root.add(pivot);
-  const barrels = [];
+  const shellSlots = [];
   for (const sx of [-0.018, 0.018]) {
     const b = new THREE.Mesh(new THREE.CylinderGeometry(0.0165, 0.0165, 0.62, 12), M.gunMetal);
     b.rotation.x = Math.PI / 2;
     b.position.set(sx, 0, -0.31);
     b.castShadow = true;
     pivot.add(b);
-    barrels.push(b);
     // Shell visible in the breech when that barrel is loaded.
     const shell = new THREE.Group();
     shell.position.set(sx, 0, -0.03);
@@ -53,9 +52,8 @@ export function createViewModel(M, camera) {
     shell.add(hull, cap);
     shell.visible = false;
     pivot.add(shell);
-    barrels.push(shell);
+    shellSlots.push(shell);
   }
-  const shellSlots = [barrels[1], barrels[3]];
   // Rib along the top of the barrels, and the forend under them.
   add(new THREE.BoxGeometry(0.012, 0.005, 0.62), M.gunMetal, 0, 0.02, -0.31, pivot);
   add(new THREE.BoxGeometry(0.05, 0.04, 0.22), M.gunWood, 0, -0.04, -0.23, pivot);

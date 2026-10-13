@@ -232,8 +232,6 @@ export function buildProp(type, dims, M) {
       const strip = new THREE.Mesh(new THREE.PlaneGeometry(0.035, 0.22), M.strip);
       strip.position.set(0, -0.52, 0.001);
       hang.add(strip);
-      const rim = cyl(hang, 0.07, 0.07, 0.01, 16, M.metal, 0, -0.35, 0, false);
-      void rim;
       extra.bell = hang;
       break;
     }

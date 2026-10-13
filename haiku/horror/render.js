@@ -104,7 +104,6 @@ function buildMaterials(T) {
   M.flashTex = T.flash;
   M.smokeTex = T.smoke;
   M.scrollTex = T.scroll;
-  M.shojiCore = null;
   M.figureTex = T.figure;
   M.beamTex = T.beam;
   M.moteTex = T.mote;
@@ -311,7 +310,6 @@ export function createRender(canvas, world) {
     burnerWorld: null,
     demoT: 0,
     outdoors: false,
-    lastRoom: null
   };
   if (world.well) {
     const b = propObjs.find(o => o.prop.type === "tsukue");
@@ -373,16 +371,20 @@ export function createRender(canvas, world) {
   }
 
   function syncLight(state, dt) {
+    // After the lid closes, the dark thins toward dawn.
+    const dawn = state.seal.lid ? Math.min(1, state.seal.dawnT / 7) : 0;
+    scene.fog.density = 0.032 - 0.02 * dawn;
     const on = state.light;
     const k = on ? state.flicker * (0.55 + 0.45 * state.charge) : 0;
-    torch.intensity = 60 * k;
+    torch.intensity = 36 * k;
     beam.material.opacity = 0.6 * k;
     motes.material.opacity = on ? 0.55 * k : 0;
+    motes.rotation.z = Math.sin(st.demoT * 0.3) * 0.08;
     muzzle.intensity = Math.max(0, muzzle.intensity - dt * 280);
     // Lightning: a brief lift of the moon and fill, scaled down for reduced motion.
     const f = st.flash * (reduced ? 0.35 : 1);
     moon.intensity = base.moon * (1 + 3.2 * f);
-    hemi.intensity = base.hemi * (1 + 2.4 * f);
+    hemi.intensity = base.hemi * (1 + 2.4 * f + 1.1 * dawn);
     ambient.intensity = base.amb * (1 + 2 * f);
     st.flash = Math.max(0, st.flash - dt * 5);
   }
@@ -400,7 +402,7 @@ export function createRender(canvas, world) {
     const bob = p.moving ? Math.sin(st.bobPhase) * (run ? 0.045 : 0.028) : 0;
     const shake = st.shake > 0 ? (Math.random() - 0.5) * 0.08 * st.shake * (reduced ? 0.3 : 1) : 0;
     camera.position.set(p.x + shake, 1.55 + bob, p.y + shake * 0.5);
-    camera.rotation.set((view.pitch || 0) + st.recoil * 0.9, p.yaw, Math.sin(st.bobPhase) * (p.moving ? 0.004 : 0));
+    camera.rotation.set((view.pitch || 0) + st.recoil * (reduced ? 0.35 : 0.9), p.yaw, Math.sin(st.bobPhase) * (p.moving ? 0.004 : 0));
     st.recoil = Math.max(0, st.recoil - dt * 6);
     st.shake = Math.max(0, st.shake - dt * 3);
   }

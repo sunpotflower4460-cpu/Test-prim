@@ -21,6 +21,7 @@ export function createUI(handlers) {
     diaryBody: $("diaryBody"),
     diaryClose: $("diaryClose"),
     choice: $("choice"),
+    choiceText: $("choiceText"),
     btnAnswer: $("btnAnswer"),
     btnSilence: $("btnSilence"),
     choiceBar: $("choiceBar"),
@@ -129,7 +130,8 @@ export function createUI(handlers) {
     el.diary.hidden = true;
   }
 
-  function showChoice(seconds) {
+  function showChoice(seconds, text) {
+    el.choiceText.textContent = text || "返事を、しますか。";
     el.choice.hidden = false;
     el.choiceBar.style.animation = "none";
     void el.choiceBar.offsetWidth;
@@ -286,8 +288,8 @@ export function createUI(handlers) {
   }
   sizeGlass();
   window.addEventListener("resize", sizeGlass);
-  for (let i = 0; i < 46; i++) {
-    drops.push({ x: grand() * window.innerWidth, y: grand() * window.innerHeight, r: 2 + grand() * 5, v: 8 + grand() * 26, len: 0 });
+  for (let i = 0; i < 70; i++) {
+    drops.push({ x: grand() * window.innerWidth, y: grand() * window.innerHeight, r: 1 + grand() * 2.6, v: 4 + grand() * 12, len: 0 });
   }
 
   function updateGlass(dt, active) {
@@ -297,30 +299,31 @@ export function createUI(handlers) {
     const h = window.innerHeight;
     glassCtx.clearRect(0, 0, w, h);
     for (const d of drops) {
-      if (grand() < 0.004) {
+      if (grand() < 0.003) {
         d.x = grand() * w;
         d.y = -10;
-        d.r = 2 + grand() * 5;
-        d.v = 8 + grand() * 26;
+        d.r = 1 + grand() * 2.6;
+        d.v = 4 + grand() * 12;
         d.len = 0;
       }
-      d.v += dt * 2;
+      d.v += dt * 1.5;
       d.len += d.v * dt * 0.6;
       d.y += d.v * dt * 0.6;
       const r = d.r;
-      glassCtx.fillStyle = "rgba(190,205,230,0.10)";
+      // A bead of water with a thin trail behind it.
+      glassCtx.fillStyle = "rgba(200,214,238,0.07)";
       glassCtx.beginPath();
-      glassCtx.ellipse(d.x, d.y, r * 0.8, r, 0, 0, Math.PI * 2);
+      glassCtx.ellipse(d.x, d.y, r * 0.7, r, 0, 0, Math.PI * 2);
       glassCtx.fill();
-      glassCtx.fillStyle = "rgba(255,255,255,0.22)";
+      glassCtx.fillStyle = "rgba(255,255,255,0.16)";
       glassCtx.beginPath();
-      glassCtx.ellipse(d.x - r * 0.3, d.y - r * 0.35, r * 0.25, r * 0.3, 0, 0, Math.PI * 2);
+      glassCtx.ellipse(d.x - r * 0.25, d.y - r * 0.35, r * 0.2, r * 0.28, 0, 0, Math.PI * 2);
       glassCtx.fill();
-      if (d.len > 6) {
-        glassCtx.strokeStyle = "rgba(180,196,224,0.08)";
-        glassCtx.lineWidth = r * 0.5;
+      if (d.len > 8) {
+        glassCtx.strokeStyle = "rgba(180,196,224,0.07)";
+        glassCtx.lineWidth = Math.max(0.6, r * 0.45);
         glassCtx.beginPath();
-        glassCtx.moveTo(d.x, d.y - d.len);
+        glassCtx.moveTo(d.x, d.y - Math.min(d.len, 60));
         glassCtx.lineTo(d.x, d.y - r);
         glassCtx.stroke();
       }
@@ -346,9 +349,6 @@ export function createUI(handlers) {
       el.stick.style.left = s.ax + "px";
       el.stick.style.top = s.ay + "px";
       el.stickKnob.style.transform = `translate(${s.kx}px, ${s.ky}px)`;
-    },
-    setLockHintVisible(on) {
-      el.lockHint.hidden = !on;
     },
     resetShown() {
       shown = { objective: null, diary: null, shells: null, reserve: null, battery: null, light: null, room: null, prompt: null, batteryCount: null };

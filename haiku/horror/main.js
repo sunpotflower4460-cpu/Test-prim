@@ -46,7 +46,6 @@ let pendingActions = [];
 let pendingDiary = null;
 let pitchView = 0;
 let last = performance.now();
-let rendered = null;
 
 const canvas = document.getElementById("view");
 const render = createRender(canvas, world);
@@ -55,8 +54,6 @@ const ui = createUI({
   roomLabel: r => (Levels.LEVEL.rooms[r] ? Levels.LEVEL.rooms[r].label : ""),
   showLockHint: () => mode === "play" && !touchDevice
 });
-const reduced = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-void reduced;
 
 const input = createInput({
   canvas,
@@ -70,10 +67,6 @@ const input = createInput({
 
 render.setExposure(settings.gamma);
 audio.setEnabled(settings.sound);
-
-function setMode(next) {
-  mode = next;
-}
 
 function clamp01(v) {
   return v < 0 ? 0 : v > 1 ? 1 : v;
@@ -127,7 +120,6 @@ function begin() {
   ui.resetShown();
   input.clear();
   input.lock();
-  rendered = null;
 }
 
 function pause() {
@@ -222,8 +214,10 @@ function handleEvents(events) {
         ui.say(Story.LINES[e.key], 5200);
         break;
       case "call":
-        ui.say(Story.LINES.call, 5600);
-        ui.showChoice(6);
+        // Pointer lock would send every click to the canvas, so free the mouse for the choice.
+        input.unlock();
+        ui.clearSubs();
+        ui.showChoice(6, Story.LINES.call);
         audio.voice();
         break;
       case "silence":
@@ -273,8 +267,7 @@ function handleEvents(events) {
         audio.freeze();
         break;
       case "scream":
-      case "stun":
-        if (e.type === "scream") audio.scream();
+        audio.scream();
         break;
       case "grab":
         onGrab();
@@ -305,8 +298,6 @@ function handleEvents(events) {
         else if (e.kind === "rustle") audio.paper();
         else if (e.kind === "silhouette") audio.door(true);
         else if (e.kind === "chime-ping") audio.chimePing();
-        break;
-      case "narr-line":
         break;
       default:
         break;
@@ -396,7 +387,6 @@ function frame(now) {
   if (ev.length) handleEvents(ev);
 
   render.update(mode === "title" || !state ? null : state, dt, now / 1000, { pitch: pitchView });
-  rendered = now;
 
   if (state && (mode === "play" || mode === "pause" || mode === "diary" || mode === "ending")) {
     const info = humInfo(state);
@@ -405,6 +395,7 @@ function frame(now) {
     const r = state.player.room;
     info.clockOn = r === "ima" || r === "hall" || r === "zashiki";
     info.dt = dt;
+    info.breath = Math.max(0, 1 - state.player.stamina) * 0.9 + (state.player.running ? 0.35 : 0);
     audio.update(dt, info);
   }
   if (state && mode === "play") {
@@ -449,7 +440,7 @@ window.nakiIdoDebug = {
     state.player.x = x;
     state.player.y = y;
     if (typeof yaw === "number") state.player.yaw = yaw;
-    state.player.room = Sim.roomAt(world, x, y);
+    // The sim notices the room change on its next step, so entering the veranda still wakes her.
     return true;
   }
 };

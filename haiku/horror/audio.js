@@ -23,6 +23,7 @@ export function createAudio() {
   let clockSec = -1;
   let melodyIdx = 0;
   let melodyT = 0;
+  let breathT = 1;
   let rnd = 0.37;
 
   function rand() {
@@ -247,6 +248,18 @@ export function createAudio() {
     }
     n.humG.gain.setTargetAtTime(info.humVol || 0, t, 0.15);
     n.pan.pan.setTargetAtTime(info.humPan || 0, t, 0.1);
+    // Breathing: heavier and quicker as breath runs short.
+    const br = info.breath || 0;
+    if (br > 0.02) {
+      breathT -= dt;
+      if (breathT <= 0 && enabled) {
+        breathT = 2.6 - 1.7 * br;
+        burst(t, { filter: "bandpass", freq: 1000 + 300 * br, q: 0.7, peak: 0.03 + 0.1 * br, attack: 0.16, decay: 0.45 });
+        burst(t + 0.55, { filter: "bandpass", freq: 760, q: 0.8, peak: 0.02 + 0.05 * br, attack: 0.12, decay: 0.4 });
+      }
+    } else {
+      breathT = 1;
+    }
     // Heartbeat: rate and loudness follow fear.
     heartT -= dt;
     if (heartT <= 0) {
@@ -584,8 +597,5 @@ export function createAudio() {
     msg,
     flash,
     voice,
-    get ready() {
-      return !!(ctx && ctx.state === "running");
-    }
   };
 }
