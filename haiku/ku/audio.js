@@ -140,7 +140,7 @@
     return true;
   }
 
-  // Koto: a triangle with a quick decay and a quiet ringing partial.
+  // Koto: a soft triangle, low-passed so the string never sounds sharp, with a quiet ringing partial.
   function pluck(index, octave) {
     if (!ensure() || muted) return;
     const base = SCALE[((index % 5) + 5) % 5] * Math.pow(2, octave || 0);
@@ -151,45 +151,71 @@
     const ring = ctx.createOscillator();
     ring.type = "sine";
     ring.frequency.value = base * 2.005;
+    const warm = ctx.createBiquadFilter();
+    warm.type = "lowpass";
+    warm.frequency.value = Math.min(2400, base * 7);
+    warm.Q.value = 0.4;
     const bodyGain = ctx.createGain();
     const ringGain = ctx.createGain();
-    env(bodyGain, 0.22, 0.004, 1.4, t);
-    env(ringGain, 0.05, 0.004, 2.6, t);
+    env(bodyGain, 0.19, 0.008, 1.4, t);
+    env(ringGain, 0.035, 0.008, 2.4, t);
     body.connect(bodyGain);
+    bodyGain.connect(warm);
+    warm.connect(master);
     ring.connect(ringGain);
-    bodyGain.connect(master);
     ringGain.connect(master);
     body.start(t);
     ring.start(t);
     body.stop(t + 1.8);
-    ring.stop(t + 2.8);
+    ring.stop(t + 2.6);
   }
 
-  // The 印 stamp: a low sweep and a short grit of noise.
+  // A short burst of noise through a high-pass: the tap of wood or rubber on paper.
+  function tick(at, peak, cutoff, release) {
+    const src = noiseSource();
+    const hp = ctx.createBiquadFilter();
+    hp.type = "highpass";
+    hp.frequency.value = cutoff;
+    const g = ctx.createGain();
+    env(g, peak, 0.001, release, at);
+    src.connect(hp);
+    hp.connect(g);
+    g.connect(master);
+    src.start(at);
+    src.stop(at + release + 0.05);
+  }
+
+  // The 印 stamp: a sharp press onto washi, a dull thud under it, the paper giving
+  // a little, and a light click as the stamp lifts away.
   function thunk() {
     if (!ensure() || muted) return;
     const t = ctx.currentTime;
+    tick(t, 0.5, 2200, 0.02);
     const osc = ctx.createOscillator();
     osc.type = "sine";
-    osc.frequency.setValueAtTime(120, t);
-    osc.frequency.exponentialRampToValueAtTime(42, t + 0.35);
+    osc.frequency.setValueAtTime(190, t);
+    osc.frequency.exponentialRampToValueAtTime(70, t + 0.09);
     const g = ctx.createGain();
-    env(g, 0.5, 0.005, 0.5, t);
+    env(g, 0.42, 0.002, 0.13, t);
     osc.connect(g);
     g.connect(master);
     osc.start(t);
-    osc.stop(t + 0.9);
-    const src = noiseSource();
-    const low = ctx.createBiquadFilter();
-    low.type = "lowpass";
-    low.frequency.value = 600;
-    const ng = ctx.createGain();
-    env(ng, 0.25, 0.002, 0.12, t);
-    src.connect(low);
-    low.connect(ng);
-    ng.connect(master);
-    src.start(t);
-    src.stop(t + 0.3);
+    osc.stop(t + 0.26);
+    const rs = noiseSource();
+    const band = ctx.createBiquadFilter();
+    band.type = "bandpass";
+    band.frequency.value = 900;
+    band.Q.value = 0.9;
+    const rg = ctx.createGain();
+    rg.gain.setValueAtTime(0.0001, t);
+    rg.gain.exponentialRampToValueAtTime(0.07, t + 0.02);
+    rg.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
+    rs.connect(band);
+    band.connect(rg);
+    rg.connect(master);
+    rs.start(t);
+    rs.stop(t + 0.25);
+    tick(t + 0.14, 0.09, 3500, 0.03);
   }
 
   // Paper rustle when the 句帳 opens.

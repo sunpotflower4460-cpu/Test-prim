@@ -13,6 +13,8 @@
 
   const KEY = "ku-journey-v1";
   const SOUND_KEY = "ku-sound";
+  const TIP_KEY = "ku-tip-v1";
+  const KANJI = ["〇", "一", "二", "三", "四", "五", "六", "七"];
   const HAND_CAP = 36;
   const WALK_SPEED = 170;
   const LINE_NAMES = ["上の句", "中の句", "下の句"];
@@ -51,6 +53,7 @@
     mistTarget: 1,
     rainOn: false,
     handNoticed: false,
+    tipSeen: false,
     dirty: false,
     loaded: false,
     sound: true,
@@ -59,7 +62,9 @@
     time: 0,
     dragging: null,
     ignoreClick: false,
-    lastSaved: 0
+    lastSaved: 0,
+    goalText: "",
+    goalPct: ""
   };
 
   let journeyScene = null;
@@ -382,6 +387,7 @@
       persist();
     }
     updateDoor();
+    updateGoal();
   }
 
   function updateDoor() {
@@ -394,17 +400,71 @@
 
   // ---- journal (句帳) -----------------------------------------------------------
 
+  // The first-composition tip is shown once per viewer, on the very first 句帳.
+  function tipWasSeen() {
+    if (game.tipSeen) return true;
+    try {
+      return window.localStorage.getItem(TIP_KEY) === "seen";
+    } catch (error) {
+      return false;
+    }
+  }
+
+  function markTipSeen() {
+    game.tipSeen = true;
+    try {
+      window.localStorage.setItem(TIP_KEY, "seen");
+    } catch (error) {
+      // ignored
+    }
+  }
+
   function openJournal() {
     if (game.dialog || game.screen !== "journey") return;
     game.overlay = "journal";
     $("journal").hidden = false;
     document.querySelector("#journal .sheet").scrollTop = 0;
     KuAudio.rustle();
+    // The tip needs room beside the page, so short landscape screens wait for a taller one.
+    const roomy = !window.matchMedia || window.matchMedia("(min-height: 560px)").matches;
+    const firstTime = roomy && game.progress.cleared === 0 && game.progress.poems.length === 0 && !tipWasSeen();
+    $("jTip").hidden = !firstTime;
+    if (firstTime) markTipSeen();
     renderJournal();
     setStatus(game.progress.cleared >= KuSim.STATION_COUNT
       ? "句集は完成しています。句帳では、旅の句を自由に詠めます。"
       : (atGate() ? "句が整ったら「句をよむ」を押してください。" : "宿の戸口で、この句を宿の主にお見せします。"));
     $("jClose").focus({ preventScroll: true });
+  }
+
+  function dismissTip() {
+    $("jTip").hidden = true;
+  }
+
+  // Says, in plain words under 句をよむ, why the 句 is not yet ready, or that it is.
+  function updateWhy(complete) {
+    const el = $("jWhy");
+    let text;
+    let ready = false;
+    if (complete) {
+      text = "八つの宿は、もう越えております。句帳では、旅の句を自由に詠めます。";
+    } else {
+      const status = KuSim.composeStatus(game.draft, game.hand);
+      if (status.exact) {
+        ready = true;
+        text = atGate() ? "句が整いました。「句をよむ」を押してください。" : "句が整いました。宿の戸口で、句をお読みください。";
+      } else {
+        const name = LINE_NAMES[status.line];
+        text = status.empty
+          ? name + "が" + KANJI[KuSim.TARGETS[status.line]] + "音に足りません。"
+          : name + "があと" + KANJI[status.remaining] + "音です。";
+        if (!status.fits) {
+          text += game.hand.length ? "手の言の葉では埋まりません。道で言の葉を集めましょう。" : "道で言の葉を集めましょう。";
+        }
+      }
+    }
+    el.textContent = text;
+    el.classList.toggle("ready", ready);
   }
 
   function closeJournal() {
@@ -477,14 +537,21 @@
       chip.className = "chip" + (tile.kire ? " kire" : "") + (hintSet.has(tile.id) ? " hint" : "");
       chip.dataset.id = String(tile.id);
       chip.setAttribute("role", "listitem");
-      chip.setAttribute("aria-label", tile.word + "、" + tile.mora + "モーラ");
+      const kinds = [];
+      if (tile.season) kinds.push(tile.season + "の季語");
+      if (tile.kire) kinds.push("切れ字");
+      chip.setAttribute("aria-label", tile.word + "、" + tile.mora + "モーラ" + (kinds.length ? "、" + kinds.join("・") : ""));
       const word = document.createElement("span");
+      word.className = "word";
       word.textContent = tile.word;
       const dots = document.createElement("span");
       dots.className = "dots";
       dots.setAttribute("aria-hidden", "true");
       for (let k = 0; k < tile.mora; k++) dots.appendChild(document.createElement("i"));
       chip.append(word, dots);
+      // 季 marks a 季語 in red; 切 marks a 切れ字 in gold.
+      if (tile.season) chip.appendChild(tileMark("季", "kigo"));
+      if (tile.kire) chip.appendChild(tileMark("切", "cut"));
       chip.addEventListener("click", () => {
         if (game.ignoreClick) { game.ignoreClick = false; return; }
         addToDraft(tile.id, game.activeLine);
@@ -497,7 +564,15 @@
     const exact = KuSim.isExact(game.draft);
     const submit = $("jSubmit");
     submit.disabled = !exact || complete;
-    submit.title = exact ? "" : "五・七・五がそろうと、句をよめます";
+    updateWhy(complete);
+  }
+
+  function tileMark(text, kind) {
+    const mark = document.createElement("i");
+    mark.className = "mark " + kind;
+    mark.textContent = text;
+    mark.setAttribute("aria-hidden", "true");
+    return mark;
   }
 
   function addToDraft(id, lineIndex) {
@@ -551,7 +626,7 @@
     game.hintIds = new Set(ids);
     const words = game.hand.filter(t => ids.includes(t.id)).map(t => "「" + t.word + "」");
     setStatus(ids.length
-      ? (season ? season + "の季語: " : "季語: ") + words.join("・")
+      ? (season ? season + "の季語: " : "季語: ") + words.join("・") + "（赤い「季」の印が目印です）"
       : (season ? "手に" + season + "の季語はまだありません。道で探してみましょう。" : "季語はまだ手にありません。"));
     // The matching 言の葉 on the road also glow for a few seconds.
     const worldIds = new Set(game.live.filter(l => {
@@ -598,6 +673,14 @@
       poem.appendChild(p);
     }
     $("vRank").textContent = judged.rank + (judged.kigo ? " · 季「" + judged.kigo + "」" : "");
+    const words = $("vWords");
+    words.textContent = "";
+    for (const tag of wordTags(judged)) {
+      const li = document.createElement("li");
+      li.className = "tag " + tag.kind;
+      li.textContent = tag.text;
+      words.appendChild(li);
+    }
     const notes = $("vNotes");
     notes.textContent = "";
     for (const note of [judged.rankText].concat(judged.notes)) {
@@ -614,6 +697,18 @@
     KuAudio.thunk();
     $("vProceed").focus({ preventScroll: true });
     persist();
+  }
+
+  // The words that earned (or missed) the credit, named for the player to learn the rule.
+  function wordTags(judged) {
+    const tags = [];
+    if (judged.kigo) tags.push({ kind: "kigo", text: "季語「" + judged.kigo + "」" });
+    else if (judged.kigoWord) tags.push({ kind: "miss", text: "季語「" + judged.kigoWord + "」は" + judged.kigoWordSeason + "の季" });
+    else tags.push({ kind: "miss", text: "季語 なし" });
+    if (judged.cuts.length === 1) tags.push({ kind: "cut", text: "切れ字「" + judged.cuts[0] + "」" });
+    else if (judged.cuts.length === 0) tags.push({ kind: "miss", text: "切れ字 なし" });
+    else tags.push({ kind: "miss", text: "切れ字 " + judged.cuts.length + "つ" });
+    return tags;
   }
 
   function proceedFromVerdict() {
@@ -754,6 +849,37 @@
       addToDraft(d.id, Number(col.dataset.line));
     } else {
       renderJournal();
+    }
+  }
+
+  // ---- goal and distance to the next 宿 ----------------------------------------------
+
+  // Shows the next step on the road and how far the traveler has come toward the next gate.
+  // Writes to the DOM only when something changes, since it runs every frame.
+  function updateGoal() {
+    const el = $("goal");
+    const cleared = game.progress.cleared;
+    const show = game.screen === "journey" && !game.overlay && !game.dialog &&
+      cleared < KuSim.STATION_COUNT && !atGate();
+    if (!show) {
+      el.hidden = true;
+      return;
+    }
+    el.hidden = false;
+    const inn = stations[cleared].inn;
+    const text = game.hand.length ? "次は" + inn + "へ。句を整えましょう" : "次の宿まで、言の葉を集めましょう";
+    if (game.goalText !== text) {
+      game.goalText = text;
+      $("goalText").textContent = text;
+      $("goalInn").textContent = inn;
+    }
+    const from = cleared === 0 ? KuSim.WORLD.start : KuSim.innX(cleared - 1);
+    const to = gateX();
+    const f = Math.max(0, Math.min(1, (game.x - from) / Math.max(1, to - from)));
+    const pct = (f * 100).toFixed(1) + "%";
+    if (game.goalPct !== pct) {
+      game.goalPct = pct;
+      $("goalFill").style.width = pct;
     }
   }
 
@@ -941,6 +1067,7 @@
     $("dlgNext").addEventListener("click", advanceDialog);
     $("dialog").addEventListener("click", e => { if (e.target.id !== "dlgNext") advanceDialog(); });
     $("jClose").addEventListener("click", closeJournal);
+    $("jTipOk").addEventListener("click", dismissTip);
     $("jHint").addEventListener("click", showHint);
     $("jReset").addEventListener("click", resetDraft);
     $("jSubmit").addEventListener("click", submitPoem);

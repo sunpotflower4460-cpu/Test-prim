@@ -179,6 +179,18 @@
     return null;
   }
 
+  // What the draft still needs before it can be read. `line` is the first line not yet
+  // sealed (上の句, then 中の句, then 下の句); `fits` is false when no tile in hand
+  // can go into any unsealed line.
+  function composeStatus(poem, hand) {
+    if (isExact(poem)) return { exact: true, line: null, remaining: 0, empty: false, fits: true };
+    const line = [0, 1, 2].find(i => !isSealed(poem, i));
+    const used = lineMora(poem, line);
+    const open = [0, 1, 2].filter(i => !isSealed(poem, i));
+    const fits = (hand || []).some(tile => open.some(i => canAdd(poem, i, tile)));
+    return { exact: false, line: line, remaining: TARGETS[line] - used, empty: used === 0, fits: fits };
+  }
+
   function poemWords(lines) {
     return lines.map(line => line.map(item => (typeof item === "string" ? item : item.word)));
   }
@@ -277,6 +289,8 @@
       rankText: rankText,
       kigo: kigo ? kigo.w : null,
       kigoSeason: kigo ? kigo.s : null,
+      kigoWord: kigoAll.length ? kigoAll[0].w : null,
+      kigoWordSeason: kigoSeason,
       cuts: cuts,
       season: season,
       lines: words,
@@ -489,6 +503,7 @@
     isExact: isExact,
     isSealed: isSealed,
     canAdd: canAdd,
+    composeStatus: composeStatus,
     addTile: addTile,
     removeTile: removeTile,
     judge: judge,

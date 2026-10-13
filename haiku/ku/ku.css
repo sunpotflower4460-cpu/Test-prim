@@ -197,7 +197,7 @@ button { font: inherit; color: inherit; }
   position: absolute;
   z-index: 20;
   top: calc(var(--safe-t) + 8px);
-  left: calc(var(--safe-l) + 112px);
+  left: calc(var(--safe-l) + 138px);
   right: calc(var(--safe-r) + 10px);
   display: flex;
   flex-wrap: wrap;
@@ -212,7 +212,7 @@ button { font: inherit; color: inherit; }
 .hud-title {
   margin-right: auto;
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 16px;
   letter-spacing: 0.2em;
   color: var(--ink-soft);
   pointer-events: none;
@@ -247,7 +247,7 @@ button { font: inherit; color: inherit; }
   border-radius: 999px;
   background: rgba(255, 252, 245, 0.84);
   border: 1px solid var(--ink-faint);
-  font-size: 14px;
+  font-size: 15px;
   white-space: nowrap;
 }
 
@@ -280,8 +280,8 @@ button { font: inherit; color: inherit; }
 }
 
 .stations li {
-  width: 10px;
-  height: 10px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   border: 1.5px solid var(--ink-soft);
   background: transparent;
@@ -394,7 +394,7 @@ button { font: inherit; color: inherit; }
 
 .kicker {
   margin: 0;
-  font-size: 12px;
+  font-size: 13px;
   letter-spacing: 0.14em;
   color: var(--ink-soft);
 }
@@ -417,19 +417,22 @@ button { font: inherit; color: inherit; }
   background: var(--card);
 }
 
-.theme-label { font-size: 12px; color: var(--ink-soft); }
-.theme-word { font-family: var(--serif); font-size: 20px; letter-spacing: 0.1em; }
+.theme-label { font-size: 13px; color: var(--ink-soft); }
+.theme-word { font-family: var(--serif); font-size: 24px; letter-spacing: 0.1em; line-height: 1.2; }
 .theme-season {
   display: inline-grid;
   place-items: center;
-  min-width: 30px;
-  height: 30px;
-  padding: 0 6px;
-  border-radius: 8px;
+  min-width: 42px;
+  height: 38px;
+  padding: 0 8px;
+  border-radius: 9px;
   background: var(--seal);
   color: #fff7ef;
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1;
+  box-shadow: 0 2px 6px rgba(120, 30, 24, 0.2);
 }
 
 /* the 句帳 page: three vertical columns, 上の句 on the right */
@@ -437,8 +440,8 @@ button { font: inherit; color: inherit; }
 @media (max-height: 500px) and (orientation: landscape) {
   .journal-sheet {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) minmax(220px, 260px);
-    column-gap: 16px;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 330px);
+    column-gap: 14px;
     align-items: start;
   }
   .journal-sheet .sheet-head { grid-column: 1 / -1; }
@@ -447,10 +450,12 @@ button { font: inherit; color: inherit; }
   .journal-sheet .status { margin: 0; text-align: left; min-height: 0; }
   .journal-sheet .tray-head { margin-top: 6px; }
   .journal-sheet .hand { margin-top: 4px; min-height: 40px; }
-  .journal-sheet .sheet-actions { margin-top: auto; padding-top: 8px; justify-content: space-between; flex-wrap: nowrap; gap: 4px; }
-  .journal-sheet .sheet-actions .btn { min-height: 40px; padding: 0 10px; font-size: 14px; }
+  .journal-sheet .sheet-actions { margin-top: 4px; padding-top: 0; justify-content: space-between; flex-wrap: nowrap; gap: 4px; }
+  .journal-sheet .sheet-actions .btn { min-height: 40px; padding: 0 10px; font-size: 14px; white-space: nowrap; }
+  .journal-sheet .chip { min-height: 36px; padding: 4px 9px; font-size: 16px; }
+  .journal-sheet .why { font-size: 13px; line-height: 1.4; margin-top: 2px; }
   .journal-sheet .sheet-actions .btn.ghost { margin-right: 0; }
-  .journal-sheet .slot { width: 30px; height: 26px; font-size: 11px; }
+  .journal-sheet .slot { width: 36px; height: 27px; font-size: 14px; }
   .journal-sheet .slots { gap: 3px; padding: 3px; }
   .journal-sheet .page { padding: 6px; gap: 10px; }
   .journal-sheet .tray-hint { display: none; }
@@ -461,8 +466,26 @@ button { font: inherit; color: inherit; }
   .overlay { padding-top: calc(var(--safe-t) + 50px); padding-bottom: 6px; }
 }
 
+/* On a desktop window the 句帳 is two columns: the page, then the hand and actions. */
+@media (min-width: 681px) and (min-height: 600px) {
+  .journal-sheet {
+    width: min(900px, 100%);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(290px, 340px);
+    column-gap: 22px;
+    align-items: start;
+    padding: 20px 22px 18px;
+  }
+  .journal-sheet .sheet-head { grid-column: 1 / -1; }
+  .journal-sheet .page { grid-column: 1; grid-row: 2; margin-top: 12px; }
+  .journal-sheet .side { grid-column: 2; grid-row: 2; margin-top: 12px; display: flex; flex-direction: column; min-width: 0; }
+  .journal-sheet .status { margin: 0; text-align: left; min-height: 0; }
+  .journal-sheet .why { text-align: left; margin-top: 6px; }
+  .journal-sheet .sheet-actions { margin-top: 10px; }
+}
+
 @media (max-height: 640px) {
-  .slot { width: 36px; height: 32px; }
+  .slot { width: 44px; height: 40px; font-size: 18px; }
   .page { margin-top: 8px; padding: 10px 8px; }
   .sheet-title { font-size: 22px; }
 }
@@ -506,21 +529,32 @@ button { font: inherit; color: inherit; }
 }
 
 .slot {
-  width: 42px;
-  height: 40px;
+  width: 52px;
+  height: 48px;
   display: grid;
   place-items: center;
-  border-radius: 6px;
-  border: 1px dashed rgba(35, 39, 43, 0.22);
+  border-radius: 7px;
+  border: 1.5px dashed rgba(35, 39, 43, 0.32);
+  background: rgba(35, 39, 43, 0.035);
   font-family: var(--serif);
-  font-size: 14px;
+  font-size: 21px;
   line-height: 1;
   white-space: nowrap;
   color: transparent;
   cursor: pointer;
-  background: transparent;
   padding: 0;
 }
+
+/* an empty slot: a dashed frame with a small dot at its centre */
+.slot:not(.filled)::after {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(35, 39, 43, 0.22);
+}
+
+.slot.filled { font-weight: 600; }
 
 .slot.filled {
   border-style: solid;
@@ -555,12 +589,12 @@ button { font: inherit; color: inherit; }
 .line-label {
   display: block;
   /* Orthogonal flow: give the vertical label its length and width explicitly. */
-  width: 22px;
-  height: 4em;
+  width: 24px;
+  height: 4.2em;
   writing-mode: vertical-rl;
   white-space: nowrap;
   font-family: var(--serif);
-  font-size: 15px;
+  font-size: 17px;
   line-height: 1.2;
   letter-spacing: 0.16em;
   color: var(--ink);
@@ -569,7 +603,7 @@ button { font: inherit; color: inherit; }
 .count {
   writing-mode: horizontal-tb;
   white-space: nowrap;
-  font-size: 12px;
+  font-size: 14px;
   color: var(--ink-soft);
   font-variant-numeric: tabular-nums;
 }
@@ -577,7 +611,7 @@ button { font: inherit; color: inherit; }
 .status {
   min-height: 24px;
   margin: 10px 2px 0;
-  font-size: 14px;
+  font-size: 15px;
   color: var(--ink-soft);
   text-align: center;
 }
@@ -595,7 +629,7 @@ button { font: inherit; color: inherit; }
   color: var(--ink-soft);
 }
 
-.tray-hint { font-size: 12px; opacity: 0.8; }
+.tray-hint { font-size: 13px; }
 
 .hand {
   display: flex;
@@ -608,7 +642,7 @@ button { font: inherit; color: inherit; }
   border: 1px dashed var(--ink-faint);
 }
 
-.hand .empty { font-size: 14px; color: var(--ink-soft); padding: 10px 6px; }
+.hand .empty { font-size: 15px; color: var(--ink-soft); padding: 10px 6px; }
 
 .chip {
   min-height: 44px;
@@ -618,7 +652,7 @@ button { font: inherit; color: inherit; }
   background: linear-gradient(180deg, #fffdf8, #f6efe0);
   color: var(--ink);
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 19px;
   letter-spacing: 0.06em;
   cursor: grab;
   display: inline-flex;
@@ -630,9 +664,31 @@ button { font: inherit; color: inherit; }
   position: relative;
 }
 
-.chip.kire { border-color: var(--gold); }
-.chip.hint { box-shadow: 0 0 0 3px rgba(181, 57, 47, 0.45); border-color: var(--seal); }
+.chip.kire { border-color: var(--gold); border-width: 1.5px; }
+.chip.hint {
+  border-color: var(--seal);
+  background: linear-gradient(180deg, #fff4ee, #f6dfd3);
+  box-shadow: 0 0 0 3px rgba(181, 57, 47, 0.5);
+}
 .chip.dragging { opacity: 0.4; }
+
+/* 季 (red) marks a 季語; 切 (gold) marks a 切れ字 */
+.chip .mark {
+  position: absolute;
+  top: -9px;
+  display: grid;
+  place-items: center;
+  width: 21px;
+  height: 21px;
+  border-radius: 50%;
+  font-family: var(--serif);
+  font-size: 13px;
+  font-style: normal;
+  line-height: 1;
+  pointer-events: none;
+}
+.chip .mark.kigo { right: -8px; background: var(--seal); color: #fff7ef; box-shadow: 0 1px 3px rgba(120, 30, 24, 0.35); }
+.chip .mark.cut { left: -8px; background: var(--gold); color: #2a2219; box-shadow: 0 1px 3px rgba(90, 64, 20, 0.35); }
 
 .dots { display: inline-flex; gap: 3px; }
 .dots i { width: 5px; height: 5px; border-radius: 50%; background: var(--ink-soft); opacity: 0.6; }
@@ -676,7 +732,7 @@ button { font: inherit; color: inherit; }
   margin: 8px auto 0;
   max-width: 34em;
   font-family: var(--serif);
-  font-size: 17px;
+  font-size: 18px;
   line-height: 1.9;
   min-height: 3.8em;
 }
@@ -719,7 +775,7 @@ button { font: inherit; color: inherit; }
 .rank {
   margin: 0;
   font-family: var(--serif);
-  font-size: 16px;
+  font-size: 17px;
   letter-spacing: 0.1em;
   color: var(--seal);
 }
@@ -730,7 +786,7 @@ button { font: inherit; color: inherit; }
   list-style: none;
   max-width: 34em;
   text-align: left;
-  font-size: 14px;
+  font-size: 15px;
   line-height: 1.8;
   color: var(--ink-soft);
 }
@@ -767,7 +823,7 @@ button { font: inherit; color: inherit; }
 .anth-item.empty { opacity: 0.55; border-style: dashed; }
 
 .anth-item .poem-v {
-  font-size: 18px;
+  font-size: 19px;
   line-height: 2;
   padding: 8px 8px;
   max-height: none;
@@ -775,7 +831,7 @@ button { font: inherit; color: inherit; }
   background: transparent;
 }
 
-.anth-meta { flex: 1 1 auto; min-width: 0; text-align: left; font-size: 13px; color: var(--ink-soft); }
+.anth-meta { flex: 1 1 auto; min-width: 0; text-align: left; font-size: 14px; color: var(--ink-soft); }
 .anth-meta strong { display: block; font-family: var(--serif); font-size: 17px; color: var(--ink); font-weight: 600; letter-spacing: 0.08em; }
 
 .anth-item .rank-tag {
@@ -785,7 +841,7 @@ button { font: inherit; color: inherit; }
   border-radius: 6px;
   background: var(--seal);
   color: #fff7ef;
-  font-size: 12px;
+  font-size: 13px;
 }
 
 .ending-sheet { text-align: center; padding-top: 28px; }
@@ -808,6 +864,143 @@ button { font: inherit; color: inherit; }
 }
 
 .credits p { margin: 0; }
+
+/* ---- guidance: tip, reasons, goal and word tags ------------------------ */
+
+.tip {
+  margin: 2px 0 10px;
+  padding: 12px 14px 8px;
+  border-radius: 14px;
+  background: #fffdf7;
+  border: 1px solid rgba(181, 57, 47, 0.28);
+  box-shadow: 0 6px 16px rgba(60, 40, 30, 0.08);
+}
+
+.tip-speaker {
+  margin: 0 0 4px;
+  font-family: var(--serif);
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  color: var(--seal);
+}
+
+.tip-text {
+  margin: 0 0 6px;
+  font-family: var(--serif);
+  font-size: 15px;
+  line-height: 1.75;
+  color: var(--ink);
+}
+
+.tip .btn.tip-ok {
+  display: block;
+  margin-left: auto;
+  min-height: 40px;
+  color: var(--seal);
+}
+
+.why {
+  min-height: 22px;
+  margin: 8px 2px 0;
+  font-size: 15px;
+  line-height: 1.6;
+  text-align: center;
+  color: var(--ink-soft);
+}
+
+.why.ready { color: var(--ink); }
+
+/* the next 宿 and the distance the traveler has come toward it */
+/* No blur or transform here: an overlay above the animated canvas must stay cheap to composite. */
+.goal {
+  position: absolute;
+  z-index: 22;
+  left: 0;
+  right: 0;
+  bottom: calc(var(--safe-b) + 14px);
+  margin: 0 auto;
+  width: min(420px, calc(100% - 32px));
+  padding: 10px 16px 16px;
+  border-radius: 14px;
+  background: #fbf8f1;
+  border: 1px solid var(--ink-faint);
+  text-align: center;
+  pointer-events: none;
+}
+
+.goal-text {
+  margin: 0;
+  font-family: var(--serif);
+  font-size: 16px;
+  line-height: 1.6;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+}
+
+.goal-track {
+  position: relative;
+  height: 6px;
+  margin: 12px 10px 18px;
+  border-radius: 3px;
+  background: rgba(35, 39, 43, 0.14);
+}
+
+.goal-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 0;
+  border-radius: 3px;
+  background: var(--ink-soft);
+}
+
+.goal-track::after {
+  content: "";
+  position: absolute;
+  right: -7px;
+  top: -4px;
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  background: var(--seal);
+  box-shadow: 0 0 0 2px rgba(255, 252, 245, 0.9);
+}
+
+.goal-inn {
+  position: absolute;
+  right: -4px;
+  top: 14px;
+  font-size: 13px;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+
+/* the words that earned, or missed, the credit on the verdict */
+.word-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin: 12px auto 0;
+  padding: 0;
+  list-style: none;
+}
+
+.word-tags .tag {
+  padding: 4px 11px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-faint);
+  font-family: var(--serif);
+  font-size: 15px;
+  letter-spacing: 0.04em;
+  color: var(--ink);
+  background: var(--card);
+}
+
+.word-tags .tag.kigo { color: var(--seal); border-color: rgba(181, 57, 47, 0.55); }
+.word-tags .tag.cut { color: #6b4f14; border-color: var(--gold); }
+.word-tags .tag.miss { color: var(--ink-soft); border-style: dashed; }
 
 /* ---- motion ---------------------------------------------------------- */
 
@@ -845,7 +1038,7 @@ button { font: inherit; color: inherit; }
   .hud { flex-direction: column-reverse; align-items: stretch; }
   .hud-right { order: 1; }
   .door-btn { left: calc(var(--safe-l) + 14px); transform: none; bottom: calc(var(--safe-b) + 184px); }
-  .slot { width: 36px; height: 36px; font-size: 12px; }
+  .slot { width: 45px; height: 44px; font-size: 19px; }
   .page { gap: 8px; padding: 12px 8px; }
   .line-col { gap: 4px; padding: 4px; }
   .sheet { padding: 14px 14px 12px; border-radius: 16px; }
@@ -855,13 +1048,13 @@ button { font: inherit; color: inherit; }
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  .hud { top: calc(var(--safe-t) + 52px); left: calc(var(--safe-l) + 100px); flex-direction: row; }
+  .hud { top: calc(var(--safe-t) + 52px); left: calc(var(--safe-l) + 138px); flex-direction: row; }
   .hud-right { width: auto; }
   .stations { position: absolute; top: auto; bottom: 118px; right: 14px; }
   .dialog { padding: 10px 14px 6px; }
   .dialog .line { font-size: 15px; min-height: 3em; line-height: 1.7; }
   .door-btn { bottom: calc(var(--safe-b) + 120px); min-height: 44px; font-size: 15px; }
-  .slot { width: 34px; height: 30px; }
+  .slot { width: 38px; height: 34px; font-size: 16px; }
   .page { padding: 8px; }
   .title-panel { margin-top: calc(var(--safe-t) + 56px); padding-top: 22px; padding-bottom: 20px; }
   .prologue { font-size: 14px; line-height: 1.8; }

@@ -63,6 +63,11 @@
 
       <button id="doorBtn" class="door-btn" type="button" hidden>宿に入る</button>
 
+      <div id="goal" class="goal" hidden>
+        <p id="goalText" class="goal-text"></p>
+        <div class="goal-track" aria-hidden="true"><span id="goalFill" class="goal-fill"></span><span id="goalInn" class="goal-inn"></span></div>
+      </div>
+
       <section id="dialog" class="dialog" aria-live="polite" hidden>
         <p id="dlgSpeaker" class="speaker"></p>
         <p id="dlgText" class="line"></p>
@@ -101,6 +106,12 @@
         </div>
 
         <div class="side">
+          <aside id="jTip" class="tip" hidden>
+            <p class="tip-speaker">宿の主</p>
+            <p class="tip-text">句は、上の句（五音）・中の句（七音）・下の句（五音）の三つの行でできております。言の葉の音を数えて、行をぴたりと埋めてください。小さな仮名（ゃ・ゅ・ょ）は前の音に添えて数えます。</p>
+            <p class="tip-text">題の季の言の葉と、切れ字（や・かな・けり）を一つずつ置くと、名句になります。</p>
+            <button id="jTipOk" class="btn ghost tip-ok" type="button">わかりました</button>
+          </aside>
           <p id="jStatus" class="status" role="status" aria-live="polite"></p>
 
           <div class="tray-head"><span>手の言の葉</span><span class="tray-hint">タップで行へ、ドラッグでも</span></div>
@@ -111,6 +122,7 @@
             <button id="jReset" class="btn ghost" type="button">やりなおす</button>
             <button id="jSubmit" class="btn primary" type="button" disabled>句をよむ</button>
           </footer>
+          <p id="jWhy" class="why" aria-live="polite"></p>
         </div>
       </div>
     </div>
@@ -129,6 +141,7 @@
             <p id="vRank" class="rank"></p>
           </div>
         </div>
+        <ul id="vWords" class="word-tags" aria-label="句の季語と切れ字"></ul>
         <ul id="vNotes" class="notes"></ul>
         <div class="verdict-actions">
           <button id="vProceed" class="btn primary" type="button">宿を発つ</button>

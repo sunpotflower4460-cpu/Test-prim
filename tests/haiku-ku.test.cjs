@@ -166,6 +166,48 @@ test("a tile can never overflow a line, and a used tile is refused", () => {
   assert.equal(sim.canAdd(placed, 1, kigo), false, "a used tile is refused");
 });
 
+test("composeStatus names the first unsealed line and the morae it still lacks", () => {
+  let poem = sim.emptyPoem();
+  const hand = [sim.tileFor("さくら", 1), sim.tileFor("や", 2)];
+  let status = sim.composeStatus(poem, hand);
+  assert.equal(status.exact, false);
+  assert.equal(status.line, 0);
+  assert.equal(status.remaining, 5);
+  assert.equal(status.empty, true);
+  assert.equal(status.fits, true);
+
+  poem = sim.addTile(poem, 0, sim.tileFor("さくら", 3));
+  status = sim.composeStatus(poem, hand);
+  assert.deepEqual([status.line, status.remaining, status.empty], [0, 2, false]);
+
+  // 上の句 is 2 morae short. かわず (3) does not fit there, but it fits the open 中の句.
+  const elsewhere = sim.composeStatus(poem, [sim.tileFor("かわず", 4)]);
+  assert.equal(elsewhere.line, 0);
+  assert.equal(elsewhere.fits, true);
+  // An empty hand fits nothing.
+  assert.equal(sim.composeStatus(poem, []).fits, false);
+
+  // Once 上の句 and 中の句 are sealed, 下の句 is the line that is still open.
+  poem = sim.addTile(poem, 0, sim.tileFor("や", 5));
+  poem = sim.addTile(poem, 0, sim.tileFor("ひ", 6));
+  poem = sim.addTile(poem, 1, sim.tileFor("かわず", 7));
+  poem = sim.addTile(poem, 1, sim.tileFor("ひとり", 8));
+  poem = sim.addTile(poem, 1, sim.tileFor("て", 9));
+  status = sim.composeStatus(poem, []);
+  assert.deepEqual([status.line, status.remaining], [2, 5]);
+  assert.equal(sim.composeStatus(sim.emptyPoem(), []).line, 0);
+});
+
+test("a judged poem reports the 季語 word even when its season is wrong", () => {
+  const wrong = sim.judge(MEIKU, "夏");
+  assert.equal(wrong.kigo, null);
+  assert.equal(wrong.kigoWord, "さくら");
+  assert.equal(wrong.kigoWordSeason, "春");
+  const right = sim.judge(MEIKU, "春");
+  assert.equal(right.kigo, "さくら");
+  assert.equal(right.kigoWord, "さくら");
+});
+
 test("a line is sealed exactly when its mora match the target", () => {
   let poem = sim.emptyPoem();
   let id = 0;

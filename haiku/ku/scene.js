@@ -7,18 +7,22 @@
   const PAD = KuPaint.PAD;
   // Enough for every visible tile of every layer in one season, plus a fade partner.
   const CACHE_LIMIT = 72;
-  const FADE_SECONDS = 2.6;
+  const FADE_SECONDS = 3.2;
 
+  // depth: how much of the paler air lies over a band (distant ranges are paler).
   const LAYERS = {
-    far: { p: 0.18, kind: "ridge", spec: { seed: 11, base: 0.47, amp: 0.2, scale: 300, tint: "far", alpha: 0.7, haze: 1.2, trees: false, fade: 0.7 } },
-    mid: { p: 0.36, kind: "ridge", spec: { seed: 23, base: 0.57, amp: 0.14, scale: 190, tint: "mid", alpha: 0.8, haze: 1, trees: true, fade: 0.72 } },
-    near: { p: 0.6, kind: "ridge", spec: { seed: 37, base: 0.69, amp: 0.07, scale: 110, tint: "near", alpha: 0.85, haze: 0.6, trees: false, fade: 0.8 } },
+    far: { p: 0.18, kind: "ridge", spec: { seed: 11, base: 0.47, amp: 0.2, scale: 300, tint: "far", alpha: 0.7, haze: 1.2, trees: false, fade: 0.7, depth: 0.3 } },
+    mid: { p: 0.36, kind: "ridge", spec: { seed: 23, base: 0.57, amp: 0.14, scale: 190, tint: "mid", alpha: 0.8, haze: 1, trees: true, fade: 0.72, depth: 0.17 } },
+    near: { p: 0.6, kind: "ridge", spec: { seed: 37, base: 0.69, amp: 0.07, scale: 110, tint: "near", alpha: 0.85, haze: 0.6, trees: false, fade: 0.8, depth: 0.06 } },
     field: { p: 0.9, kind: "field" },
     road: { p: 1, kind: "road" },
     fore: { p: 1, kind: "fore" }
   };
 
-  const LANTERN_FONT = "600 14px 'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP','IPAMincho','IPAGothic',serif";
+  const LANTERN_FONT = "600 16px 'Hiragino Mincho ProN','Yu Mincho','Noto Serif JP','IPAMincho','IPAGothic',serif";
+  // Lantern metrics: width, and the height per kana.
+  const LANTERN_W = 30;
+  const LANTERN_STEP = 20;
 
   function smooth(t) {
     const x = Math.max(0, Math.min(1, t));
@@ -27,7 +31,7 @@
 
   function create(canvas, options) {
     const opts = options || {};
-    const ctx = canvas.getContext("2d");
+    let ctx = canvas.getContext("2d");
     const state = {
       W: 0,
       H: 0,
@@ -47,7 +51,9 @@
       t: 0,
       seed: 0,
       warm: [],
-      warmNeeded: true
+      warmNeeded: true,
+      fadeBuf: null,
+      fadeMask: null
     };
 
     function ground() {
@@ -206,7 +212,8 @@
       }
     }
 
-    function setSeason(season) {
+    // wx: the world x where the change happens (the 宿 that was cleared), if known.
+    function setSeason(season, wx) {
       if (!season) return;
       if (state.season === null) {
         state.season = season;
@@ -215,7 +222,7 @@
       }
       const target = state.fade ? state.fade.to : state.season;
       if (season === target) return;
-      state.fade = { from: state.season, to: season, t: 0 };
+      state.fade = { from: state.season, to: season, t: 0, wx: wx, seed: season.charCodeAt(0) * 0.37 + (wx || 0) * 0.001 };
       state.warmNeeded = true;
       seedMotion(season);
     }
@@ -233,40 +240,133 @@
       }
     }
 
-    function drawSkyAndLayers(view) {
+    // One season's backdrop, painted into the current context: sky, drifting cloud, ridges and meadow.
+    function paintBackdrop(season, cam) {
+      ctx.drawImage(skyFor(season), 0, 0, state.W, state.H);
+      drawClouds(season, cam);
+      for (const key of ["far", "mid", "near", "field"]) drawTileRow(key, season, 1, cam);
+    }
+
+    // Clouds drift slowly across the sky, with a little parallax against the walk.
+    function drawClouds(season, cam) {
+      const span = state.W + 420;
+      for (let i = 0; i < 5; i++) {
+        const img = sprite("cloud|" + season + "|" + i, () => KuPaint.cloudSprite(season, i, state.tileScale));
+        const drift = state.t * (4 + i * 1.6) - cam * 0.05;
+        const x = (((i * 611 + 200 - drift) % span) + span) % span - 210;
+        const y = state.H * (0.06 + (i * 0.11) % 0.26);
+        ctx.drawImage(img, x, y, img.width / state.tileScale, img.height / state.tileScale);
+      }
+    }
+
+    function drawBackdrop(view) {
       const cam = view.camX;
       const fade = state.fade;
-      const ease = fade ? smooth(fade.t) : 1;
-      const from = fade ? fade.from : state.season;
-      const to = fade ? fade.to : state.season;
-      ctx.drawImage(skyFor(from), 0, 0, state.W, state.H);
-      if (fade) {
-        ctx.globalAlpha = ease;
-        ctx.drawImage(skyFor(to), 0, 0, state.W, state.H);
-        ctx.globalAlpha = 1;
+      if (!fade) {
+        paintBackdrop(state.season, cam);
+        return;
       }
-      for (const key of ["far", "mid", "near", "field"]) {
-        drawTileRow(key, from, fade ? 1 - ease : 1, cam);
-        if (fade) drawTileRow(key, to, ease, cam);
+      paintBackdrop(fade.from, cam);
+      revealSeason(fade, smooth(fade.t), view);
+    }
+
+    // The new season spreads outward from the 宿 like ink on washi: an irregular blot
+    // grows over the old scene, with a faint dark edge where it soaks in.
+    function ensureFadeBuffers() {
+      const w = canvas.width;
+      const h = canvas.height;
+      if (!state.fadeBuf || state.fadeBuf.width !== w || state.fadeBuf.height !== h) {
+        state.fadeBuf = KuPaint.makeCanvas(w, h);
+        state.fadeMask = KuPaint.makeCanvas(w, h);
       }
+    }
+
+    // Traces the blot in the given context's user units, centred on (cx, cy) with radius r.
+    function blotPath(g, cx, cy, r, seed) {
+      const p1 = seed * 2.1;
+      const p2 = seed * 3.7;
+      const p3 = seed * 5.3;
+      g.beginPath();
+      for (let i = 0; i <= 72; i++) {
+        const a = (i / 72) * Math.PI * 2;
+        const wob = 1 + 0.07 * Math.sin(3 * a + p1) + 0.04 * Math.sin(5 * a + p2) + 0.02 * Math.sin(9 * a + p3);
+        const x = cx + Math.cos(a) * r * wob;
+        const y = cy + Math.sin(a) * r * wob * 0.78;
+        if (i) g.lineTo(x, y);
+        else g.moveTo(x, y);
+      }
+      g.closePath();
+    }
+
+    function revealSeason(fade, ease, view) {
+      ensureFadeBuffers();
+      const w = canvas.width;
+      const h = canvas.height;
+      const s = state.scale;
+      const cx = fade.wx === undefined ? state.W * 0.5 : fade.wx - view.camX;
+      const cy = state.H * 0.72;
+      const reach = Math.hypot(state.W, state.H) * (0.1 + ease * 1.02);
+
+      // 1. The new season is painted off-screen.
+      const bg = state.fadeBuf.getContext("2d");
+      bg.setTransform(1, 0, 0, 1, 0, 0);
+      bg.clearRect(0, 0, w, h);
+      bg.setTransform(s, 0, 0, s, 0, 0);
+      const screen = ctx;
+      ctx = bg;
+      try {
+        paintBackdrop(fade.to, view.camX);
+      } finally {
+        ctx = screen;
+      }
+
+      // 2. The blot is the mask that lets the new season through.
+      const mg = state.fadeMask.getContext("2d");
+      mg.setTransform(1, 0, 0, 1, 0, 0);
+      mg.clearRect(0, 0, w, h);
+      mg.setTransform(s, 0, 0, s, 0, 0);
+      mg.fillStyle = "#000";
+      if ("filter" in mg) mg.filter = "blur(9px)";
+      blotPath(mg, cx, cy, reach, fade.seed);
+      mg.fill();
+      if ("filter" in mg) mg.filter = "none";
+      bg.setTransform(1, 0, 0, 1, 0, 0);
+      bg.globalCompositeOperation = "destination-in";
+      bg.drawImage(state.fadeMask, 0, 0);
+      bg.globalCompositeOperation = "source-over";
+
+      // 3. Composite over the old scene, then draw the soaked edge.
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.drawImage(state.fadeBuf, 0, 0);
+      ctx.setTransform(s, 0, 0, s, 0, 0);
+      ctx.save();
+      ctx.strokeStyle = KuPaint.rgba(KuPaint.PALETTE[fade.to].ink, 0.2 * (1 - ease * 0.7));
+      ctx.lineWidth = 2.2;
+      blotPath(ctx, cx, cy, reach, fade.seed);
+      ctx.stroke();
+      ctx.restore();
     }
 
     function drawBirds(dt) {
       for (const bird of state.birds) {
         bird.x -= bird.speed * dt;
         if (bird.x < -120) bird.x = state.W + 120;
-        const wing = Math.sin(state.t * 6 + bird.phase) * 0.55;
+        // Flap in bursts with short glides between them, the way a bird crosses the sky.
+        const cycle = ((state.t * 0.3 + bird.phase / 6.28) % 1 + 1) % 1;
+        const flapping = cycle < 0.6;
+        const wing = flapping ? Math.sin(state.t * 9 + bird.phase) * 0.6 : 0.2;
+        const lift = Math.sin(state.t * 0.8 + bird.phase) * 3;
         ctx.strokeStyle = KuPaint.rgba(KuPaint.PALETTE[state.season].ink, 0.75);
         ctx.lineWidth = 1.4;
         ctx.lineCap = "round";
         if (bird.kind === "geese") {
           for (let i = 0; i < 5; i++) {
             const bx = bird.x + (i % 2 ? -1 : 1) * Math.ceil(i / 2) * 15;
-            const by = bird.y + Math.ceil(i / 2) * 7;
+            const by = bird.y + Math.ceil(i / 2) * 7 + lift;
             drawGull(bx, by, 9, wing * 0.5);
           }
         } else {
-          for (let i = 0; i < 2; i++) drawGull(bird.x + i * 26, bird.y + i * 6 + Math.sin(state.t + i) * 2, 7, wing);
+          for (let i = 0; i < 2; i++) drawGull(bird.x + i * 26, bird.y + i * 6 + lift + Math.sin(state.t + i) * 1.5, 7, wing);
         }
       }
     }
@@ -364,7 +464,6 @@
     function drawGrass(cam, season) {
       const blades = ensureBlades();
       const gy = ground() + 2;
-      const wind = Math.sin(state.t * 0.6) * 0.5 + Math.sin(state.t * 1.7) * 0.2;
       const ink = KuPaint.PALETTE[season].ink;
       ctx.strokeStyle = KuPaint.rgba(ink, 0.5);
       ctx.lineWidth = 1.1;
@@ -374,7 +473,10 @@
         const sx = b.wx - cam;
         if (sx < -20 || sx > state.W + 20) continue;
         const y = gy + b.side * 14 + (b.wx % 7) * 0.2;
-        const sway = (wind + Math.sin(state.t * 2.2 + b.ph) * 0.25) * b.h * 0.5 + b.lean * b.h;
+        // A breeze that travels along the road: each blade leans as the gust passes it.
+        const gust = Math.sin(state.t * 0.85 - b.wx * 0.006) * 0.6 + Math.sin(state.t * 0.4) * 0.15;
+        const flutter = Math.sin(state.t * 2.6 + b.ph) * 0.14;
+        const sway = (gust + flutter) * b.h * 0.6 + b.lean * b.h;
         ctx.moveTo(sx, y);
         ctx.quadraticCurveTo(sx + sway * 0.3, y - b.h * 0.6, sx + sway, y - b.h);
       }
@@ -447,14 +549,14 @@
     function lanternSprite(word, season) {
       return sprite("lan|" + season + "|" + word, () => {
         const chars = Array.from(word);
-        const w = 26;
-        const h = 24 + chars.length * 18;
+        const w = LANTERN_W;
+        const h = 24 + chars.length * LANTERN_STEP;
         const pad = 4;
         const cnv = KuPaint.makeCanvas((w + pad * 2) * state.tileScale, (h + pad * 2) * state.tileScale);
         const g = cnv.getContext("2d");
         g.setTransform(state.tileScale, 0, 0, state.tileScale, 0, 0);
         const pal = KuPaint.PALETTE[season];
-        g.fillStyle = "rgba(251,244,228,0.94)";
+        g.fillStyle = "rgba(251,244,228,0.96)";
         g.beginPath();
         g.roundRect ? g.roundRect(pad, pad, w, h, 9) : g.rect(pad, pad, w, h);
         g.fill();
@@ -467,8 +569,8 @@
         g.font = LANTERN_FONT;
         g.textAlign = "center";
         g.textBaseline = "middle";
-        g.fillStyle = "#2a2219";
-        chars.forEach((ch, i) => g.fillText(ch, pad + w / 2, pad + 15 + i * 18));
+        g.fillStyle = "#1f1812";
+        chars.forEach((ch, i) => g.fillText(ch, pad + w / 2, pad + 16 + i * LANTERN_STEP));
         return cnv;
       });
     }
@@ -497,11 +599,11 @@
       ctx.drawImage(glow, cx - 56, y - 56, 112, 112);
       if (hot) {
         const pulse = 1 + Math.sin(state.t * 4) * 0.06;
-        const h = 24 + Array.from(lantern.word).length * 18;
-        ctx.strokeStyle = KuPaint.rgba(KuPaint.PALETTE[season].dot, 0.8);
-        ctx.lineWidth = 2;
+        const h = 24 + Array.from(lantern.word).length * LANTERN_STEP;
+        ctx.strokeStyle = KuPaint.rgba(KuPaint.PALETTE[season].dot, 0.9);
+        ctx.lineWidth = 2.5;
         ctx.beginPath();
-        ctx.ellipse(cx, y, (13 + 12) * pulse, (h / 2 + 12) * pulse, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx, y, (LANTERN_W / 2 + 12) * pulse, (h / 2 + 12) * pulse, 0, 0, Math.PI * 2);
         ctx.stroke();
       }
       const img = lanternSprite(lantern.word, season);
@@ -628,7 +730,7 @@
       state.t += dt;
       ctx.setTransform(state.scale, 0, 0, state.scale, 0, 0);
       ctx.clearRect(0, 0, state.W, state.H);
-      setSeason(view.season);
+      setSeason(view.season, view.bloom ? view.bloom.x : undefined);
       advanceFade(dt);
       const season = state.fade ? state.fade.to : state.season;
       if (!state.particles.length) seedMotion(season);
@@ -639,7 +741,7 @@
       runWarm();
       if (view.prefetch) prefetch(season, view.camX, view.prefetch);
 
-      drawSkyAndLayers(view);
+      drawBackdrop(view);
       drawBirds(dt);
       const cam = view.camX;
       for (const inn of view.inns) {

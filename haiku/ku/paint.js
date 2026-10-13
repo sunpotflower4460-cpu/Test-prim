@@ -7,6 +7,8 @@
   const TILE = 640;
   // Tiles abut without overlap, so their washes never double up at a seam.
   const PAD = 0;
+  // The colour of the air between the viewer and the hills.
+  const HAZE_TINT = "#f3efe6";
 
   // Season palettes. far / mid / near are ridge washes; field is the meadow; ink is the brush.
   const PALETTE = {
@@ -36,22 +38,57 @@
     return c;
   }
 
-  // A noise tile for paper grain, generated once and tiled as a pattern.
+  // A noise tile for paper grain, generated once and tiled as a pattern. Its size is a
+  // divisor of TILE, so the grain lines up across neighbouring tiles.
   let grain = null;
   function grainTile() {
     if (grain) return grain;
     const c = makeCanvas(160, 160);
     const g = c.getContext("2d");
     const rand = KuSim.mulberry32(9001);
-    for (let i = 0; i < 1400; i++) {
-      g.fillStyle = rand() < 0.5 ? "rgba(40,32,24," + (0.01 + rand() * 0.025) + ")" : "rgba(255,255,255," + (0.04 + rand() * 0.06) + ")";
-      const r = 0.4 + rand() * 1.1;
+    for (let i = 0; i < 2600; i++) {
+      g.fillStyle = rand() < 0.55 ? "rgba(40,32,24," + (0.015 + rand() * 0.04) + ")" : "rgba(255,255,255," + (0.05 + rand() * 0.08) + ")";
+      const r = 0.35 + rand() * 1.2;
       g.beginPath();
       g.arc(rand() * 160, rand() * 160, r, 0, Math.PI * 2);
       g.fill();
     }
+    // Short fibres, the way washi catches the brush.
+    for (let i = 0; i < 90; i++) {
+      const x = rand() * 160;
+      const y = rand() * 160;
+      const a = rand() * Math.PI;
+      const len = 4 + rand() * 7;
+      g.strokeStyle = rand() < 0.6 ? "rgba(40,32,24," + (0.03 + rand() * 0.04) + ")" : "rgba(255,255,255," + (0.08 + rand() * 0.08) + ")";
+      g.lineWidth = 0.5 + rand() * 0.4;
+      g.beginPath();
+      g.moveTo(x, y);
+      g.lineTo(x + Math.cos(a) * len, y + Math.sin(a) * len);
+      g.stroke();
+    }
     grain = c;
     return c;
+  }
+
+  // Lets the paper show through a finished wash: the grain is laid only over
+  // pixels already painted (source-atop), so the empty sky stays untouched.
+  function applyGrain(ctx, alpha) {
+    const cnv = ctx.canvas;
+    ctx.save();
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.globalCompositeOperation = "source-atop";
+    ctx.globalAlpha = alpha === undefined ? 0.85 : alpha;
+    ctx.fillStyle = ctx.createPattern(grainTile(), "repeat");
+    ctx.fillRect(0, 0, cnv.width, cnv.height);
+    ctx.restore();
+  }
+
+  const HAS_FILTER = typeof document !== "undefined" &&
+    "filter" in document.createElement("canvas").getContext("2d");
+
+  // Dry-brush: a horizontal stroke dragged over the wash so that paper shows in its gaps.
+  function drySweep(ctx, x, y, len, width, color, alpha, rand) {
+    hair(ctx, x, y, x + len, y + (rand() - 0.5) * 1.5, width, color, alpha, rand);
   }
 
   // One dry-brush hair: a few slightly offset passes that skip on the paper.
@@ -87,7 +124,8 @@
     ctx.closePath();
     ctx.fill();
     // Bleed only along the crest. Stroking the closing sides would draw a seam at each tile edge.
-    const crest = pts.slice(0, pts.length - 2);
+    // The crest is trimmed away from the tile edges, so a soft halo never meets its neighbour.
+    const inner = pts.slice(0, pts.length - 2).filter(p => p[0] > 5 && p[0] < TILE - 5);
     for (let b = 0; b < 3; b++) {
       ctx.save();
       ctx.translate((rand() - 0.5) * 2.4, (rand() - 0.5) * 1.6);
@@ -95,7 +133,19 @@
       ctx.lineWidth = 2.5 + rand() * 2;
       ctx.strokeStyle = rgba(top, 1);
       ctx.beginPath();
-      crest.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      inner.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      ctx.stroke();
+      ctx.restore();
+    }
+    // Ink that has soaked outward from the edge: a blurred dark halo just under the crest.
+    if (HAS_FILTER) {
+      ctx.save();
+      ctx.filter = "blur(2.5px)";
+      ctx.globalAlpha = alpha * 0.22;
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = rgba(bottom, 1);
+      ctx.beginPath();
+      inner.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1] + 2) : ctx.moveTo(p[0], p[1] + 2)));
       ctx.stroke();
       ctx.restore();
     }
@@ -170,6 +220,33 @@
       }
     }
 
+    // Dry-brush streaks: paper-coloured drags across the body of the mountain, and a
+    // few darker ones, so the wash reads as brushed rather than flat.
+    const streaks = Math.round(TILE * 0.2);
+    for (let i = 0; i < streaks; i++) {
+      const x = rand() * (TILE + PAD * 2) - PAD;
+      const y = yOf(x) + 10 + rand() * H * 0.22;
+      const len = 26 + rand() * 70;
+      drySweep(ctx, x, y, len, 0.9 + rand() * 1.4, "#f6f2ea", 0.1 + rand() * 0.14, rand);
+    }
+    for (let i = 0; i < Math.round(TILE * 0.06); i++) {
+      const x = rand() * (TILE + PAD * 2) - PAD;
+      const y = yOf(x) + 16 + rand() * H * 0.3;
+      drySweep(ctx, x, y, 18 + rand() * 40, 0.8 + rand() * 0.8, pal.ink, 0.03 + rand() * 0.035, rand);
+    }
+
+    // Distance: a paler veil over the whole band, strongest for the farthest ranges.
+    if (spec.depth) {
+      const shape = polyFrom(xs, yOf, H);
+      ctx.fillStyle = rgba(HAZE_TINT, spec.depth);
+      ctx.beginPath();
+      shape.forEach((p, i) => (i ? ctx.lineTo(p[0], p[1]) : ctx.moveTo(p[0], p[1])));
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    applyGrain(ctx, 0.8);
+
     // Atmospheric haze at the foot of each band so that layers recede.
     const haze = ctx.createLinearGradient(0, H * 0.58, 0, H * 0.74);
     haze.addColorStop(0, "rgba(255,255,255,0)");
@@ -208,6 +285,7 @@
       ctx.arc(rand() * (TILE + PAD * 2) - PAD, bandTop + rand() * (ground - bandTop), 1.2 + rand() * 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
+    applyGrain(ctx, 0.7);
     return cnv;
   }
 
@@ -288,6 +366,13 @@
       ctx.ellipse(x, y, 1 + rand() * 1.6, 0.8 + rand() * 0.8, 0, 0, Math.PI * 2);
       ctx.fill();
     }
+    // Dry streaks along the path, where the brush ran out of ink.
+    for (let i = 0; i < 14; i++) {
+      const x = rand() * width;
+      const y = yOf(x) - 4 + rand() * 12;
+      drySweep(ctx, x, y, 14 + rand() * 30, 0.8 + rand() * 0.6, "#f6f2ea", 0.14 + rand() * 0.12, rand);
+    }
+    applyGrain(ctx, 0.7);
     return cnv;
   }
 
@@ -353,6 +438,38 @@
     // The vignette is baked in here, so the frame loop does not blit it again.
     ctx.fillStyle = vignetteGradient(ctx, W, H);
     ctx.fillRect(0, 0, W, H);
+    return cnv;
+  }
+
+  // A soft cloud wash, drifted across the sky by the scene. Drawn once per season and index.
+  function cloudSprite(season, index, scale) {
+    const w = 300;
+    const h = 90;
+    const cnv = makeCanvas(w * scale, h * scale);
+    const ctx = cnv.getContext("2d");
+    ctx.setTransform(scale, 0, 0, scale, 0, 0);
+    const pal = PALETTE[season];
+    const rand = KuSim.mulberry32(5150 + index * 97 + season.charCodeAt(0));
+    const strength = season === "夏" ? 0.3 : 0.2;
+    for (let i = 0; i < 7; i++) {
+      const cx = 96 + rand() * 110;
+      const cy = 40 + (rand() - 0.5) * 18;
+      const rx = 40 + rand() * 60;
+      const ry = 9 + rand() * 9;
+      const grad = ctx.createRadialGradient(cx, cy, 0, cx, cy, rx);
+      grad.addColorStop(0, rgba(pal.cloud, strength));
+      grad.addColorStop(0.65, rgba(pal.cloud, strength * 0.5));
+      grad.addColorStop(1, rgba(pal.cloud, 0));
+      ctx.save();
+      ctx.translate(cx, cy);
+      ctx.scale(1, ry / rx);
+      ctx.translate(-cx, -cy);
+      ctx.fillStyle = grad;
+      ctx.beginPath();
+      ctx.arc(cx, cy, rx, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
     return cnv;
   }
 
@@ -463,6 +580,8 @@
       const step = all.length === 2 ? 22 : 18;
       ctx.fillText(ch, size / 2, size / 2 + (i - (all.length - 1) / 2) * step);
     });
+    // Pressed ink is never even: the washi shows through in tiny specks.
+    applyGrain(ctx, 0.55);
     return cnv;
   }
 
@@ -505,6 +624,8 @@
     roadTile: roadTile,
     foreTile: foreTile,
     skyCanvas: skyCanvas,
+    cloudSprite: cloudSprite,
+    applyGrain: applyGrain,
     innSprite: innSprite,
     bloomSprite: bloomSprite,
     sealCanvas: sealCanvas,
