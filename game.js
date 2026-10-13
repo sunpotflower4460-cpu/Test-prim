@@ -209,7 +209,7 @@
       enemies: [], shots: [], hostile: [], orbs: [], kills: 0, level: 1,
       xp: 0, totalXp: 0, bossSpawned: false, bossId: null,
       spawned: 0, spawnCd: .28, nextId: 1, hudCd: 0, settled: false,
-      rerolls: 2, previousOffers: [], score: 0, combo: 0, bestCombo: 0, comboTimer: 0, chapterReward: 0, bossMinionCd: 9, waveMark: 0
+      rerolls: 2, previousOffers: [], score: 0, combo: 0, bestCombo: 0, comboTimer: 0, comboPending: 0, chapterReward: 0, bossMinionCd: 9, waveMark: 0
     };
     particles.length = 0; rings.length = 0; texts.length = 0;
     musicAt = clock; beat = 0;
@@ -492,7 +492,9 @@
       game.bestCombo = Math.max(game.bestCombo, game.combo);
       game.comboTimer = 3.8;
       if (game.combo > 0 && game.combo % 8 === 0 && e.type !== "boss") {
-        game.xp += 5; game.totalXp += 5; sound("combo");
+        // Award through addExp on the next frame, so luck and level-up accounting
+        // stay consistent without opening a modal midway through an enemy loop.
+        game.comboPending += 5; sound("combo");
         rise(e.x, e.y - 35, "✧ CHAIN " + game.combo, "#fce2a6");
         ring(e.x, e.y, 78, "#e8d8b2", .36);
       }
@@ -502,7 +504,7 @@
       if (e.type === "boss" || game.kills % 3 === 0) sound("kill");
       if (e.type === "boss") {
         // The old boss orbs vanished in the chapter reset; carry their reward forward.
-        game.chapterReward = Math.round((80 + game.stage * 40) * game.player.luck);
+        game.chapterReward = 80 + game.stage * 40; // addExp applies luck exactly once in the next chapter.
         game.player.hp = Math.min(game.player.maxHp, game.player.hp + 18 + game.stage * 5);
         game.bossId = null;
         game.enemies = game.enemies.filter(mob => mob.type !== "boss");
@@ -552,6 +554,7 @@
     burst(p.x, p.y, 19, "#caffed", .9);
     if (p.pulse) {
       for (const e of game.enemies) {
+        if (scene !== "playing") break;
         if (distance(e, p) < 115 + p.pulse * 17) hurtEnemy(e, 25 + p.pulse * 20);
       }
     }
@@ -624,7 +627,11 @@
   ui.dash.addEventListener("click", event => { if (event.detail === 0) dash(); });
   // Only the GPT6 CHAT door opens its own two-work shelf. Other authors' doors are untouched.
   $("openGameBtn").addEventListener("click", () => { window.location.href = "gpt6-chat/index.html"; });
-  $("returnPortalBtn").addEventListener("click", () => { game = null; window.location.href = "gpt6-chat/index.html"; });
+  $("returnPortalBtn").addEventListener("click", () => {
+    if (game) saveProgress();
+    game = null;
+    window.location.href = "gpt6-chat/index.html";
+  });
   $("startBtn").addEventListener("click", startRun);
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
@@ -653,7 +660,9 @@
     if ((k === "escape" || k === "p") && !event.repeat) {
       if (scene === "playing") pause(); else if (scene === "paused") $("resume").click();
     }
-    if (k === "enter" && !onControl && !event.repeat && scene === "launcher") { setScene("home"); }
+    if (k === "enter" && !onControl && !event.repeat && scene === "launcher") {
+      window.location.href = "gpt6-chat/index.html";
+    }
     else if (k === "enter" && !onControl && !event.repeat && scene === "home") startRun();
   }, { passive: false });
   window.addEventListener("keyup", event => keys.delete(event.key.toLowerCase() === " " ? "space" : event.key.toLowerCase()));
@@ -694,6 +703,11 @@
 
   function update(dt) {
     const g = game, p = g.player;
+    if (g.comboPending) {
+      const bonus = g.comboPending; g.comboPending = 0;
+      addExp(bonus);
+      if (scene !== "playing") return;
+    }
     g.time += dt; g.stageTime += dt;
     g.comboTimer = Math.max(0, g.comboTimer - dt);
     if (g.comboTimer <= 0) g.combo = 0;
