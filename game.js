@@ -26,7 +26,7 @@
     { name: "第三章 · 星の神殿", short: "星の神殿", title: "夜明けは、ここから。", intro: "あなたの光で、世界はまた巡りはじめる。", bg: ["#1b172a", "#34243b"], glow: "#e5a5ce", orb: "#ffd8b3", accent: "#ffe0c1", boss: "最後の夜", note: 4 }
   ];
   const storageKey = "lumina-garden-v1";
-  let saved = { best: 0, wins: 0, music: true };
+  let saved = { best: 0, wins: 0, music: true, bestKills: 0, bestLevel: 1 };
   try { saved = Object.assign(saved, JSON.parse(localStorage.getItem(storageKey) || "{}")); } catch (_) {}
   const persist = () => { try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch (_) {} };
   const perks = [
@@ -49,6 +49,17 @@
     { id: "echo", icon: "❖", name: "余光の連鎖", desc: "影の浄化で近くの敵へ光を伝える", max: 3, apply: p => { p.echo++; } },
     { id: "focus", icon: "⟡", name: "光の導き", desc: "星の矢の速さと射程が17%上昇", max: 3, apply: p => { p.projectileSpeed *= 1.17; } }
   ];
+  const resonances = [
+    { id: "stardust", first: "bolts", second: "pierce", name: "星屑の軌道", desc: "星矢の速さが15%上昇" },
+    { id: "moonwave", first: "frost", second: "nova", name: "月輪の薄氷", desc: "光の波が敵を鈍らせる" },
+    { id: "afterglow", first: "flow", second: "pulse", name: "残光の疾走", desc: "ダッシュ距離が25%上昇" },
+    { id: "lifegarden", first: "vitality", second: "regen", name: "生命の庭", desc: "危機のとき再生速度が2倍" },
+    { id: "lightchain", first: "power", second: "echo", name: "光の連鎖", desc: "連鎖ダメージが30%上昇" }
+  ];
+  function activeResonance(p, id) {
+    const recipe = resonances.find(item => item.id === id);
+    return Boolean(recipe && p.perkLevels[recipe.first] && p.perkLevels[recipe.second]);
+  }
   const perkRoles = {
     bolts: "attack", tempo: "attack", power: "attack", orbit: "attack", frost: "attack",
     pulse: "attack", nova: "attack", pierce: "attack", crit: "attack", echo: "attack", focus: "attack",
@@ -140,7 +151,9 @@
   }
 
   function loadRecord() {
-    ui.record.textContent = saved.best ? ("BEST · 第" + saved.best + "章到達  /  全制覇 " + saved.wins + " 回") : "あなたの物語は、ここから。";
+    ui.record.textContent = saved.best
+      ? ("BEST · 第" + saved.best + "章 / 全制覇 " + saved.wins + " 回 / LV " + (saved.bestLevel || 1) + " / ✧ " + (saved.bestKills || 0))
+      : "あなたの物語は、ここから。";
     ui.sound.textContent = saved.music ? "♫" : "♪̸";
     ui.sound.setAttribute("aria-label", saved.music ? "音を消す" : "音を出す");
   }
@@ -189,7 +202,7 @@
       enemies: [], shots: [], hostile: [], orbs: [], kills: 0, level: 1,
       xp: 0, totalXp: 0, bossSpawned: false, bossId: null,
       spawned: 0, spawnCd: .28, nextId: 1, hudCd: 0, settled: false,
-      rerolls: 2, previousOffers: [], score: 0
+      rerolls: 2, previousOffers: [], score: 0, combo: 0, comboTimer: 0, chapterReward: 0, bossMinionCd: 9, waveMark: 0
     };
     particles.length = 0; rings.length = 0; texts.length = 0;
     musicAt = clock; beat = 0;
@@ -231,10 +244,16 @@
     ui.bossbar.classList.add("hidden");
     loadRecord();
   }
+  function saveProgress() {
+    if (!game) return;
+    saved.best = Math.max(saved.best || 0, game.stage + 1);
+    saved.bestKills = Math.max(saved.bestKills || 0, game.kills);
+    saved.bestLevel = Math.max(saved.bestLevel || 1, game.level);
+    persist();
+  }
   function gameOver() {
     if (!game || scene !== "playing") return;
-    saved.best = Math.max(saved.best, game.stage + 1);
-    persist();
+    saveProgress();
     setScene("over");
     sound("hit");
     overlayCard("YOUR LIGHT REMAINS", "星は、消えない。", "歩いてきた光は、きっと次の旅に残っている。", '<div class="stats"><span><strong>' + (game.stage + 1) + '</strong>到達した章</span><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span></div><button class="primary" id="retry">もう一度、旅へ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
@@ -243,7 +262,7 @@
   function win() {
     if (!game || game.settled) return;
     game.settled = true;
-    saved.best = 3; saved.wins++;
+    saveProgress(); saved.best = 3; saved.wins++;
     persist();
     setScene("won");
     flash(.55); sound("win");
@@ -253,12 +272,18 @@
   function chapterClear() {
     if (!game || scene !== "playing") return;
     if (game.stage === 2) { win(); return; }
-    saved.best = Math.max(saved.best, game.stage + 2); persist();
+    saveProgress(); saved.best = Math.max(saved.best, game.stage + 2); persist();
     setScene("chapter");
     const t = themes[game.stage + 1];
     sound("level"); flash(.36);
-    overlayCard("CHAPTER COMPLETE", themes[game.stage].short + "に光が戻った", "旅はまだ終わらない。<br>次は、" + t.short + "へ。", '<div class="special">✧</div><button class="primary" id="nextChapter">次の世界へ <b>↗</b></button>');
-    bindButton("nextChapter", () => { game.stage++; beginChapter(); });
+    overlayCard("CHAPTER COMPLETE", themes[game.stage].short + "に光が戻った", "守護者の星核を受け取った。<br>次は、" + t.short + "へ。",
+      '<div class="special">✧</div><p class="chapter-reward">✦ 星核の経験値 +' + game.chapterReward + '</p><button class="primary" id="nextChapter">次の世界へ <b>↗</b></button>');
+    bindButton("nextChapter", () => {
+      game.stage++; beginChapter();
+      const reward = game.chapterReward; game.chapterReward = 0;
+      if (reward) addExp(reward);
+      if (scene === "playing") showToast("星核の祝福 +" + reward);
+    });
   }
 
   function expNeed() { return Math.floor(12 + game.level * 8 + Math.pow(game.level, 1.23) * 2.3); }
@@ -302,9 +327,11 @@
     if (scene !== "upgrade") return;
     const p = game.player, n = p.perkLevels[item.id] || 0;
     if (n >= item.max) return;
+    const before = resonances.filter(recipe => activeResonance(p, recipe.id)).map(recipe => recipe.id);
     item.apply(p); p.perkLevels[item.id] = n + 1;
+    const unlocked = resonances.find(recipe => !before.includes(recipe.id) && activeResonance(p, recipe.id));
     setScene("playing");
-    showToast(item.name + "  " + (n + 1) + "/" + item.max);
+    showToast(unlocked ? "✦ 共鳴・" + unlocked.name : item.name + "  " + (n + 1) + "/" + item.max);
     haptic(20); updateHud();
     if (game.xp >= expNeed()) {
       game.xp -= expNeed(); game.level++; levelUp();
@@ -323,6 +350,9 @@
     }
     options.forEach((item, i) => {
       const n = p.perkLevels[item.id] || 0, harmony = (perkFamilies[item.id] || []).filter(id => p.perkLevels[id]);
+      const completing = resonances.find(recipe =>
+        ((recipe.first === item.id && p.perkLevels[recipe.second]) ||
+         (recipe.second === item.id && p.perkLevels[recipe.first])) && !activeResonance(p, recipe.id));
       const role = perkRoles[item.id] || "support";
       const button = document.createElement("button");
       button.type = "button"; button.className = "upgrade upgrade-" + role;
@@ -331,7 +361,8 @@
         '<div class="upgrade-body"><div class="upgrade-meta"><span>' + roleNames[role] + '</span><span>OPTION ' + (i + 1) + '</span></div>' +
         '<div class="upgrade-title">' + item.name + '</div><div class="upgrade-desc">' + item.desc + '</div>' +
         '<span class="upgrade-rank">RANK ' + n + ' → ' + (n + 1) + ' / ' + item.max + '</span>' +
-        (harmony.length ? '<span class="upgrade-harmony">✦ 所持の祝福と共鳴 · ' + harmony.length + '</span>' : '') + '</div>';
+        (completing ? '<span class="upgrade-harmony">✦ 共鳴解放：' + completing.name + ' · ' + completing.desc + '</span>'
+          : harmony.length ? '<span class="upgrade-harmony">✧ 相性のよい祝福 · ' + harmony.length + '</span>' : '') + '</div>';
       button.addEventListener("click", () => finishUpgrade(item));
       list.appendChild(button);
     });
@@ -347,8 +378,10 @@
     const current = $("upgradeBuild");
     if (current) {
       const built = perks.filter(item => p.perkLevels[item.id]);
-      current.textContent = built.length
-        ? "旅の祝福 · " + built.slice(-5).map(item => item.icon + " " + p.perkLevels[item.id]).join("  ")
+      const awakened = resonances.filter(recipe => activeResonance(p, recipe.id));
+      current.textContent = awakened.length
+        ? "✦ 共鳴 " + awakened.map(recipe => recipe.name).join(" / ")
+        : built.length ? "旅の祝福 · " + built.slice(-5).map(item => item.icon + " " + p.perkLevels[item.id]).join("  ")
         : "最初の祝福が、旅のかたちを決める";
     }
   }
