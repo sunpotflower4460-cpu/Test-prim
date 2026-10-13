@@ -75,10 +75,10 @@
   try {
     const value = JSON.parse(localStorage.getItem(STORAGE) || "null");
     if (value && typeof value === "object") {
-      saved.unlocked = clamp(Number(value.unlocked) || 0, 0, levels.length - 1);
-      saved.grades = Array.isArray(value.grades) ? levels.map((_,i) => clamp(Number(value.grades[i]) || 0,0,3)) : saved.grades;
+      saved.unlocked = clamp(Math.floor(Number(value.unlocked) || 0), 0, levels.length - 1);
+      saved.grades = Array.isArray(value.grades) ? levels.map((_,i) => clamp(Math.floor(Number(value.grades[i]) || 0),0,3)) : saved.grades;
       saved.muted = Boolean(value.muted); saved.still = Boolean(value.still);
-      saved.clears = Math.max(0,Number(value.clears)||0);
+      saved.clears = Math.max(0,Math.floor(Number(value.clears)||0));
     }
   } catch (_) {}
   // Honor system preferences on a first visit, while preserving any user choice.
@@ -200,6 +200,7 @@
     state.breath=1;state.strokes=0;state.elapsed=0;state.musicAt=0;
     state.history=[];state.particles=[];state.wakes=[];state.ripples=[];
     state.levelCleared=false;state.pointer=null;state.held.clear();state.noticeTimer=0;
+    state.focus=false;els.notice.classList.remove("shown");
   }
   function startLevel(index) {
     if (index<0 || index>saved.unlocked || index>=levels.length)return;
@@ -240,6 +241,7 @@
     Object.assign(state.seed,{x:prev.x,y:prev.y,vx:prev.vx,vy:prev.vy});
     state.notes.forEach((n,i)=>n.taken=prev.notes[i]);
     state.breath=prev.breath;state.strokes=prev.strokes;
+    state.held.clear();state.pointer=null; // Undo must not immediately replay a still-held key.
     state.wakes.length=0;state.ripples.push({x:prev.x,y:prev.y,r:8,life:.5,max:.5,color:"#c7eeda"});
     sound("undo");showNotice("風をひとつ、巻き戻した",1.3);updateUI();
   }
@@ -395,9 +397,10 @@
   els.motion.addEventListener("click",()=>{saved.still=!saved.still;persist();updateUI();});
   function resolveCollision(ob,r,restitution=.54){
     const seed=state.seed,dx=seed.x-ob.x,dy=seed.y-ob.y;
-    const d=Math.max(.001,hypot(dx,dy)),min=r+11;
+    const raw=hypot(dx,dy),d=Math.max(.001,raw),min=r+11;
     if(d>=min)return;
-    const nx=dx/d,ny=dy/d;
+    // Exact centre overlaps can occur with moving spirits; choose a real escape normal.
+    const nx=raw<.001?1:dx/d,ny=raw<.001?0:dy/d;
     seed.x=ob.x+nx*min;seed.y=ob.y+ny*min;
     const inward=seed.vx*nx+seed.vy*ny;
     if(inward<0){seed.vx-=(1+restitution)*inward*nx;seed.vy-=(1+restitution)*inward*ny;}
@@ -481,7 +484,14 @@
     }
   }
   function rounded(x,y,w,h,r) {
-    ctx.beginPath();ctx.roundRect(x,y,w,h,r);
+    ctx.beginPath();
+    if (typeof ctx.roundRect === "function") { ctx.roundRect(x,y,w,h,r); return; }
+    // CanvasRenderingContext2D.roundRect is missing in older iOS browsers.
+    const rr=Math.min(r,w/2,h/2);
+    ctx.moveTo(x+rr,y);ctx.lineTo(x+w-rr,y);ctx.quadraticCurveTo(x+w,y,x+w,y+rr);
+    ctx.lineTo(x+w,y+h-rr);ctx.quadraticCurveTo(x+w,y+h,x+w-rr,y+h);
+    ctx.lineTo(x+rr,y+h);ctx.quadraticCurveTo(x,y+h,x,y+h-rr);
+    ctx.lineTo(x,y+rr);ctx.quadraticCurveTo(x,y,x+rr,y);ctx.closePath();
   }
   function leaf(x,y,r,angle,color,opacity=1){
     ctx.save();ctx.translate(x,y);ctx.rotate(angle);ctx.globalAlpha*=opacity;
@@ -680,7 +690,12 @@
     now+=dt;
     if(state.mode==="playing")update(dt);
     if(state.mode==="playing"||state.mode==="cleared")updateEffects(dt);
-    render();requestAnimationFrame(frame);
+    // The game behind a menu is still visible, but need not redraw at 60fps.
+    if(state.mode==="playing" || state.mode==="cleared" ||
+      !frame.idleDraw || timestamp-frame.idleDraw>=90) {
+      render();frame.idleDraw=timestamp;
+    }
+    requestAnimationFrame(frame);
   }
   home();requestAnimationFrame(frame);
 })();
