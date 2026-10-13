@@ -390,3 +390,30 @@ body.code-active #flash,body.sync-active #flash{display:none}
 @media(prefers-reduced-motion:reduce){
   #topbar.low-hp .healthpanel,#mobileControls .dash-btn .dash-glyph{animation:none}
 }
+
+
+/* LUMINA constellation — visible only on the GPT6 CHAT result card. */
+#overlay .run-signature{
+  margin:12px auto 8px;padding:14px 13px 12px;border:1px solid rgba(201,235,215,.23);
+  border-radius:13px;
+  background:linear-gradient(125deg,rgba(111,203,193,.11),rgba(239,197,138,.055));
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+#overlay .run-signature-label{
+  font:9px/1.5 Arial,sans-serif;letter-spacing:.23em;color:#c6dfd5;
+}
+#overlay .run-signature strong{
+  font:500 11px/1.8 "Noto Serif JP",serif;color:#fff1d0;letter-spacing:.04em;
+}
+#overlay .run-resonances{
+  color:#f5dca4;font:10px/1.7 "Noto Serif JP",serif;
+}
+#overlay .run-streak{
+  border-top:1px solid rgba(212,237,214,.17);padding-top:8px;
+  width:75%;color:#a7dacc;font:10px Arial,sans-serif;letter-spacing:.12em;
+}
+@media(max-height:680px){
+  #overlay .run-signature{margin:8px auto 4px;padding:8px 10px;gap:4px}
+  #overlay .run-signature strong{font-size:10px;line-height:1.5}
+  #overlay .run-streak{padding-top:4px}
+}
