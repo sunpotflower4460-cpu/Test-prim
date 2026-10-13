@@ -118,12 +118,13 @@ function runSetsunaAudit(source, gameHtml, shelfHtml) {
   });
   check("Pointer joystick resets after release",()=>{
     const m=setup(),q=m.qa,pad=m.$("pad");q.startRun();
+    const before=q.get().player.x;
     pad.handlers.pointerdown[0]({pointerId:7,clientX:87,clientY:630,preventDefault:noop});
     pad.handlers.pointermove[0]({pointerId:7,clientX:125,clientY:630,preventDefault:noop});
-    m.step(3);const start=q.get().player.x;
+    m.step(3);const moved=q.get().player.x;
     pad.handlers.pointerup[0]({pointerId:7});
     m.step(3);
-    return q.get().player.x>start;
+    return moved>before&&q.get().player.x===moved&&m.$("knob").style.transform==="translate(0px,0px)";
   });
   check("Continuous timing-controlled play can finish",()=>{
     const m=setup(3),q=m.qa;q.startRun();
