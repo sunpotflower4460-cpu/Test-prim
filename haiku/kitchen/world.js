@@ -3,6 +3,65 @@
 import * as THREE from "../vendor/three.module.js";
 import * as T from "./textures.js";
 
+// The room reflections, shared with the props and characters. Only glossy or metal materials read
+// it (see glossyMat), so the matte surfaces stay cheap to draw.
+export const envState = { map: null };
+
+// Soft room reflections for the metal and glaze: a warm gradient dome with two bright panels
+// (window and ceiling light). It is baked once with PMREM.
+export function buildEnvironment(renderer) {
+  const envScene = new THREE.Scene();
+  const c = document.createElement("canvas");
+  c.width = 4;
+  c.height = 256;
+  const g = c.getContext("2d");
+  const grd = g.createLinearGradient(0, 0, 0, 256);
+  grd.addColorStop(0, "#fff4e2");
+  grd.addColorStop(0.5, "#e6d2b2");
+  grd.addColorStop(1, "#7d5e40");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 4, 256);
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  envScene.add(new THREE.Mesh(new THREE.SphereGeometry(10, 24, 16), new THREE.MeshBasicMaterial({ map: tex, side: THREE.BackSide })));
+  const panelMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(2.6, 2.4, 2.1), side: THREE.DoubleSide });
+  const window1 = new THREE.Mesh(new THREE.PlaneGeometry(4.5, 3), panelMat);
+  window1.position.set(-4, 3, -5);
+  window1.lookAt(0, 1, 0);
+  envScene.add(window1);
+  const ceilingPanel = new THREE.Mesh(new THREE.PlaneGeometry(3, 3), new THREE.MeshBasicMaterial({ color: new THREE.Color(1.6, 1.5, 1.35), side: THREE.DoubleSide }));
+  ceilingPanel.position.set(0, 6, 0);
+  ceilingPanel.rotation.x = Math.PI / 2;
+  envScene.add(ceilingPanel);
+  const pm = new THREE.PMREMGenerator(renderer);
+  const rt = pm.fromScene(envScene, 0.04);
+  pm.dispose();
+  envState.map = rt.texture;
+  return rt.texture;
+}
+
+// Metal and glaze get the room reflections. Matte surfaces do not, which keeps them cheaper.
+export function glossyMat(m) {
+  if (envState.map && (m.metalness > 0.3 || m.roughness < 0.4)) {
+    m.envMap = envState.map;
+    m.needsUpdate = true;
+  }
+  return m;
+}
+
+// A soft contact shadow disc for an object standing on a surface. y is its height above the surface.
+const contactMatCache = {};
+export function contactShadowMesh(radius, y = 0.006) {
+  if (!contactMatCache.m) {
+    contactMatCache.m = new THREE.MeshBasicMaterial({ map: T.contactShadow(), transparent: true, depthWrite: false, opacity: 0.9, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+  }
+  const m = new THREE.Mesh(new THREE.PlaneGeometry(radius * 2, radius * 2), contactMatCache.m);
+  m.rotation.x = -Math.PI / 2;
+  m.position.y = y;
+  m.renderOrder = 1;
+  return m;
+}
+
 // Station anchors: where the player stands to use each one, and what it is called.
 export const STATION_ANCHORS = {
   fridge: { x: 3.9, z: -2.2, r: 0.9 },
@@ -90,7 +149,10 @@ export function buildWorld(scene) {
   const geoCache = [];
   const mats = {};
   const mat = (key, opts) => {
-    if (!mats[key]) mats[key] = new THREE.MeshLambertMaterial(Object.assign({ roughness: 0.85, metalness: 0 }, opts));
+    if (!mats[key]) {
+      mats[key] = new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.85, metalness: 0, envMapIntensity: 0.45 }, opts));
+      glossyMat(mats[key]);
+    }
     return mats[key];
   };
   const add = (parent, mesh, cast = true, recv = true) => {
@@ -125,17 +187,29 @@ export function buildWorld(scene) {
     return mesh;
   };
   // Walls and tall furniture block the camera too. Low furniture (h below 1.4) only blocks walking.
-  const collide = (x0, x1, z0, z1, h = 3.2) => colliders.push({ x0, x1, z0, z1, h });
+  // noCam: the wall is not a camera blocker (the front wall, which the camera may step outside).
+  const collide = (x0, x1, z0, z1, h = 3.2, noCam = false) => colliders.push({ x0, x1, z0, z1, h, noCam });
+  // Walls that can end up between the camera and the room fade out when the camera is close to them.
+  const anim_cutaways = [];
+  const cutMat = (n, map = wallTex) => {
+    const m = new THREE.MeshStandardMaterial({ map, roughness: 0.95, metalness: 0, envMapIntensity: 0.45, transparent: true });
+    mats["cut" + n] = m;
+    return m;
+  };
+  let cutN = 0;
 
   const wallTex = T.plasterWall("#f3e6cf");
   const wallMat = mat("wall", { map: wallTex, roughness: 0.95 });
   const dinWallMat = mat("dinwall", { map: T.plasterWall("#efe0c6"), roughness: 0.95 });
-  const woodFloorMat = mat("floor", { map: T.woodFloor(), roughness: 0.7 });
-  const dinFloorMat = mat("dinfloor", { map: T.woodGrain(0.8), roughness: 0.75 });
-  const tileMat = mat("tile", { map: T.tileSplashback(), roughness: 0.4 });
-  const steel = mat("steel", { color: 0xbfc5c8, roughness: 0.35, metalness: 0.6 });
-  const cabinet = mat("cabinet", { map: T.woodGrain(0.92), roughness: 0.7 });
-  const counterTop = mat("counter", { color: 0xe9dfcc, roughness: 0.55 });
+  const woodFloorMat = mat("floor", Object.assign({ roughness: 1, envMapIntensity: 0.8 }, T.woodFloor()));
+  const dinFloorMat = mat("dinfloor", Object.assign({ roughness: 1, envMapIntensity: 0.7 }, T.woodGrain(0.8)));
+  // Glossy glaze: a low roughness plus a clear coat, so the tiles catch the window light.
+  const tileMat = mat("tile", { map: T.tileSplashback(), roughness: 0.2, metalness: 0, envMapIntensity: 1.1 });
+  tileMat.clearcoat = 0.6;
+  tileMat.clearcoatRoughness = 0.12;
+  const steel = mat("steel", { color: 0xc4cacd, roughness: 0.28, metalness: 0.75, envMapIntensity: 1.0 });
+  const cabinet = mat("cabinet", Object.assign({ roughness: 1, envMapIntensity: 0.7 }, T.woodGrain(0.92)));
+  const counterTop = mat("counter", { color: 0xeee5d2, roughness: 0.3, envMapIntensity: 0.9 });
   const white = mat("white", { color: 0xfbf8f2, roughness: 0.5 });
   const cream = mat("cream", { color: 0xf5ecd9, roughness: 0.6 });
   const darkMetal = mat("dark", { color: 0x3b3f44, roughness: 0.5, metalness: 0.3 });
@@ -231,7 +305,7 @@ export function buildWorld(scene) {
   boxAt(root, 8.9, 0.04, 0.78, counterTop, 0, 0.92, -4.02);
   collide(-4.45, 4.45, -4.45, -3.55, 0.95);
   // Cutting board on the counter, with a knife block beside it
-  boxAt(root, 0.82, 0.035, 0.48, mat("boardTop", { map: T.boardTop() }), -0.3, 0.9375, -3.9);
+  boxAt(root, 0.82, 0.035, 0.48, mat("boardTop", { map: T.boardTop(), roughness: 0.75 }), -0.3, 0.9375, -3.9);
   boxAt(root, 0.2, 0.26, 0.14, cabinet, -1.02, 1.05, -3.95);
   for (let i = 0; i < 3; i++) {
     const knife = boxAt(root, 0.022, 0.2, 0.012, mat("knifeBlade", { color: 0xd9dde0, roughness: 0.3, metalness: 0.5 }), -1.07 + i * 0.05, 1.2, -3.98, false, false);
@@ -272,20 +346,28 @@ export function buildWorld(scene) {
   boxAt(root, 3.5, 0.08, 0.6, counterTop, 0.15, 0.9, -1.25);
   boxAt(root, 3.3, 0.84, 0.56, cabinet, 0.15, 0.48, -1.25);
   collide(-1.6, 1.9, -1.55, -0.95, 0.95);
+  // Each jar: a short word and a small glyph on a band, wrapped round the front of the jar.
   const jarSpots = [
-    ["お味噌", -1.3, 0x7a4a24], ["砂糖", -0.85, 0xf5f0e0], ["みりん", -0.4, 0xe9c96a], ["醤油", 0.05, 0x6b3a22],
-    ["油", 0.5, 0xf0d070], ["海苔", 0.95, 0x2f4a3b], ["お塩", 1.4, 0xfbfbf6]
+    ["味噌", -1.3, 0x7a4a24, "#a0673a", "bean"], ["砂糖", -0.85, 0xf5f0e0, "#c9a86a", "crystal"],
+    ["みりん", -0.4, 0xe9c96a, "#d9a520", "sun"], ["しょうゆ", 0.05, 0x6b3a22, "#8a3b1e", "bottle"],
+    ["油", 0.5, 0xf0d070, "#d4a017", "drop"], ["のり", 0.95, 0x2f4a3b, "#2f5a3e", "leaf"], ["塩", 1.4, 0xfbfbf6, "#5b8fc6", "dots"]
   ];
-  for (const [label, x, col] of jarSpots) {
-    const bodyG = new THREE.CylinderGeometry(0.075, 0.085, 0.2, 14);
+  const labelTheta = 1.32;
+  for (const [label, x, col, accent, glyph] of jarSpots) {
+    const bodyG = new THREE.CylinderGeometry(0.075, 0.085, 0.2, 18);
     geoCache.push(bodyG);
-    const body = new THREE.Mesh(bodyG, mat("jar" + label, { color: col, roughness: 0.3 }));
+    const body = new THREE.Mesh(bodyG, mat("jar" + label, { color: col, roughness: 0.22, envMapIntensity: 0.9 }));
     body.position.set(x, 1.04, -1.4);
     add(root, body);
-    const lab = new THREE.Mesh(new THREE.PlaneGeometry(0.13, 0.08), new THREE.MeshBasicMaterial({ map: T.jarLabel(label) }));
-    geoCache.push(lab.geometry);
-    lab.position.set(x, 1.04, -1.31);
+    // The label is a slice of a tapered cylinder, so it hugs the jar instead of floating in front of it.
+    const labG = new THREE.CylinderGeometry(0.0786, 0.0844, 0.118, 28, 1, true, -labelTheta / 2, labelTheta);
+    geoCache.push(labG);
+    const lab = new THREE.Mesh(labG, new THREE.MeshBasicMaterial({ map: T.jarLabel(label, "#fff7e6", accent, glyph), side: THREE.FrontSide }));
+    lab.position.set(x, 1.04, -1.4);
     root.add(lab);
+    const shadow = contactShadowMesh(0.1, 0.004);
+    shadow.position.set(x, 0.942, -1.4);
+    root.add(shadow);
   }
   // Salt, rice cooker, toaster, radio, kettle, drawer
   const rice = new THREE.Group();
@@ -383,7 +465,7 @@ export function buildWorld(scene) {
   boxAt(root, 0.08, 1.0, 0.08, cabinet, -4.36, 0.5, 1.6, false, false);
 
   // Left wall with the back door (door opening at z 2.2..3.8), and the pantry shelf
-  boxAt(root, 0.16, H, 6.9, wallMat, -4.54, H / 2, -1.15);
+  anim_cutaways.push({ mesh: boxAt(root, 0.16, H, 6.9, cutMat(cutN++), -4.54, H / 2, -1.15), x: -4.54 });
   collide(-4.7, -4.4, -4.6, 2.2);
   boxAt(root, 0.16, 0.6, 1.6, wallMat, -4.54, 2.9, 3.0);
   boxAt(root, 0.16, H, 0.85, wallMat, -4.54, H / 2, 4.1);
@@ -423,17 +505,17 @@ export function buildWorld(scene) {
   collide(2.8, 3.6, 0.5, 1.3, 0.5);
 
   // Front wall: full height. Camera collision keeps the view inside.
-  boxAt(root, 9.2, H, 0.16, wallMat, 0, H / 2, 4.55);
-  collide(-4.6, 4.6, 4.46, 4.7);
+  anim_cutaways.push({ mesh: boxAt(root, 9.2, H, 0.16, cutMat(cutN++), 0, H / 2, 4.55), front: true });
+  collide(-4.6, 4.6, 4.46, 4.7, 3.2, true);
 
   // Dining room
   const dinBack = boxAt(root, 6.6, H, 0.16, dinWallMat, 7.8, H / 2, -4.5);
   dinBack.name = "dinBack";
   boxAt(root, 0.16, H, 9.2, dinWallMat, 11.0, H / 2, 0);
-  boxAt(root, 6.4, H, 0.16, dinWallMat, 7.8, H / 2, 4.55);
-  boxAt(root, 0.16, H, 3.8, wallMat, 4.5, H / 2, -2.6);
-  boxAt(root, 0.16, H, 2.4, wallMat, 4.5, H / 2, 3.2);
-  boxAt(root, 0.16, 0.9, 2.0, wallMat, 4.5, 2.75, 0.6);
+  anim_cutaways.push({ mesh: boxAt(root, 6.4, H, 0.16, cutMat(cutN++, dinWallMat.map), 7.8, H / 2, 4.55), front: true });
+  anim_cutaways.push({ mesh: boxAt(root, 0.16, H, 3.8, cutMat(cutN++), 4.5, H / 2, -2.6), x: 4.5 });
+  anim_cutaways.push({ mesh: boxAt(root, 0.16, H, 2.4, cutMat(cutN++), 4.5, H / 2, 3.2), x: 4.5 });
+  anim_cutaways.push({ mesh: boxAt(root, 0.16, 0.9, 2.0, cutMat(cutN++), 4.5, 2.75, 0.6), x: 4.5 });
   collide(4.4, 4.6, -4.6, -0.4);
   collide(4.4, 4.6, 1.6, 4.6);
   collide(10.9, 11.1, -4.6, 4.6);
@@ -465,7 +547,7 @@ export function buildWorld(scene) {
   const table = new THREE.Group();
   table.position.set(7.6, 0, 0.4);
   root.add(table);
-  boxAt(table, 2.4, 0.08, 1.4, mat("tableTop", { map: T.woodGrain(1.05), roughness: 0.55 }), 0, 0.71, 0);
+  boxAt(table, 2.4, 0.08, 1.4, mat("tableTop", Object.assign({ roughness: 1, envMapIntensity: 0.8 }, T.woodGrain(1.05))), 0, 0.71, 0);
   for (const [x, z] of [[-1.05, -0.6], [1.05, -0.6], [-1.05, 0.6], [1.05, 0.6]]) cyl(table, 0.04, 0.05, 0.7, 10, cabinet, x, 0.35, z);
   const cloth = new THREE.Mesh(new THREE.PlaneGeometry(1.7, 1.1), mat("cloth", { color: 0xf3c7b7, roughness: 0.95 }));
   geoCache.push(cloth.geometry);
@@ -673,9 +755,9 @@ export function buildWorld(scene) {
   for (const x of rowsX) collide(x - 0.45, x + 0.45, -4.1, 4.1, 0.2);
 
   // Lights: warm afternoon sun through the window, soft sky-and-earth fill, warm stove glow.
-  const hemi = new THREE.HemisphereLight(0xcfe9ff, 0xf1c08b, 0.95);
+  const hemi = new THREE.HemisphereLight(0xd6eeff, 0xf1c08b, 1.05);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffe2b0, 2.1);
+  const sun = new THREE.DirectionalLight(0xffe2b0, 1.75);
   sun.position.set(-5.5, 8.5, -9);
   sun.target.position.set(0.5, 0, 0.5);
   sun.castShadow = true;
@@ -691,6 +773,13 @@ export function buildWorld(scene) {
   scene.add(sun);
   scene.add(sun.target);
   anim.sun = sun;
+  // Rim light from behind and to the right: a thin cool edge on the characters, no shadows.
+  const rim = new THREE.DirectionalLight(0xd2e8ff, 0.55);
+  rim.position.set(5.5, 5, -6);
+  rim.target.position.set(0.5, 1, 0.5);
+  scene.add(rim);
+  scene.add(rim.target);
+  anim.rim = rim;
   const stoveLight = new THREE.PointLight(0xffb86b, 1.1, 4.5, 1.8);
   stoveLight.position.copy(LAYOUT.stove);
   scene.add(stoveLight);
@@ -718,6 +807,7 @@ export function buildWorld(scene) {
   };
 
   anim.elapsed = 0;
+  anim.cutaways = anim_cutaways;
   return {
     root,
     stations,

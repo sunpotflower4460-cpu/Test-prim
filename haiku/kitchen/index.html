@@ -31,6 +31,7 @@
     <p class="dish-name" id="dishName"></p>
     <p class="step-label" id="stepLabel"></p>
     <p class="step-hint" id="stepHint"></p>
+    <p class="holding" id="holding" hidden></p>
     <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
     <ol class="checklist" id="checklist"></ol>
   </div>
@@ -46,8 +47,10 @@
   <p class="basket" id="basket" hidden></p>
 </div>
 
+<div id="guideEdge" class="guide-edge" hidden aria-hidden="true"><span class="ge-arrow"></span><span class="ge-text"></span></div>
 <div id="prompt" class="prompt" hidden><span class="prompt-key" aria-hidden="true">E</span><span id="promptText"></span></div>
-<div id="timing" class="timing" hidden aria-hidden="true"><div class="zone" id="zone"></div><div class="needle" id="needle"></div></div>
+<div id="timing" class="timing" hidden aria-hidden="true"><p class="timing-cue" id="timingCue"></p><div class="zone" id="zone"></div><div class="needle" id="needle"></div></div>
+<p class="feedback" id="feedback" hidden role="status"></p>
 <div id="dragRing" class="drag-ring" hidden><span id="dragText"></span></div>
 <div id="holdBar" class="hold-bar" hidden><span id="holdFill"></span></div>
 <div class="actions" id="actions" hidden>
@@ -70,7 +73,8 @@
       <circle cx="39" cy="34" r="1.4" fill="#2b1d18"/>
       <circle cx="21" cy="41" r="2.6" fill="#f08c96" opacity=".7"/>
       <circle cx="43" cy="41" r="2.6" fill="#f08c96" opacity=".7"/>
-      <path d="M27 43q5 4 10 0" fill="none" stroke="#9b4b44" stroke-width="1.6" stroke-linecap="round"/>
+      <path id="pBrows" d="M21 29q4-2 8-1M35 28q4-1 8 1" fill="none" stroke="#6d5d57" stroke-width="1.6" stroke-linecap="round"/>
+      <path id="pMouth" d="M27 43q5 4 10 0" fill="none" stroke="#9b4b44" stroke-width="1.6" stroke-linecap="round"/>
     </svg>
   </div>
   <div class="talk-body">

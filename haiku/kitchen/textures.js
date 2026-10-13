@@ -30,38 +30,88 @@ function toTexture(canvas, repeatX = 1, repeatY = 1) {
   return t;
 }
 
-// Warm wood floor: planks with grain and slight tone variation.
-export function woodFloor() {
-  const c = makeCanvas(1024, 1024);
+// Wood with a varnish sheen: a colour map, a roughness map (grain lines are a little rougher than the
+// varnish between them) and a bump map for the grooves. Returns the three maps for a material.
+function woodPack(opts) {
+  const w = opts.w || 512;
+  const h = opts.h || 512;
+  const planks = opts.planks || 1;
+  const base = opts.base || [190, 136, 84];
+  const r = rng(opts.seed || 11);
+  const c = makeCanvas(w, h);
+  const rc = makeCanvas(w, h);
+  const bc = makeCanvas(w, h);
   const g = c.getContext("2d");
-  const r = rng(11);
-  const planks = 8;
-  const ph = 1024 / planks;
+  const rg = rc.getContext("2d");
+  const bg = bc.getContext("2d");
+  g.fillStyle = `rgb(${base[0]},${base[1]},${base[2]})`;
+  g.fillRect(0, 0, w, h);
+  rg.fillStyle = "rgb(92,92,92)";
+  rg.fillRect(0, 0, w, h);
+  bg.fillStyle = "rgb(128,128,128)";
+  bg.fillRect(0, 0, w, h);
+  const ph = h / planks;
   for (let i = 0; i < planks; i++) {
-    const tone = 0.9 + r() * 0.2;
-    const base = [Math.round(196 * tone), Math.round(146 * tone), Math.round(96 * tone)];
-    g.fillStyle = `rgb(${base[0]},${base[1]},${base[2]})`;
-    g.fillRect(0, i * ph, 1024, ph);
-    for (let k = 0; k < 26; k++) {
+    const tone = 0.9 + r() * 0.16;
+    g.fillStyle = `rgb(${Math.round(base[0] * tone)},${Math.round(base[1] * tone)},${Math.round(base[2] * tone)})`;
+    g.fillRect(0, i * ph, w, ph);
+    for (let k = 0; k < 20; k++) {
       const y0 = i * ph + r() * ph;
       const amp = 2 + r() * 4;
-      const freq = 0.004 + r() * 0.006;
-      g.strokeStyle = `rgba(90,52,28,${0.10 + r() * 0.15})`;
-      g.lineWidth = 0.8 + r() * 1.4;
+      const freq = (0.004 + r() * 0.006) * (512 / w);
+      const a = 0.1 + r() * 0.15;
+      const lw = 0.8 + r() * 1.4;
+      g.strokeStyle = `rgba(90,52,28,${a})`;
+      g.lineWidth = lw;
+      rg.strokeStyle = "rgb(150,150,150)";
+      rg.lineWidth = lw + 1;
+      bg.strokeStyle = "rgb(96,96,96)";
+      bg.lineWidth = lw;
       g.beginPath();
-      for (let x = 0; x <= 1024; x += 16) {
+      rg.beginPath();
+      bg.beginPath();
+      for (let x = 0; x <= w; x += 8) {
         const y = y0 + Math.sin(x * freq + k) * amp;
-        if (x === 0) g.moveTo(x, y);
-        else g.lineTo(x, y);
+        if (x === 0) { g.moveTo(x, y); rg.moveTo(x, y); bg.moveTo(x, y); } else { g.lineTo(x, y); rg.lineTo(x, y); bg.lineTo(x, y); }
       }
       g.stroke();
+      rg.stroke();
+      bg.stroke();
     }
     g.fillStyle = "rgba(60,34,18,0.55)";
-    g.fillRect(0, i * ph, 1024, 2);
-    const jx = r() * 1024;
+    g.fillRect(0, i * ph, w, 2);
+    rg.fillStyle = "rgb(190,190,190)";
+    rg.fillRect(0, i * ph, w, 2);
+    bg.fillStyle = "rgb(40,40,40)";
+    bg.fillRect(0, i * ph, w, 2);
+    const jx = r() * w;
     g.fillRect(jx, i * ph, 2, ph);
+    rg.fillRect(jx, i * ph, 2, ph);
   }
-  return toTexture(c, 2, 2);
+  const rep = opts.repeat || [1, 1];
+  const map = toTexture(c, rep[0], rep[1]);
+  const roughnessMap = dataTexture(rc, rep);
+  const bumpMap = dataTexture(bc, rep);
+  return { map, roughnessMap, bumpMap, bumpScale: opts.bump === undefined ? 0.6 : opts.bump };
+}
+
+// Data maps (roughness, bump) are not colour, so they are not sRGB encoded.
+function dataTexture(canvas, rep) {
+  const t = new THREE.CanvasTexture(canvas);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.repeat.set(rep[0], rep[1]);
+  return t;
+}
+
+// Warm wood floor: planks with grain, varnish sheen and grooves.
+export function woodFloor() {
+  return woodPack({ w: 1024, h: 1024, planks: 8, seed: 11, base: [196, 146, 96], repeat: [2, 2], bump: 0.5 });
+}
+
+// Wood grain for the tables, counter fronts and cabinets. tone darkens or lightens it.
+export function woodGrain(tone = 1) {
+  return woodPack({ w: 256, h: 256, planks: 1, seed: Math.round(tone * 1000), base: [190 * tone, 136 * tone, 84 * tone].map((v) => Math.round(v)), repeat: [1, 1], bump: 0.7 });
 }
 
 // Cream tiles with a blue-and-white pattern for the splashback.
@@ -300,20 +350,111 @@ export function calendarFace() {
   return c;
 }
 
-// Labelled jar and bottle. Each seasoning reads at a glance.
-export function jarLabel(text, color = "#fff7e6") {
-  const c = makeCanvas(128, 96);
+// Jar and bottle label, wrapped round the jar. A coloured band carries a small glyph, and the
+// short word sits large below it so it reads from the kitchen camera. accent=null gives a plain
+// label (the fridge magnets use that).
+export function jarLabel(text, color = "#fff7e6", accent = null, glyph = null) {
+  const W = 256;
+  const H = 224;
+  const c = makeCanvas(W, H);
   const g = c.getContext("2d");
   g.fillStyle = color;
-  g.fillRect(0, 0, 128, 96);
-  g.strokeStyle = "#8a5a33";
-  g.lineWidth = 5;
-  g.strokeRect(4, 4, 120, 88);
-  g.fillStyle = "#4a2e1a";
+  g.fillRect(0, 0, W, H);
+  const bandH = accent ? 66 : 0;
+  if (accent) {
+    g.fillStyle = accent;
+    g.fillRect(0, 0, W, bandH);
+    drawGlyph(g, glyph, W / 2, bandH / 2, 22);
+  }
+  g.strokeStyle = "#7a4d2a";
+  g.lineWidth = 8;
+  g.strokeRect(4, 4, W - 8, H - 8);
+  g.fillStyle = "#3a2416";
   g.textAlign = "center";
-  g.font = "bold 34px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif";
-  g.fillText(text, 64, 60);
+  g.textBaseline = "middle";
+  let size = 74;
+  g.font = `bold ${size}px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif`;
+  while (g.measureText(text).width > W - 34 && size > 30) {
+    size -= 2;
+    g.font = `bold ${size}px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif`;
+  }
+  g.fillText(text, W / 2, bandH + (H - bandH) / 2 + 2);
   return toTexture(c, 1, 1);
+}
+
+// Small white glyphs on the label band: drop, crystal, bean, dots, leaf, sun, bottle.
+function drawGlyph(g, kind, x, y, s) {
+  g.fillStyle = "#fffaf0";
+  g.strokeStyle = "#fffaf0";
+  g.lineWidth = 5;
+  g.beginPath();
+  if (kind === "drop") {
+    g.moveTo(x, y - s);
+    g.quadraticCurveTo(x + s, y + s * 0.2, x, y + s * 0.8);
+    g.quadraticCurveTo(x - s, y + s * 0.2, x, y - s);
+  } else if (kind === "crystal") {
+    g.moveTo(x, y - s);
+    g.lineTo(x + s * 0.7, y);
+    g.lineTo(x, y + s);
+    g.lineTo(x - s * 0.7, y);
+    g.closePath();
+  } else if (kind === "bean") {
+    g.ellipse(x, y, s * 0.8, s, 0, 0, Math.PI * 2);
+  } else if (kind === "dots") {
+    for (const [dx, dy] of [[-0.5, -0.4], [0.5, -0.4], [0, 0.5], [-0.2, 0.05], [0.4, 0.2]]) {
+      g.moveTo(x + dx * s + 4, y + dy * s);
+      g.arc(x + dx * s, y + dy * s, 4.5, 0, Math.PI * 2);
+    }
+  } else if (kind === "leaf") {
+    g.moveTo(x - s, y + s * 0.8);
+    g.quadraticCurveTo(x - s, y - s, x + s, y - s * 0.9);
+    g.quadraticCurveTo(x + s * 0.8, y + s * 0.6, x - s, y + s * 0.8);
+  } else if (kind === "sun") {
+    g.arc(x, y, s * 0.55, 0, Math.PI * 2);
+    for (let i = 0; i < 8; i++) {
+      const a = (i / 8) * Math.PI * 2;
+      g.moveTo(x + Math.cos(a) * s * 0.8, y + Math.sin(a) * s * 0.8);
+      g.lineTo(x + Math.cos(a) * s * 1.15, y + Math.sin(a) * s * 1.15);
+    }
+    g.stroke();
+    return;
+  } else if (kind === "bottle") {
+    g.rect(x - s * 0.5, y - s * 0.2, s, s * 1.2);
+    g.rect(x - s * 0.22, y - s * 0.9, s * 0.44, s * 0.7);
+  }
+  g.fill();
+}
+
+// Soft dark pool for contact shadows under items and the pot. Multiplies onto the surface.
+export function contactShadow() {
+  const c = makeCanvas(128, 128);
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(64, 64, 0, 64, 64, 64);
+  grd.addColorStop(0, "rgba(34,20,8,0.62)");
+  grd.addColorStop(0.5, "rgba(34,20,8,0.34)");
+  grd.addColorStop(1, "rgba(34,20,8,0)");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 128, 128);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
+// A soft ring with a bright rim, so steam bubbles read as bubbles rather than white dots.
+export function bubbleRing() {
+  const c = makeCanvas(64, 64);
+  const g = c.getContext("2d");
+  const grd = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+  grd.addColorStop(0, "rgba(240,250,255,0.1)");
+  grd.addColorStop(0.62, "rgba(240,250,255,0.25)");
+  grd.addColorStop(0.8, "rgba(255,255,255,0.95)");
+  grd.addColorStop(0.92, "rgba(190,225,245,0.55)");
+  grd.addColorStop(1, "rgba(190,225,245,0)");
+  g.fillStyle = grd;
+  g.fillRect(0, 0, 64, 64);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
 }
 
 // Chalkboard menu listing the dishes.
@@ -342,24 +483,6 @@ export function towelStripes() {
   g.fillRect(0, 0, 64, 256);
   g.fillStyle = "#5b8fc6";
   for (let y = 0; y < 256; y += 48) g.fillRect(0, y, 64, 14);
-  return toTexture(c, 1, 1);
-}
-
-// Plain wood grain for the tables and counter tops.
-export function woodGrain(tone = 1) {
-  const c = makeCanvas(256, 256);
-  const g = c.getContext("2d");
-  g.fillStyle = `rgb(${Math.round(190 * tone)},${Math.round(136 * tone)},${Math.round(84 * tone)})`;
-  g.fillRect(0, 0, 256, 256);
-  const r = rng(Math.round(tone * 1000));
-  for (let i = 0; i < 18; i++) {
-    g.strokeStyle = `rgba(90,50,25,${0.1 + r() * 0.15})`;
-    g.lineWidth = 1 + r() * 2;
-    g.beginPath();
-    const y = r() * 256;
-    for (let x = 0; x <= 256; x += 16) g.lineTo(x, y + Math.sin(x * 0.03 + i) * 3);
-    g.stroke();
-  }
   return toTexture(c, 1, 1);
 }
 

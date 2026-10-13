@@ -191,9 +191,19 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .step-hint {
   margin: 0;
-  font-size: 12.5px;
-  line-height: 1.5;
-  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.55;
+  color: #5e4a3a;
+}
+.holding {
+  margin: 6px 0 0;
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-deep);
+  font-size: 14px;
+  font-weight: 700;
 }
 .progress {
   margin-top: 8px;
@@ -214,8 +224,9 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   margin: 8px 0 0;
   padding: 0;
   list-style: none;
-  font-size: 12px;
-  color: var(--ink-soft);
+  font-size: 14px;
+  line-height: 1.5;
+  color: #5e4a3a;
 }
 .checklist li {
   padding: 2px 0 2px 18px;
@@ -233,7 +244,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 .checklist li.done { color: #a89482; text-decoration: line-through; }
 .checklist li.done::before { background: #9bbf8a; border-color: #9bbf8a; }
-.checklist li.current { color: var(--ink); font-weight: 700; }
+.checklist li.current { color: var(--ink); font-weight: 800; }
 .checklist li.current::before { border-color: var(--accent); background: var(--accent-soft); }
 
 .hud-tools {
@@ -273,6 +284,37 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   font-size: 12px;
   color: var(--ink-soft);
   text-align: right;
+}
+
+/* Guide when the next station is off screen: a small pointer at the screen edge. */
+.guide-edge {
+  position: fixed;
+  z-index: 21;
+  left: 0;
+  top: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px 6px 9px;
+  border-radius: 999px;
+  border: 2px solid #ffd27a;
+  background: rgba(34, 24, 17, 0.9);
+  color: #fff8ec;
+  font-size: 13px;
+  font-weight: 700;
+  white-space: nowrap;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 6px 16px rgba(20, 12, 6, 0.3);
+  pointer-events: none;
+}
+.ge-arrow {
+  display: inline-block;
+  width: 0;
+  height: 0;
+  border-top: 6px solid transparent;
+  border-bottom: 6px solid transparent;
+  border-left: 10px solid #ffd27a;
+  transform: rotate(var(--a, 0rad));
 }
 
 /* Prompt, actions, overlays */
@@ -403,6 +445,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   font-size: 15.5px;
   line-height: 1.7;
   min-height: 1.7em;
+  white-space: pre-line;
 }
 .talking .actions { bottom: calc(22px + var(--safe-b)); }
 
@@ -413,29 +456,88 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   transform: translate(-50%, -50%);
   z-index: 24;
   width: min(360px, 82vw);
-  height: 26px;
+  height: 30px;
   border-radius: 999px;
-  background: rgba(63, 46, 34, 0.78);
-  box-shadow: 0 6px 16px rgba(40, 24, 12, 0.3);
+  background: rgba(34, 24, 17, 0.92);
+  border: 2px solid #fff8ec;
+  box-shadow: 0 6px 16px rgba(20, 12, 6, 0.45);
   pointer-events: none;
 }
 .timing .zone {
   position: absolute;
-  top: 3px;
-  bottom: 3px;
+  top: 2px;
+  bottom: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, #9fd58a, #6fbf6a);
-  box-shadow: 0 0 10px rgba(160, 230, 140, 0.7);
+  background: linear-gradient(90deg, #9be37f, #4fbf4a);
+  border: 2px solid #2f7a2b;
+  box-shadow: 0 0 12px rgba(150, 240, 130, 0.9);
 }
 .timing .needle {
   position: absolute;
-  top: -6px;
-  bottom: -6px;
-  width: 6px;
-  margin-left: -3px;
-  border-radius: 3px;
-  background: #fff8ec;
-  box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+  top: -7px;
+  bottom: -7px;
+  width: 7px;
+  margin-left: -3.5px;
+  border-radius: 4px;
+  background: #fffdf6;
+  box-shadow: 0 0 0 2px rgba(34, 24, 17, 0.9), 0 0 10px rgba(255, 255, 255, 0.9);
+}
+.timing-cue {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 10px);
+  transform: translateX(-50%);
+  margin: 0;
+  padding: 5px 14px;
+  white-space: nowrap;
+  border-radius: 999px;
+  background: rgba(34, 24, 17, 0.9);
+  color: #fff8ec;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  box-shadow: 0 4px 12px rgba(20, 12, 6, 0.35);
+}
+.timing-cue.now {
+  background: var(--accent);
+  color: #fff;
+  border: 2px solid #fff8ec;
+  animation: cuePulse 0.42s ease-in-out infinite alternate;
+}
+@keyframes cuePulse {
+  from { transform: translateX(-50%) scale(1); }
+  to { transform: translateX(-50%) scale(1.08); }
+}
+
+/* Short word after each press: ぴったり！ / おしい / もうすこし */
+.feedback {
+  position: fixed;
+  left: 50%;
+  top: calc(46% - 74px);
+  z-index: 26;
+  margin: 0;
+  transform: translate(-50%, -50%);
+  padding: 6px 18px;
+  border-radius: 999px;
+  background: rgba(34, 24, 17, 0.9);
+  color: #fff8ec;
+  font-family: var(--serif);
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  pointer-events: none;
+  box-shadow: 0 6px 16px rgba(20, 12, 6, 0.35);
+}
+.feedback.nice { background: #3f8f3a; color: #fff; }
+.feedback.good { background: #b07a1f; color: #fff; }
+.feedback.show { animation: fbPop 0.9s ease both; }
+@keyframes fbPop {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.6); }
+  18% { opacity: 1; transform: translate(-50%, -50%) scale(1.1); }
+  32% { transform: translate(-50%, -50%) scale(1); }
+  78% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-50%, -62%) scale(1); }
 }
 
 .drag-ring {
@@ -446,7 +548,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   margin: -60px 0 0 -60px;
   border-radius: 50%;
   --p: 0;
-  background: conic-gradient(var(--accent) calc(var(--p) * 1turn), rgba(255, 255, 255, 0.25) 0);
+  background: conic-gradient(#ffd27a calc(var(--p) * 1turn), rgba(34, 24, 17, 0.62) 0);
   -webkit-mask: radial-gradient(circle, transparent 46px, #000 47px);
   mask: radial-gradient(circle, transparent 46px, #000 47px);
   pointer-events: none;
@@ -459,10 +561,11 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   white-space: nowrap;
   padding: 4px 10px;
   border-radius: 999px;
-  background: rgba(63, 46, 34, 0.82);
+  background: rgba(34, 24, 17, 0.92);
   color: #fff8ec;
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 15px;
+  font-weight: 800;
+  border: 2px solid #ffd27a;
 }
 .hold-bar {
   position: fixed;
@@ -687,8 +790,10 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 /* Phone and landscape */
 @media (max-width: 720px) {
   .dish-card { width: min(250px, 58vw); padding: 10px 12px; }
-  .step-label { font-size: 14px; }
-  .step-hint { font-size: 12px; }
+  .step-label { font-size: 15px; }
+  .step-hint { font-size: 13px; line-height: 1.5; }
+  .checklist { font-size: 13px; }
+  .holding { font-size: 13px; }
   .tool-btn span { display: none; }
   .tool-btn { padding: 0; width: 40px; justify-content: center; }
   .btn-act { width: 76px; height: 76px; font-size: 17px; }
@@ -707,13 +812,14 @@ button:focus-visible, a:focus-visible, input:focus-visible {
 }
 
 @media (max-height: 500px) and (orientation: landscape) {
-  .hud { top: calc(10px + var(--safe-t)); left: calc(56px + var(--safe-l)); }
+  .hud { top: calc(44px + var(--safe-t)); left: calc(12px + var(--safe-l)); }
   .checklist { display: none; }
-  .dish-card { width: min(240px, 38vw); padding: 8px 10px; }
-  .step-hint { display: none; }
+  .dish-card { width: min(250px, 38vw); padding: 8px 10px; }
+  .step-hint { font-size: 13px; line-height: 1.45; }
+  .holding { font-size: 12.5px; padding: 2px 8px; }
   .back-link { font-size: 12px; padding: 5px 10px; }
-  .hud-tools { top: 0; }
-  .basket { top: 44px; }
+  .hud-tools { top: -34px; }
+  .basket { top: 0; }
   .btn-act { width: 62px; height: 62px; font-size: 15px; }
   .btn-help { padding: 6px 10px; font-size: 12px; }
   .actions { bottom: calc(12px + var(--safe-b)); gap: 6px; }

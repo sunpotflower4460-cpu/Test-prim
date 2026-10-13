@@ -46,11 +46,17 @@ let pendingActions = [];
 let pendingDiary = null;
 let pitchView = 0;
 let last = performance.now();
+// Per-viewer, in memory only: the first sighting plays a shiver; each objective hints once.
+let shiverDone = false;
+let hintDone = {};
+let stallT = 0;
+let stallSig = null;
 
 const canvas = document.getElementById("view");
 const render = createRender(canvas, world);
 const audio = createAudio();
 const ui = createUI({
+  world,
   roomLabel: r => (Levels.LEVEL.rooms[r] ? Levels.LEVEL.rooms[r].label : ""),
   showLockHint: () => mode === "play" && !touchDevice
 });
@@ -95,6 +101,8 @@ function startNew() {
   audio.unlock();
   audio.setEnabled(settings.sound);
   cp = null;
+  shiverDone = false;
+  hintDone = {};
   writeStore();
   state = Sim.newGame(world, SEED);
   begin();
@@ -106,6 +114,7 @@ function continueRun() {
   if (!cp) return;
   audio.unlock();
   audio.setEnabled(settings.sound);
+  hintDone = {};
   state = Sim.restore(world, cp);
   begin();
 }
@@ -183,15 +192,16 @@ function humInfo(s) {
   const dy = e.y - p.y;
   const d = Math.max(0.001, Math.hypot(dx, dy));
   const prox = clamp01(1 - d / 22);
+  // The hum is faint and dull when she is far, and grows and brightens as she comes near.
   let vol;
-  if (!s.awakened) vol = 0.035;
-  else vol = 0.05 + 0.24 * prox * prox;
+  if (!s.awakened) vol = 0.012;
+  else vol = 0.008 + 0.26 * prox * prox;
   if (e.state === "FROZEN") vol *= 1.5;
   if (e.state === "STUNNED") vol *= 1.25;
-  if (e.state === "SEALED") vol = 0.015;
+  if (e.state === "SEALED") vol = 0.01;
   const right = [Math.cos(p.yaw), -Math.sin(p.yaw)];
   const side = (dx * right[0] + dy * right[1]) / d;
-  return { humVol: vol, humPan: Math.max(-0.9, Math.min(0.9, side * 0.9)), fear: s.fear };
+  return { humVol: vol, humProx: prox, humPan: Math.max(-0.9, Math.min(0.9, side * 0.9)), fear: s.fear };
 }
 
 function onGrab() {
@@ -335,14 +345,21 @@ ui.el.diaryClose.addEventListener("click", closeDiary);
 ui.el.btnAnswer.addEventListener("click", () => pendingActions.push("answer"));
 ui.el.btnSilence.addEventListener("click", () => pendingActions.push("silence"));
 ui.el.btnPauseTouch.addEventListener("click", pause);
-ui.el.actInteract.addEventListener("pointerdown", e => e.stopPropagation());
 
 // Keys that belong to menus: Escape resumes or closes, E closes the diary.
 window.addEventListener("keydown", e => {
-  if (mode === "pause" && e.code === "Escape") {
-    e.preventDefault();
-    resume();
-  } else if (mode === "diary" && (e.code === "Escape" || e.code === "KeyE")) {
+  if (e.code === "Escape") {
+    if (mode === "play") {
+      e.preventDefault();
+      pause();
+    } else if (mode === "pause") {
+      e.preventDefault();
+      resume();
+    } else if (mode === "diary") {
+      e.preventDefault();
+      closeDiary();
+    }
+  } else if (mode === "diary" && e.code === "KeyE" && !e.repeat) {
     e.preventDefault();
     closeDiary();
   }
@@ -385,6 +402,29 @@ function frame(now) {
     pitchView = inp.pitch;
   }
   if (ev.length) handleEvents(ev);
+
+  if (state && mode === "play") {
+    // The first time she sees you, a shiver, so the threat reads without the HUD.
+    if (state.ent.seen && !shiverDone) {
+      shiverDone = true;
+      audio.shiver();
+    }
+    // After a long stretch with no progress, one quiet line says where to go next.
+    const sig = Sim.progressSig(state);
+    if (sig !== stallSig) {
+      stallSig = sig;
+      stallT = 0;
+    } else if (!state.choice && !state.ending) {
+      stallT += dt;
+      const O = Sim.objectiveOf(world, state);
+      const key = O.stage + ":" + (O.next || "");
+      const hint = Story.stallHint(O);
+      if (stallT > 150 && hint && !hintDone[key]) {
+        hintDone[key] = true;
+        ui.say(hint, 6000);
+      }
+    }
+  }
 
   render.update(mode === "title" || !state ? null : state, dt, now / 1000, { pitch: pitchView });
 

@@ -56,6 +56,17 @@
         lift: "きれいに巻けたわ",
         shape: "ふんわりにぎれたわ"
       },
+      // Short words shown on each timed press (chop, crack).
+      grade: { nice: "ぴったり！", good: "おしい", miss: "もうすこし" },
+      // Shown at each third of a stir or beat.
+      stir: ["いい感じ", "その調子", "もうひと息"],
+      // Two lines the first time a recipe is started. Never repeated after that.
+      firstTip: {
+        miso: ["まずは、棚から鍋を出してね。", "鍋を持ったら、シンクで「する」を長押しして、お水をためるのよ。"],
+        tamago: ["まずは、棚からボウルを出して、作業台に置いてね。", "卵は冷蔵庫から3つ。光ったところで「する」で割りましょう。"],
+        niku: ["まずは、棚から鍋を出して、コンロにのせましょう。", "火をつけたら、牛肉を入れて、鍋の中でぐるぐる炒めるのよ。"],
+        onigiri: ["まずは、お塩の台で「する」を押して、手に塩をつけましょう。", "そのあと、炊飯器からご飯をゆっくり引き出して、にぎるのよ。"]
+      },
       tasteOk: "ちょうどいいわ",
       tasteSweetHigh: "少し、あまめね",
       tasteSweetLow: "もうちょっと、甘くしてもいいかも",

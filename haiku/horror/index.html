@@ -24,14 +24,15 @@
       <div id="diaryCount" class="sub">日記 0/3</div>
     </div>
     <div class="hud-br">
-      <div class="shells" aria-label="二連銃の装填">
+      <div class="shells" role="img" aria-label="二連銃の装填">
+        <span class="hud-label">二連銃</span>
         <span id="shell0" class="shell" data-v="empty"></span>
         <span id="shell1" class="shell" data-v="empty"></span>
-        <span class="reserve">残 <span id="reserveCount">2</span></span>
+        <span class="reserve">予備 <span id="reserveCount">2</span></span>
       </div>
       <div class="battery">
-        <div class="bar"><div id="batteryFill"></div></div>
-        <span id="batteryCount" class="sub">電池 0</span>
+        <div class="bar" role="img" aria-label="懐中電灯の充電"><div id="batteryFill"></div></div>
+        <span id="batteryCount" class="sub">予備電池 0</span>
       </div>
       <div id="lightState" class="sub">消灯</div>
     </div>

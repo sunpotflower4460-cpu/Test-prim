@@ -755,7 +755,33 @@
   function contextAction(world, s) {
     const t = findTarget(world, s);
     if (!t) return null;
-    return { kind: t.kind, id: t.id, key: t.key, search: t.search || null };
+    const item = t.kind === "take" || t.kind === "read" ? world.itemById[t.id] : null;
+    const door = t.kind === "door" ? world.doors.find(d => d.id === t.id) : null;
+    return {
+      kind: t.kind,
+      id: t.id,
+      key: t.key,
+      search: t.search || null,
+      itemKind: item ? item.kind : null,
+      doorKind: door ? door.kind : null,
+      doorOpen: door ? !!s.doorOpen[door.index] : null
+    };
+  }
+
+  // What the player should do next, derived from the state. The sim gives keys and counts;
+  // the words live in story.js.
+  function objectiveOf(world, s) {
+    const n = fudaCount(world, s);
+    if (s.seal.lid) return { stage: "dawn", n, placed: s.placed, next: null };
+    if (s.placed >= 3) return { stage: "lid", n, placed: s.placed, next: null };
+    if (n >= 3) return { stage: "well", n, placed: s.placed, next: null };
+    const next = FUDA_IDS.find(id => !s.taken[id]) || null;
+    return { stage: "fuda", n, placed: s.placed, next };
+  }
+
+  // A number that changes whenever the player makes progress.
+  function progressSig(s) {
+    return Object.keys(s.taken).length * 10 + s.placed * 100 + Object.keys(s.notes).length * 1000 + (s.seal.lid ? 10000 : 0);
   }
 
   // ---------- actions ----------
@@ -1379,6 +1405,8 @@
     step,
     rnd,
     contextAction,
+    objectiveOf,
+    progressSig,
     findTarget,
     seesEntity,
     beamHits,

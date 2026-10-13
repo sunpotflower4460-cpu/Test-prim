@@ -1,11 +1,11 @@
 // Visuals for pots, pans, bowls, plates, food and items. They are rebuilt only when the
 // world changes, and they mirror the sim state. Nothing here changes game state.
 import * as THREE from "../vendor/three.module.js";
-import { LAYOUT } from "./world.js";
+import { LAYOUT, contactShadowMesh, glossyMat } from "./world.js";
 
 const cache = {};
 function mat(key, opts) {
-  if (!cache[key]) cache[key] = new THREE.MeshLambertMaterial(Object.assign({ roughness: 0.6, metalness: 0 }, opts));
+  if (!cache[key]) cache[key] = glossyMat(new THREE.MeshStandardMaterial(Object.assign({ roughness: 0.6, metalness: 0, envMapIntensity: 0.6 }, opts)));
   return cache[key];
 }
 const steel = () => mat("potSteel", { color: 0xa4acb1, roughness: 0.35, metalness: 0.6 });
@@ -77,6 +77,8 @@ function buildPot(v) {
   g.add(body);
   g.add(box(0.1, 0.02, 0.03, wood(), 0.23, 0.12, 0));
   g.add(box(0.1, 0.02, 0.03, wood(), -0.23, 0.12, 0));
+  // The pot sits on the burner: a soft shadow under its base.
+  g.add(contactShadowMesh(0.2, 0.02));
   if (v.water) {
     const [col, op] = brothFor(v);
     const water = disc(0.155, 0.01, mat("pBroth" + col, { color: col, transparent: true, opacity: op, roughness: 0.2 }), 0, 0.128, 0, 28);
@@ -96,6 +98,7 @@ function buildPot(v) {
 
 function buildPan(v) {
   const g = new THREE.Group();
+  g.add(contactShadowMesh(0.25, 0.022));
   g.add(shadowed(disc(0.19, 0.03, dark(), 0, 0.015, 0, 28)));
   g.add(box(0.28, 0.025, 0.04, wood(), 0.33, 0.02, 0));
   if (v.oil) g.add(disc(0.175, 0.005, mat("pOil", { color: 0xf3d37a, transparent: true, opacity: 0.6, roughness: 0.2 }), 0, 0.034, 0, 26));
@@ -279,6 +282,11 @@ export function createProps(scene) {
   const tableGroup = new THREE.Group();
   tableGroup.position.copy(LAYOUT.table);
   root.add(tableGroup);
+  // Items on the counter and board get a soft shadow so they sit on the surface.
+  function withContact(obj) {
+    obj.add(contactShadowMesh(0.14, 0.008));
+    return obj;
+  }
   let counterKey = "";
   let boardKey = "";
   let counterObj = null;
@@ -330,12 +338,12 @@ export function createProps(scene) {
       const ck = itemKey(world.counter);
       if (ck !== counterKey) {
         counterKey = ck;
-        counterObj = swapGroup(counterGroup, counterObj, world.counter ? buildItem(world.counter) : null);
+        counterObj = swapGroup(counterGroup, counterObj, world.counter ? withContact(buildItem(world.counter)) : null);
       }
       const bk = itemKey(world.board);
       if (bk !== boardKey) {
         boardKey = bk;
-        boardObj = swapGroup(boardGroup, boardObj, world.board ? buildItem(world.board) : null);
+        boardObj = swapGroup(boardGroup, boardObj, world.board ? withContact(buildItem(world.board)) : null);
       }
     },
     // Hand items: rebuilt when the item changes. Parent is the player's hand group.
@@ -348,8 +356,9 @@ export function createProps(scene) {
       }
       const obj = item ? buildItem(item) : null;
       if (obj) {
-        obj.position.set(0, -0.02, 0.06);
-        obj.scale.setScalar(0.9);
+        // In the hand: a little forward of the fist, so the item sits in front of the body.
+        obj.position.set(0, -0.06, 0.12);
+        obj.scale.setScalar(item.kind === "pot" || item.kind === "pan" ? 1.25 : 1.1);
         parent.add(obj);
       }
       return { key: k, obj };
@@ -360,6 +369,7 @@ export function createProps(scene) {
       const g = buildItem(item);
       g.position.set(-0.6 + (idx % 3) * 0.55, 0.0, idx < 3 ? -0.25 : 0.35);
       g.scale.setScalar(1.1);
+      g.add(contactShadowMesh(0.16, 0.012));
       tableGroup.add(g);
       served.push(g);
       return g;

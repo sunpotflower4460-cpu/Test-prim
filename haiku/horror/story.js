@@ -58,6 +58,56 @@
     wellLook: "井戸を覗く"
   };
 
+  // Prompt text: the key name comes first in the UI ("E 障子を開ける").
+  const ACTION = {
+    take: { battery: "電池を拾う", shell: "散弾を拾う", fuda: "札を拾う" },
+    read: "日記を読む",
+    open: { shoji: "障子を開ける", fusuma: "襖を開ける", genkan: "戸を開ける", hikido: "引き戸を開ける" },
+    close: { shoji: "障子を閉める", fusuma: "襖を閉める", genkan: "戸を閉める", hikido: "引き戸を閉める" },
+    burn: "線香を焚く",
+    well: "札を井戸に納める",
+    lid: "井戸の蓋を閉める",
+    wellLook: "井戸を覗く",
+    search: "調べる"
+  };
+
+  // Short words for the round touch button, which is only 64 px across.
+  const ACTION_SHORT = {
+    take: "拾う", read: "読む", open: "開ける", close: "閉める", burn: "焚く",
+    well: "納める", lid: "閉じる", wellLook: "覗く", search: "調べる"
+  };
+
+  // Where the next talisman is. Keyed by the talisman that is still missing.
+  const NEXT_FUDA = {
+    "fuda-1": "納戸の箱を調べる",
+    "fuda-2": "仏間の位牌の下を調べる",
+    "fuda-3": "蔵の箱を開ける"
+  };
+
+  // Quiet hints after a long pause without progress. Once per objective.
+  const STALL = {
+    "fuda-1": "……納戸の、箱の裏が気になる。",
+    "fuda-2": "仏壇の位牌の下。祖母は、そこに何かを隠していた。",
+    "fuda-3": "蔵の箱。さっきの日記に、そう書いてあった。",
+    well: "札を三枚納めれば、歌は止むはずだ。井戸の縁へ。",
+    lid: "あとは蓋を閉めるだけだ。井戸の縁で、蓋を。"
+  };
+
+  // The objective line, from the sim's objectiveOf() result.
+  function objectiveText(o) {
+    if (o.stage === "fuda") return "札 " + o.n + "/3 — 次は、" + NEXT_FUDA[o.next];
+    if (o.stage === "well") return "札を納める " + o.placed + "/3 — 井戸の縁で";
+    if (o.stage === "lid") return "井戸の蓋を閉める — 札は三枚納まった";
+    return "蓋は閉じた — 夜明けを待つ";
+  }
+
+  function stallHint(o) {
+    if (o.stage === "fuda") return STALL[o.next] || null;
+    if (o.stage === "well") return STALL.well;
+    if (o.stage === "lid") return STALL.lid;
+    return null;
+  }
+
   const SEARCH_LABELS = {
     tansu: "引き出しを開ける",
     ihai: "位牌の下を見る",
@@ -143,7 +193,10 @@
     ]
   };
 
-  const API = { TITLE, LINES, LABELS, SEARCH_LABELS, CALL, DIARY, ENDINGS, CARDS, CONTROLS };
+  const API = {
+    TITLE, LINES, LABELS, SEARCH_LABELS, CALL, DIARY, ENDINGS, CARDS, CONTROLS,
+    ACTION, ACTION_SHORT, NEXT_FUDA, STALL, objectiveText, stallHint
+  };
 
   if (typeof module !== "undefined" && module.exports) module.exports = API;
   else window.NakiIdoStory = API;

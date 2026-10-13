@@ -183,12 +183,12 @@ export function buildWell(world, M) {
   const w = world.well;
   g.position.set(w.x, 0, w.y);
 
-  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.62, 1.0, 26, 1, true), M.stone);
+  const ring = new THREE.Mesh(new THREE.CylinderGeometry(0.56, 0.62, 1.0, 26, 1, true), M.wellStone || M.stone);
   ring.position.y = 0.5;
   ring.castShadow = true;
   ring.receiveShadow = true;
   g.add(ring);
-  const top = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.6, 26), M.stone);
+  const top = new THREE.Mesh(new THREE.RingGeometry(0.4, 0.6, 26), M.wellStone || M.stone);
   top.rotation.x = -Math.PI / 2;
   top.position.y = 1.005;
   top.receiveShadow = true;

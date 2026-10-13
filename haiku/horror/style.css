@@ -7,7 +7,11 @@
   --muted: #a79f8b;
   --accent: #b8402f;
   --gold: #c9a45a;
-  --line: rgba(233, 225, 204, 0.32);
+  --line: rgba(233, 225, 204, 0.42);
+  --hud: #f1e9d4;
+  --hud-sub: #cfc6ad;
+  --warn: #efb265;
+  --danger: #ff7a62;
   --serif: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", serif;
   --fear: 0;
   --safe-t: env(safe-area-inset-top, 0px);
@@ -85,28 +89,30 @@ html, body {
   position: absolute;
   top: calc(12px + var(--safe-t));
   left: calc(14px + var(--safe-l));
+  width: min(560px, 62vw);
 }
 .room {
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 15px;
+  color: var(--hud-sub);
   letter-spacing: 0.12em;
 }
 .objective {
-  font-size: 20px;
-  letter-spacing: 0.08em;
-  color: var(--text);
+  font-size: 21px;
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  color: var(--hud);
 }
 .sub {
-  font-size: 13px;
-  color: var(--muted);
-  letter-spacing: 0.06em;
+  font-size: 15px;
+  color: var(--hud-sub);
+  letter-spacing: 0.04em;
 }
 
 .hud-br {
   position: absolute;
   right: calc(16px + var(--safe-r));
   bottom: calc(16px + var(--safe-b));
-  width: 170px;
+  width: 200px;
   text-align: right;
 }
 .shells {
@@ -114,9 +120,10 @@ html, body {
   justify-content: flex-end;
   align-items: center;
   gap: 6px;
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 15px;
+  color: var(--hud-sub);
 }
+.hud-label { margin-right: 4px; }
 .shell {
   display: inline-block;
   width: 16px;
@@ -130,6 +137,7 @@ html, body {
   border-color: #d59a4a;
 }
 .reserve { margin-left: 6px; }
+.reserve #reserveCount { color: var(--hud); font-size: 17px; }
 .battery {
   margin-top: 8px;
   display: flex;
@@ -138,25 +146,28 @@ html, body {
   gap: 4px;
 }
 .bar {
-  width: 150px;
-  height: 8px;
+  width: 170px;
+  height: 10px;
   border: 1px solid var(--line);
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.55);
   overflow: hidden;
 }
 #batteryFill {
   width: 100%;
   height: 100%;
-  background: #d9c79b;
+  background: linear-gradient(90deg, #b99a5e, #e6d3a2);
   transform-origin: left center;
   transition: transform 0.25s linear;
 }
-#batteryFill.low { background: #c0412c; }
+#batteryFill.low { background: linear-gradient(90deg, #8e2a1d, #e0553e); }
 #lightState {
   margin-top: 4px;
-  font-size: 13px;
-  color: var(--muted);
+  font-size: 15px;
+  color: var(--hud-sub);
 }
+#lightState.on { color: #f0d9a0; }
+#lightState.warn { color: var(--warn); }
+#lightState.low, #lightState.dead { color: var(--danger); }
 
 #crosshair {
   position: absolute;
@@ -166,13 +177,18 @@ html, body {
   height: 6px;
   margin: -3px 0 0 -3px;
   border-radius: 50%;
-  background: rgba(240, 232, 214, 0.85);
+  background: rgba(240, 232, 214, 0.9);
   box-shadow: 0 0 4px rgba(0, 0, 0, 0.8);
-  transition: transform 0.15s ease, background 0.15s ease;
+  transition: width 0.18s ease, height 0.18s ease, margin 0.18s ease, background 0.18s ease, border-color 0.18s ease;
 }
+/* Seen: a red ring that tightens onto the centre, so the state reads without the HUD. */
 #crosshair.seen {
-  transform: scale(0.6);
-  background: #e0503c;
+  width: 14px;
+  height: 14px;
+  margin: -7px 0 0 -7px;
+  background: rgba(224, 70, 52, 0.25);
+  border: 2px solid #ff5a44;
+  box-shadow: 0 0 10px rgba(255, 70, 50, 0.7);
 }
 
 .prompt {
@@ -180,11 +196,12 @@ html, body {
   left: 50%;
   bottom: calc(96px + var(--safe-b));
   transform: translateX(-50%);
-  font-size: 16px;
-  letter-spacing: 0.06em;
-  padding: 6px 14px;
-  background: rgba(0, 0, 0, 0.42);
-  border: 1px solid var(--line);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  color: var(--hud);
+  padding: 7px 16px;
+  background: rgba(0, 0, 0, 0.62);
+  border: 1px solid rgba(233, 225, 204, 0.55);
   white-space: nowrap;
   opacity: 0;
   transition: opacity 0.2s ease;
@@ -212,10 +229,10 @@ html, body {
   left: 50%;
   top: 16px;
   transform: translateX(-50%);
-  font-size: 13px;
-  color: var(--muted);
-  padding: 4px 10px;
-  background: rgba(0, 0, 0, 0.4);
+  font-size: 15px;
+  color: var(--hud);
+  padding: 5px 12px;
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .pause-touch {
@@ -226,11 +243,11 @@ html, body {
   min-width: 44px;
   padding: 8px 12px;
   pointer-events: auto;
-  background: rgba(10, 10, 14, 0.6);
+  background: rgba(10, 10, 14, 0.7);
   border: 1px solid var(--line);
-  color: var(--text);
+  color: var(--hud);
   font: inherit;
-  font-size: 13px;
+  font-size: 15px;
 }
 
 /* ---------- touch ---------- */
@@ -281,7 +298,7 @@ html, body {
   background: rgba(14, 12, 16, 0.72);
   color: var(--text);
   font: inherit;
-  font-size: 14px;
+  font-size: 15px;
   letter-spacing: 0.04em;
   padding: 4px;
   line-height: 1.2;
@@ -444,7 +461,7 @@ h1 {
   width: min(560px, 100%);
   max-height: calc(100dvh - 112px);
   overflow-y: auto;
-  padding: 26px 28px 22px;
+  padding: 26px 28px 0;
   background:
     radial-gradient(ellipse at 30% 20%, rgba(255, 255, 255, 0.35), transparent 60%),
     linear-gradient(160deg, #efe6cd, #dccfae);
@@ -454,30 +471,38 @@ h1 {
 }
 .sheet .place {
   margin: 0;
-  font-size: 13px;
-  color: #6b5a40;
-  letter-spacing: 0.1em;
+  font-size: 15px;
+  color: #4d3e28;
+  letter-spacing: 0.08em;
 }
 .sheet h2 {
-  margin: 4px 0 14px;
+  margin: 6px 0 14px;
   font-weight: 400;
-  font-size: 22px;
-  letter-spacing: 0.14em;
-  border-bottom: 1px solid rgba(90, 70, 40, 0.4);
-  padding-bottom: 8px;
+  font-size: 25px;
+  letter-spacing: 0.12em;
+  border-bottom: 1px solid rgba(90, 70, 40, 0.5);
+  padding-bottom: 10px;
 }
 .sheet .body p {
-  margin: 0 0 14px;
-  font-size: 16px;
-  line-height: 2;
-  letter-spacing: 0.04em;
+  margin: 0 0 16px;
+  font-size: 17px;
+  line-height: 2.05;
+  letter-spacing: 0.03em;
+  color: #241a10;
+  text-align: left;
 }
 .sheet .btn {
-  margin-top: 8px;
-  min-width: 140px;
+  display: block;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  min-width: 0;
+  min-height: 54px;
+  margin: 14px 0 0;
+  font-size: 18px;
   color: #2b2118;
-  background: rgba(255, 252, 240, 0.7);
-  border-color: rgba(90, 70, 40, 0.6);
+  background: #f6efd9;
+  border: 1.5px solid rgba(90, 70, 40, 0.75);
 }
 
 /* Call choice. */
@@ -570,8 +595,12 @@ h1 {
   .shells { justify-content: flex-start; }
   .battery { align-items: flex-start; }
   .bar { width: 130px; }
-  .prompt { bottom: calc(236px + var(--safe-b)); }
+  .prompt { bottom: calc(236px + var(--safe-b)); font-size: 17px; }
   .subs { bottom: calc(286px + var(--safe-b)); width: calc(100vw - 32px); font-size: 16px; }
+  .hud-tl { width: calc(100vw - 170px); }
+  .objective { font-size: 18px; }
+  .room, .sub, .shells, #lightState { font-size: 14px; }
+  .bar { width: 150px; }
 }
 
 @media (pointer: coarse) and (orientation: landscape) {
@@ -597,9 +626,13 @@ h1 {
   .tagline { margin-bottom: 14px; font-size: 14px; }
   .menu { margin-bottom: 0; align-items: center; }
   .menu .btn { min-width: 170px; min-height: 44px; }
+  .sheet { max-height: calc(100dvh - 40px); padding: 14px 22px 0; }
+  .sheet h2 { margin: 2px 0 8px; font-size: 21px; padding-bottom: 6px; }
+  .sheet .body p { font-size: 16px; line-height: 1.85; margin-bottom: 10px; }
+  .sheet .btn { min-height: 46px; font-size: 16px; margin-top: 8px; }
   .controls { border-top: 0; padding-top: 0; }
   .controls h2 { margin-bottom: 6px; }
-  .controls dl { font-size: 12px; gap: 2px 10px; }
+  .controls dl { font-size: 13px; gap: 2px 10px; }
   .screen { padding-top: calc(40px + var(--safe-t)); }
   .act { min-width: 56px; min-height: 56px; font-size: 13px; }
   .actions { grid-template-columns: repeat(2, 56px); gap: 8px; }
@@ -608,19 +641,10 @@ h1 {
   .stick { width: 110px; height: 110px; margin: -55px 0 0 -55px; }
 }
 
-@media (min-width: 760px) and (min-height: 560px) {
-  .sheet .body {
-    writing-mode: vertical-rl;
-    height: 260px;
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-  .sheet .body p {
-    margin: 0 0 0 18px;
-    height: 100%;
-  }
-}
 
 @media (prefers-reduced-motion: reduce) {
   #fade, #crosshair, .subs, .prompt, #glass, #vignette { transition: none; }
 }
+
+/* Phones: the prompt sits above the call box rather than under it. */
+.prompt.muted { opacity: 0; }

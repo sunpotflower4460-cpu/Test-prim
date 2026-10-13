@@ -3,25 +3,30 @@
 import * as THREE from "../vendor/three.module.js";
 import * as T from "./textures.js";
 
+// tex: "dot" (soft round), "ring" (bubble rim) or "spark" (a small bright dot for sizzle).
 const KINDS = {
-  steam: { color: 0xfff8f0, life: [1.6, 2.4], size: [0.22, 0.4], up: 0.35, grow: 0.5, opacity: 0.55, gravity: 0 },
-  bubble: { color: 0xe9f7ff, life: [0.4, 0.7], size: [0.05, 0.09], up: 0.6, grow: 0, opacity: 0.8, gravity: 0 },
-  sizzle: { color: 0xffe0a0, life: [0.25, 0.4], size: [0.03, 0.05], up: 0.8, grow: 0, opacity: 0.9, gravity: 4 },
-  splash: { color: 0xcfeeff, life: [0.4, 0.6], size: [0.06, 0.1], up: 1.6, grow: 0, opacity: 0.85, gravity: 6 },
-  shell: { color: 0xfff6e8, life: [0.8, 1.2], size: [0.03, 0.05], up: 0.8, grow: 0, opacity: 1, gravity: 7 },
-  sparkle: { color: 0xffe27a, life: [0.6, 0.9], size: [0.07, 0.12], up: 0.9, grow: -0.5, opacity: 1, gravity: 0 },
-  puff: { color: 0xffffff, life: [0.4, 0.6], size: [0.1, 0.18], up: 0.2, grow: 0.6, opacity: 0.35, gravity: 0 }
+  steam: { tex: "dot", color: 0xfff8f0, life: [1.6, 2.4], size: [0.26, 0.42], up: 0.35, grow: 0.5, opacity: 0.6, gravity: 0 },
+  bubble: { tex: "ring", color: 0xf2fbff, life: [0.45, 0.75], size: [0.07, 0.12], up: 0.6, grow: 0.1, opacity: 0.95, gravity: 0 },
+  sizzle: { tex: "spark", color: 0xfff0b8, life: [0.3, 0.45], size: [0.05, 0.075], up: 0.8, grow: 0, opacity: 1, gravity: 4 },
+  splash: { tex: "dot", color: 0xcfeeff, life: [0.4, 0.6], size: [0.06, 0.1], up: 1.6, grow: 0, opacity: 0.85, gravity: 6 },
+  shell: { tex: "dot", color: 0xfff6e8, life: [0.8, 1.2], size: [0.03, 0.05], up: 0.8, grow: 0, opacity: 1, gravity: 7 },
+  sparkle: { tex: "dot", color: 0xffe27a, life: [0.6, 0.9], size: [0.07, 0.12], up: 0.9, grow: -0.5, opacity: 1, gravity: 0 },
+  puff: { tex: "dot", color: 0xffffff, life: [0.4, 0.6], size: [0.1, 0.18], up: 0.2, grow: 0.6, opacity: 0.35, gravity: 0 }
 };
 
 export function createFx(scene, count = 160) {
-  const tex = T.softDot("rgba(255,255,255,1)", "rgba(255,255,255,0)");
+  const textures = {
+    dot: T.softDot("rgba(255,255,255,1)", "rgba(255,255,255,0)"),
+    ring: T.bubbleRing(),
+    spark: T.softDot("rgba(255,255,255,1)", "rgba(255,255,255,0)")
+  };
   const pool = [];
   for (let i = 0; i < count; i++) {
-    const m = new THREE.SpriteMaterial({ map: tex, transparent: true, depthWrite: false, opacity: 0 });
+    const m = new THREE.SpriteMaterial({ map: textures.dot, transparent: true, depthWrite: false, opacity: 0 });
     const s = new THREE.Sprite(m);
     s.visible = false;
     scene.add(s);
-    pool.push({ sprite: s, alive: false, life: 0, max: 1, vx: 0, vy: 0, vz: 0, kind: null, baseSize: 0.1 });
+    pool.push({ sprite: s, alive: false, life: 0, max: 1, vx: 0, vy: 0, vz: 0, kind: null, baseSize: 0.1, tex: "dot" });
   }
   let cursor = 0;
   const rnd = (a, b) => a + Math.random() * (b - a);
@@ -37,6 +42,11 @@ export function createFx(scene, count = 160) {
     p.life = p.max;
     const size = rnd(k.size[0], k.size[1]) * (opts.scale || 1);
     p.baseSize = size;
+    if (p.tex !== k.tex) {
+      p.tex = k.tex;
+      p.sprite.material.map = textures[k.tex];
+      p.sprite.material.needsUpdate = true;
+    }
     p.sprite.position.set(x + rnd(-0.03, 0.03), y, z + rnd(-0.03, 0.03));
     p.sprite.scale.set(size, size, 1);
     p.sprite.material.color.setHex(opts.color || k.color);

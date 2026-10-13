@@ -38,10 +38,8 @@ export function createInput(opts) {
 
   window.addEventListener("keydown", e => {
     if (!isPlaying() || isTypingTarget(e.target)) return;
-    if (e.code === "Escape") {
-      if (opts.onPause) opts.onPause();
-      return;
-    }
+    // Escape is handled by main.js, which pauses or resumes once per press.
+    if (e.code === "Escape") return;
     keys.add(e.code);
     if (["KeyW", "KeyA", "KeyS", "KeyD", "ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].includes(e.code)) {
       e.preventDefault();

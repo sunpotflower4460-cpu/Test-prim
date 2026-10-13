@@ -130,6 +130,31 @@ function normalFrom(heights, w, h, strength) {
   return tex;
 }
 
+// A grey roughness map from the same heights: base plus a variation around it.
+// Worn high points are smoother, pits and grain lines are rougher.
+function roughFrom(heights, w, h, base, amp) {
+  const c = document.createElement("canvas");
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext("2d");
+  const img = ctx.createImageData(w, h);
+  const d = img.data;
+  for (let i = 0; i < w * h; i++) {
+    const v = Math.max(0, Math.min(1, base - amp * (heights[i] - 0.5)));
+    const b = v * 255;
+    d[i * 4] = b;
+    d[i * 4 + 1] = b;
+    d[i * 4 + 2] = b;
+    d[i * 4 + 3] = 255;
+  }
+  ctx.putImageData(img, 0, 0);
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = THREE.RepeatWrapping;
+  t.wrapT = THREE.RepeatWrapping;
+  t.anisotropy = 4;
+  return t;
+}
+
 // Random-walk crack marks: returns a mask (1 = crack) over w x h.
 function cracks(w, h, count, seed) {
   const r = rng(seed);
@@ -181,7 +206,9 @@ export function createTextures() {
       base *= (0.9 + 0.1 * weave) * edge * seam;
       const hgt = 0.5 + 0.4 * (weave - 0.5) + 0.2 * (n - 0.5);
       return [base * 0.78, base * 0.72, base * 0.42, hgt];
-    }, { bump: 1.2 });
+    }, { bump: 2.2 });
+    // Rush straw is rough and a little worn in patches.
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.86, 0.5);
     T.tatami = p;
   }
 
@@ -196,7 +223,9 @@ export function createTextures() {
       const seam = pu < 0.02 || pu > 0.98 ? 0.45 : 1;
       const k = tone * (0.72 + 0.22 * streak * (0.6 + grain * 0.6)) * seam;
       return [0.42 * k, 0.28 * k, 0.17 * k, 0.5 + 0.5 * streak * 0.4 - (seam < 1 ? 0.5 : 0)];
-    }, { bump: 1.5 });
+    }, { bump: 2.6 });
+    // Grain runs rougher than the polished plank, with a sheen on the worn spots.
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.74, 0.42);
     T.wood = p;
   }
 
@@ -207,7 +236,8 @@ export function createTextures() {
       const streak = 0.5 + 0.5 * Math.sin(Math.PI * 2 * (u * 20) + n * 12);
       const k = 0.4 + 0.25 * streak * n;
       return [0.24 * k, 0.16 * k, 0.1 * k, streak * 0.5];
-    }, { bump: 1.0 });
+    }, { bump: 1.6 });
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.8, 0.4);
     T.ceiling = p;
   }
 
@@ -219,6 +249,7 @@ export function createTextures() {
       const k = 0.4 + 0.5 * n + pebble;
       return [0.3 * k, 0.24 * k, 0.18 * k, n];
     }, { bump: 3 });
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.92, 0.3);
     T.earth = p;
   }
 
@@ -282,8 +313,11 @@ export function createTextures() {
       const n = fbm(u * 8, v * 8, 8, 8, 4, 73);
       const k = (0.36 + 0.2 * jitter + 0.22 * n) * grout;
       return [0.5 * k, 0.5 * k, 0.48 * k, grout < 1 ? 0.1 : 0.7 + n * 0.3];
-    }, { bump: 2 });
+    }, { bump: 2.4 });
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.8, 0.5);
     T.stone = p;
+    // Wet stone: low roughness in patches of water, higher where it has dried.
+    T.wetStone = roughFrom(p.heights, p.w, p.h, 0.45, 0.5);
   }
 
   // Plaster walls (漆喰): off-white, stains, hairline cracks.
@@ -297,7 +331,9 @@ export function createTextures() {
       const crack = mask[y * w + x] ? 1 : 0;
       const k = 0.83 + 0.1 * (n - 0.5) - stain * 0.12 - dirt * 0.4 - crack * 0.25;
       return [0.8 * k, 0.74 * k, 0.6 * k, 0.5 + n * 0.3 - crack * 0.6];
-    }, { bump: 2 });
+    }, { bump: 2.8 });
+    // Trowel marks: a second, finer noise makes the wall uneven in its sheen.
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.88, 0.5);
     T.plaster = p;
   }
 
@@ -322,7 +358,8 @@ export function createTextures() {
       const grain = fbm(u * 16, v * 2, 16, 2, 4, 103);
       const k = tone * (0.5 + 0.4 * grain) * seam;
       return [0.25 * k, 0.18 * k, 0.12 * k, grain * seam];
-    }, { bump: 1.5 });
+    }, { bump: 2.4 });
+    p.rough = roughFrom(p.heights, p.w, p.h, 0.78, 0.5);
     T.boarding = p;
   }
 
@@ -337,6 +374,8 @@ export function createTextures() {
       const k = bar ? 0.2 : 0.9 + 0.08 * (n - 0.5);
       return [0.92 * k, 0.9 * k, 0.8 * k, bar ? 0.2 : 0.7];
     }, { bump: 0.5 });
+    // The light through the paper: brightest in the middle of each pane, falling off toward
+    // the frame and the lattice, and a little brighter at the top where the moon comes from.
     const emissive = canvasTex(size, size, (ctx, w, h) => {
       const img = ctx.createImageData(w, h);
       for (let y = 0; y < h; y++) {
@@ -345,18 +384,40 @@ export function createTextures() {
           const v = y / h;
           const gu = (u * 3) % 1;
           const gv = (v * 4) % 1;
+          const du = (gu - 0.5) * 2;
+          const dv = (gv - 0.5) * 2;
+          const edge = Math.max(Math.abs(du), Math.abs(dv));
           const bar = gu < 0.05 || gv < 0.04 || gu > 0.95 || gv > 0.96;
+          const fall = 1 - 0.55 * Math.pow(Math.min(1, edge), 2.2);
+          const top = 1 - 0.22 * v;
+          const k = bar ? 0.06 : 0.62 * fall * top;
           const i = (y * w + x) * 4;
-          const k = bar ? 0.05 : 0.8;
-          img.data[i] = 150 * k;
-          img.data[i + 1] = 175 * k;
-          img.data[i + 2] = 230 * k;
+          img.data[i] = 176 * k;
+          img.data[i + 1] = 196 * k;
+          img.data[i + 2] = 236 * k;
           img.data[i + 3] = 255;
         }
       }
       ctx.putImageData(img, 0, 0);
     });
     T.shoji = { map: p.map, normal: p.normal, emissive };
+
+    // Eaves water: a translucent streak with bright beads, scrolled along its length.
+    T.water = canvasTex(32, 256, (ctx, w, h) => {
+      const r = rng(211);
+      for (let i = 0; i < 26; i++) {
+        const x = 4 + r() * (w - 8);
+        const y = r() * h;
+        const len = 20 + r() * 60;
+        const g = ctx.createLinearGradient(0, y, 0, y + len);
+        g.addColorStop(0, "rgba(180,200,230,0)");
+        g.addColorStop(0.5, "rgba(190,210,240," + (0.25 + r() * 0.3) + ")");
+        g.addColorStop(1, "rgba(180,200,230,0)");
+        ctx.fillStyle = g;
+        ctx.fillRect(x - 1, y, 2 + r() * 2, len);
+      }
+    });
+    T.water.wrapT = THREE.RepeatWrapping;
   }
 
   // Fusuma: cream paper panel with fibre texture.

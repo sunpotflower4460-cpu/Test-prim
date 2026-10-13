@@ -845,6 +845,7 @@
       v: SAVE_VERSION,
       cooked: {},
       settings: { music: 0.35, sfx: 0.7, muted: false },
+      tips: {},
       dish: null
     };
   }
@@ -863,6 +864,10 @@
     save.settings.music = isNum(music) ? clamp01(music) : save.settings.music;
     save.settings.sfx = isNum(sfx) ? clamp01(sfx) : save.settings.sfx;
     save.settings.muted = obj.settings.muted === true;
+    // First-time tips per recipe: once a recipe has shown its tip it is never shown again.
+    if (obj.tips && typeof obj.tips === "object" && !Array.isArray(obj.tips)) {
+      for (var tk in obj.tips) if (recipeById(tk) && obj.tips[tk] === true) save.tips[tk] = true;
+    }
     save.dish = obj.dish ? validateWorld(obj.dish) : null;
     return save;
   }

@@ -1,5 +1,6 @@
 // DOM overlays: title, pause, diary, call choice, cards, HUD, subtitles and the glass overlay.
 const Story = window.NakiIdoStory;
+const Sim = window.NakiIdoSim;
 
 const $ = id => document.getElementById(id);
 
@@ -198,21 +199,27 @@ export function createUI(handlers) {
 
   // ---------- HUD ----------
 
-  function labelFor(ctx) {
-    if (!ctx) return null;
-    const L = Story.LABELS;
+  // The words for the prompt: what the key does, in Japanese.
+  function promptLabel(ctx) {
+    const A = Story.ACTION;
     switch (ctx.key) {
-      case "take": return L.take;
-      case "read": return L.read;
-      case "open": return L.open;
-      case "close": return L.close;
-      case "burn": return L.burn;
-      case "search": return ctx.search || "調べる";
-      case "well": return L.well;
-      case "lid": return L.lid;
-      case "wellLook": return L.wellLook;
-      default: return "調べる";
+      case "take": return A.take[ctx.itemKind] || "拾う";
+      case "read": return A.read;
+      case "open": return A.open[ctx.doorKind] || "開ける";
+      case "close": return A.close[ctx.doorKind] || "閉める";
+      case "burn": return A.burn;
+      case "search": return ctx.search || A.search;
+      case "well": return A.well;
+      case "lid": return A.lid;
+      case "wellLook": return A.wellLook;
+      default: return A.search;
     }
+  }
+
+  // The short word for the round touch button.
+  function shortLabel(ctx) {
+    if (!ctx) return "調べる";
+    return Story.ACTION_SHORT[ctx.key] || "調べる";
   }
 
   function setText(node, value, key) {
@@ -221,10 +228,18 @@ export function createUI(handlers) {
     node.textContent = value;
   }
 
+  // Colour states for the light line: off is muted, on is warm, low and dead are red.
+  function setLightClass(cls) {
+    if (shown.lightClass === cls) return;
+    shown.lightClass = cls;
+    el.lightState.classList.remove("on", "warn", "low", "dead");
+    if (cls) el.lightState.classList.add(cls);
+  }
+
   function updateHud(state, ctx, lookLocked, touch) {
-    const fudaN = Math.min(3, Object.keys(state.taken).filter(id => id.startsWith("fuda")).length);
+    const O = Sim.objectiveOf(handlers.world, state);
+    setText(el.objective, Story.objectiveText(O), "objective");
     const diaryN = Object.keys(state.notes).length;
-    setText(el.objective, `札 ${fudaN}/3`, "objective");
     setText(el.diaryCount, `日記 ${diaryN}/3`, "diary");
     const room = state.player.room;
     const roomLabel = room && handlers.roomLabel ? handlers.roomLabel(room) : "";
@@ -244,22 +259,38 @@ export function createUI(handlers) {
       el.batteryFill.style.transform = `scaleX(${state.charge.toFixed(3)})`;
       el.batteryFill.classList.toggle("low", state.charge < 0.2);
     }
-    setText(el.batteryCount, `電池 ${state.inv.battery}`, "batteryCount");
+    setText(el.batteryCount, `予備電池 ${state.inv.battery}`, "batteryCount");
     let light;
-    if (state.light) light = state.flicker < 1 ? "点滅" : "点灯";
-    else light = state.charge <= 0 && state.inv.battery <= 0 ? "切れた" : "消灯";
+    let cls = "";
+    if (state.light) {
+      const warn = state.flicker < 1;
+      light = `点灯 ${pct}%`;
+      cls = state.charge < 0.2 ? "low" : warn ? "warn" : "on";
+      if (warn) light = `点滅 ${pct}%`;
+    } else if (state.charge <= 0 && state.inv.battery <= 0) {
+      light = "電池切れ・予備なし";
+      cls = "dead";
+    } else if (state.charge <= 0) {
+      light = "電池切れ・Fで交換";
+      cls = "dead";
+    } else {
+      light = touch ? "消灯・「灯」で点ける" : "消灯・Fで点ける";
+    }
     setText(el.lightState, light, "light");
+    setLightClass(cls);
 
     const seen = !!state.ent.seen;
     el.crosshair.classList.toggle("seen", seen);
-    const prompt = ctx ? "E " + labelFor(ctx) : "";
+    // While the call box is up, the prompt steps aside so the two do not overlap.
+    const choiceUp = !el.choice.hidden;
+    const prompt = ctx && !choiceUp ? "E " + promptLabel(ctx) : "";
     if (shown.prompt !== prompt) {
       shown.prompt = prompt;
       el.prompt.textContent = prompt;
       el.prompt.classList.toggle("on", !!prompt);
     }
     if (touch) {
-      const label = ctx ? labelFor(ctx) : "調べる";
+      const label = shortLabel(ctx);
       if (el.actInteractLabel.textContent !== label) el.actInteractLabel.textContent = label;
       el.actInteract.classList.toggle("idle", !ctx);
     }
@@ -268,7 +299,7 @@ export function createUI(handlers) {
     el.vignette.style.setProperty("--fear", (state.fear || 0).toFixed(3));
   }
 
-  // ---------- glass: rain running down a window ----------
+  // ---------- glass: beads of rain on a window, lit from the room side ----------
 
   const drops = [];
   let glassSeed = 3;
@@ -288,9 +319,22 @@ export function createUI(handlers) {
   }
   sizeGlass();
   window.addEventListener("resize", sizeGlass);
-  for (let i = 0; i < 70; i++) {
-    drops.push({ x: grand() * window.innerWidth, y: grand() * window.innerHeight, r: 1 + grand() * 2.6, v: 4 + grand() * 12, len: 0 });
+
+  // A bead either sits on the glass until it grows heavy (hold), then slides down
+  // with a thin trail. Some beads never move; they are the stuck ones.
+  function newBead(y) {
+    const stuck = grand() < 0.35;
+    return {
+      x: grand() * window.innerWidth,
+      y: y === undefined ? grand() * window.innerHeight : y,
+      r: 1.1 + grand() * 2.4,
+      v: 0,
+      len: 0,
+      hold: stuck ? 1e9 : grand() * 9,
+      sliding: false
+    };
   }
+  for (let i = 0; i < 120; i++) drops.push(newBead());
 
   function updateGlass(dt, active) {
     el.glass.style.opacity = active ? "1" : "0";
@@ -298,39 +342,40 @@ export function createUI(handlers) {
     const w = window.innerWidth;
     const h = window.innerHeight;
     glassCtx.clearRect(0, 0, w, h);
-    for (const d of drops) {
-      if (grand() < 0.003) {
-        d.x = grand() * w;
-        d.y = -10;
-        d.r = 1 + grand() * 2.6;
-        d.v = 4 + grand() * 12;
-        d.len = 0;
+    for (let i = 0; i < drops.length; i++) {
+      const d = drops[i];
+      if (!d.sliding) {
+        d.hold -= dt;
+        if (d.hold <= 0 && grand() < 0.02) {
+          d.sliding = true;
+          d.v = 2 + grand() * 3;
+        }
+      } else {
+        d.v += dt * 2.2;
+        d.len += d.v * dt * 0.7;
+        d.y += d.v * dt * 0.7;
       }
-      d.v += dt * 1.5;
-      d.len += d.v * dt * 0.6;
-      d.y += d.v * dt * 0.6;
       const r = d.r;
-      // A bead of water with a thin trail behind it.
-      glassCtx.fillStyle = "rgba(200,214,238,0.07)";
+      // A bead: dark body, a bright specular glint on its upper left.
+      glassCtx.fillStyle = "rgba(40,52,74,0.18)";
       glassCtx.beginPath();
-      glassCtx.ellipse(d.x, d.y, r * 0.7, r, 0, 0, Math.PI * 2);
+      glassCtx.ellipse(d.x, d.y, r * 0.9, r * 1.05, 0, 0, Math.PI * 2);
       glassCtx.fill();
-      glassCtx.fillStyle = "rgba(255,255,255,0.16)";
+      glassCtx.fillStyle = "rgba(226,236,255,0.34)";
       glassCtx.beginPath();
-      glassCtx.ellipse(d.x - r * 0.25, d.y - r * 0.35, r * 0.2, r * 0.28, 0, 0, Math.PI * 2);
+      glassCtx.ellipse(d.x - r * 0.3, d.y - r * 0.4, r * 0.28, r * 0.36, 0, 0, Math.PI * 2);
       glassCtx.fill();
-      if (d.len > 8) {
-        glassCtx.strokeStyle = "rgba(180,196,224,0.07)";
-        glassCtx.lineWidth = Math.max(0.6, r * 0.45);
+      if (d.sliding && d.len > 6) {
+        glassCtx.strokeStyle = "rgba(190,206,234,0.14)";
+        glassCtx.lineWidth = Math.max(0.6, r * 0.5);
         glassCtx.beginPath();
-        glassCtx.moveTo(d.x, d.y - Math.min(d.len, 60));
+        glassCtx.moveTo(d.x, d.y - Math.min(d.len, 70));
         glassCtx.lineTo(d.x, d.y - r);
         glassCtx.stroke();
       }
       if (d.y > h + 12) {
-        d.y = -12;
-        d.len = 0;
-        d.x = grand() * w;
+        drops[i] = newBead(-12);
+        drops[i].hold = 0.5 + grand() * 2;
       }
     }
   }

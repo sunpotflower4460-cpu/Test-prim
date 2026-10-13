@@ -667,3 +667,58 @@ test("the danger fear measure rises when she is close and falls in the light", (
   assert.ok(near > far, "closer is scarier");
   assert.ok(near <= 1 && far >= 0);
 });
+
+test("the objective follows the state: the next missing talisman, then the well, then the lid", () => {
+  const s = fresh();
+  let o = S.objectiveOf(world, s);
+  assert.equal(o.stage, "fuda");
+  assert.equal(o.n, 0);
+  assert.equal(o.next, "fuda-1", "the first missing talisman is named");
+  assert.equal(Story.objectiveText(o), "札 0/3 — 次は、納戸の箱を調べる");
+  s.taken["fuda-1"] = true;
+  s.inv.fuda = 1;
+  o = S.objectiveOf(world, s);
+  assert.equal(o.next, "fuda-2", "the next one is the one still missing");
+  assert.equal(Story.objectiveText(o), "札 1/3 — 次は、仏間の位牌の下を調べる");
+  s.taken["fuda-2"] = true;
+  s.taken["fuda-3"] = true;
+  s.inv.fuda = 3;
+  o = S.objectiveOf(world, s);
+  assert.equal(o.stage, "well", "three in hand means the well");
+  assert.equal(Story.objectiveText(o), "札を納める 0/3 — 井戸の縁で");
+  s.placed = 3;
+  s.inv.fuda = 0;
+  o = S.objectiveOf(world, s);
+  assert.equal(o.stage, "lid");
+  s.seal.lid = true;
+  assert.equal(S.objectiveOf(world, s).stage, "dawn");
+});
+
+test("the stalled hint names the same place the objective does, and only for open stages", () => {
+  const s = fresh();
+  assert.ok(Story.stallHint(S.objectiveOf(world, s)).length > 0);
+  s.seal.lid = true;
+  assert.equal(Story.stallHint(S.objectiveOf(world, s)), null, "nothing to hint after the lid");
+});
+
+test("the prompt names the action and the kind of door or item", () => {
+  const s = fresh();
+  // Stand in front of the living room shoji (a closed door at the veranda edge).
+  s.player.room = "ima";
+  s.player.x = 2.5;
+  s.player.y = 5.7;
+  s.player.yaw = Math.PI;
+  s.doorOpen[world.doors.find(d => d.id === "d-veranda-ima").index] = false;
+  const door = S.contextAction(world, s);
+  assert.equal(door.kind, "door");
+  assert.equal(door.doorKind, "shoji");
+  assert.equal(door.doorOpen, false);
+  // A battery on the floor in front of the player.
+  const bat = world.itemById["bat-1"];
+  s.player.x = bat.x;
+  s.player.y = bat.y - 0.6;
+  faceTo(s.player, bat.x, bat.y);
+  const item = S.contextAction(world, s);
+  assert.equal(item.kind, "take");
+  assert.equal(item.itemKind, "battery");
+});

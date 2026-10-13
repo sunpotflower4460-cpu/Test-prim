@@ -8,6 +8,8 @@ import { createViewModel } from "./viewmodel.js";
 
 const Sim = window.NakiIdoSim;
 const deg = Math.PI / 180;
+// The default exposure. The brightness slider multiplies this.
+const EXPOSURE_BASE = 1.3;
 
 function seeded(seed) {
   let s = seed >>> 0;
@@ -21,14 +23,23 @@ function seeded(seed) {
 }
 
 function buildMaterials(T) {
-  const tex = (t, extra = {}) =>
-    new THREE.MeshStandardMaterial(Object.assign({
+  // A textured surface. Where the texture carries a roughness map, the map alone sets the
+  // roughness (worn and damp spots catch the light differently), so no flat value is applied.
+  const tex = (t, extra = {}) => {
+    const base = {
       map: t.map,
       normalMap: t.normal || null,
-      normalScale: new THREE.Vector2(0.7, 0.7),
+      normalScale: new THREE.Vector2(0.9, 0.9),
       roughness: 0.85,
       metalness: 0
-    }, extra));
+    };
+    if (t.rough) {
+      base.roughnessMap = t.rough;
+      base.roughness = 1;
+      delete extra.roughness;
+    }
+    return new THREE.MeshStandardMaterial(Object.assign(base, extra));
+  };
   const flat = (color, extra = {}) =>
     new THREE.MeshStandardMaterial(Object.assign({ color, roughness: 0.7, metalness: 0 }, extra));
   const M = {};
@@ -49,14 +60,27 @@ function buildMaterials(T) {
   M.stone = tex(T.stone, { roughness: 0.82 });
   M.trim = flat(0x2a1c13, { roughness: 0.6 });
   M.roof = flat(0x15121a, { roughness: 0.9 });
+  // Paper lit from behind: the emissive map carries the glow and its falloff.
   M.shojiMat = new THREE.MeshStandardMaterial({
     map: T.shoji.map,
     normalMap: T.shoji.normal,
     emissiveMap: T.shoji.emissive,
-    emissive: new THREE.Color(0x6f86c0),
-    emissiveIntensity: 0.55,
+    emissive: new THREE.Color(0xffffff),
+    emissiveIntensity: 0.72,
     roughness: 0.95
   });
+  // Wet well stone: a clear coat over the stone, with wet patches that are glossier still.
+  M.wellStone = new THREE.MeshPhysicalMaterial({
+    map: T.stone.map,
+    normalMap: T.stone.normal,
+    normalScale: new THREE.Vector2(0.9, 0.9),
+    roughnessMap: T.wetStone,
+    roughness: 1,
+    metalness: 0,
+    clearcoat: 0.45,
+    clearcoatRoughness: 0.22
+  });
+  M.water = new THREE.MeshBasicMaterial({ map: T.water, transparent: true, opacity: 0.6, depthWrite: false, side: THREE.DoubleSide });
   M.fusumaMat = tex(T.fusuma, { roughness: 0.92 });
 
   M.lacquer = flat(0x2a1410, { roughness: 0.35 });
@@ -123,7 +147,7 @@ export function createRender(canvas, world) {
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(0x06070d);
-  scene.fog = new THREE.FogExp2(0x080a14, 0.032);
+  scene.fog = new THREE.FogExp2(0x141a2e, 0.032);
 
   const camera = new THREE.PerspectiveCamera(70, 1, 0.05, 70);
   camera.rotation.order = "YXZ";
@@ -133,9 +157,10 @@ export function createRender(canvas, world) {
   const M = buildMaterials(T);
 
   // Lights: cool moon from the north-west, faint sky fill, warm torch on the camera.
-  const hemi = new THREE.HemisphereLight(0x3a4c80, 0x1d150f, 0.62);
+  // The rooms get a faint cool fill, so dark reads as shadow and walls and furniture keep their shapes.
+  const hemi = new THREE.HemisphereLight(0x6474a8, 0x2e2418, 0.9);
   scene.add(hemi);
-  const ambient = new THREE.AmbientLight(0x262c48, 0.2);
+  const ambient = new THREE.AmbientLight(0x4a5680, 0.36);
   scene.add(ambient);
   const moon = new THREE.DirectionalLight(0x9fb4ff, 1.5);
   moon.position.set(-8, 18, -10);
@@ -170,13 +195,86 @@ export function createRender(canvas, world) {
   camera.add(muzzle);
   muzzle.position.set(0.2, -0.1, -0.7);
 
-  // Beam: an additive cone along the torch axis, and dust motes inside it.
-  const beamGeo = new THREE.CylinderGeometry(6.2, 0.05, 14, 22, 1, true);
-  const beam = new THREE.Mesh(beamGeo, new THREE.MeshBasicMaterial({ map: T.beam, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, opacity: 0.6, color: 0xffe9c0 }));
+  // Warm sources that give the dark rooms their shapes: the lantern, the hibachi ember,
+  // the candles on the altar, the incense burner. No shadows, so they stay cheap.
+  const fillLights = [];
+  const warm = (color, intensity, distance, x, y, z) => {
+    const l = new THREE.PointLight(color, intensity, distance, 2);
+    l.position.set(x, y, z);
+    scene.add(l);
+    fillLights.push(l);
+    return l;
+  };
+  const props0 = world.props;
+  const byType = type => props0.find(p => p.type === type);
+  const andon = byType("andon");
+  const hibachi = byType("hibachi");
+  const butsudan = byType("butsudan");
+  const tsukue = byType("tsukue");
+  const lampLight = andon ? warm(0xffb46a, 0, 5.5, andon.x, 1.0, andon.y) : null;
+  const hibachiLight = hibachi ? warm(0xff7a33, 0, 3.2, hibachi.x, 0.7, hibachi.y) : null;
+  // Candles stand inside the shrine, a little in front of the frame.
+  const candleLight = butsudan ? warm(0xffc070, 0, 3.0, butsudan.x - 0.2, 1.1, butsudan.y) : null;
+  const burnerLight = tsukue ? warm(0xffa860, 0, 2.2, tsukue.x, 0.95, tsukue.y) : null;
+  // Moonlight through the shoji: a cool glow on the room side of each veranda door.
+  const shojiLights = [2.5, 6.5, 11.5].map(x => warm(0x9fb4ff, 0, 4.5, x, 1.9, 6.6));
+  const baseFill = {
+    lamp: 1.1, hibachi: 0.55, candle: 0.45, burner: 0.22, shoji: 0.7
+  };
+
+  // Lightning from the garden side: a soft fill for the whole house, and a sun with
+  // shadows that falls on the garden for a moment, so the well and the trees throw shade.
+  const flashFill = warm(0xdfe8ff, 0, 20, 7.5, 2.3, 8);
+  const flashSun = new THREE.DirectionalLight(0xdfe8ff, 0);
+  flashSun.castShadow = true;
+  flashSun.shadow.mapSize.set(touch ? 512 : 1024, touch ? 512 : 1024);
+  flashSun.shadow.camera.left = -12;
+  flashSun.shadow.camera.right = 12;
+  flashSun.shadow.camera.top = 12;
+  flashSun.shadow.camera.bottom = -12;
+  flashSun.shadow.camera.near = 1;
+  flashSun.shadow.camera.far = 50;
+  flashSun.shadow.bias = -0.0008;
+  flashSun.shadow.normalBias = 0.02;
+  scene.add(flashSun, flashSun.target);
+  flashSun.position.set(8, 16, 2);
+  flashSun.target.position.set(7, 0, 4);
+
+  // Beam: a soft cone along the torch axis. The edge falls off as the surface turns away
+  // from the eye, and the light falls off along the length, so it has no hard rim.
+  const beamGeo = new THREE.CylinderGeometry(6.2, 0.05, 14, 28, 1, true);
+  const beamMat = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    uniforms: { uOpacity: { value: 0.6 }, uColor: { value: new THREE.Color(0xffe6bc) } },
+    vertexShader: `
+      varying vec2 vUv;
+      varying float vFacing;
+      void main() {
+        vUv = uv;
+        vFacing = abs(normalize(normalMatrix * normal).z);
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }`,
+    fragmentShader: `
+      uniform float uOpacity;
+      uniform vec3 uColor;
+      varying vec2 vUv;
+      varying float vFacing;
+      void main() {
+        float edge = smoothstep(0.04, 0.9, vFacing);
+        float along = 1.0 - smoothstep(0.0, 1.0, vUv.y);
+        float falloff = 0.25 + 0.75 * along * along;
+        float a = uOpacity * edge * falloff;
+        gl_FragColor = vec4(uColor * a, a);
+      }`
+  });
+  const beam = new THREE.Mesh(beamGeo, beamMat);
   beam.rotation.x = -Math.PI / 2;
   beam.position.set(0, 0, -7);
   camera.add(beam);
-  const moteCount = touch ? 50 : 90;
+  const moteCount = touch ? 90 : 170;
   const moteGeo = new THREE.BufferGeometry();
   const moteArr = new Float32Array(moteCount * 3);
   const rnd = seeded(7);
@@ -189,7 +287,7 @@ export function createRender(canvas, world) {
     moteArr[i * 3 + 2] = -d;
   }
   moteGeo.setAttribute("position", new THREE.BufferAttribute(moteArr, 3));
-  const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: T.mote, size: 0.035, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xfff0d6 }));
+  const motes = new THREE.Points(moteGeo, new THREE.PointsMaterial({ map: T.mote, size: 0.04, transparent: true, opacity: 0.0, depthWrite: false, blending: THREE.AdditiveBlending, color: 0xfff4e0 }));
   camera.add(motes);
 
   // Building.
@@ -201,6 +299,17 @@ export function createRender(canvas, world) {
 
   const well = buildWell(world, M);
   scene.add(well.group);
+
+  // Water running off the eaves of the house: thin streaks down from the roof's north edge.
+  const eaves = new THREE.Group();
+  const streakGeo = new THREE.PlaneGeometry(0.035, 2.5);
+  for (let x = 1.0; x <= 14.0; x += 0.75) {
+    const streak = new THREE.Mesh(streakGeo, M.water);
+    streak.position.set(x, 1.25, 4.66);
+    eaves.add(streak);
+  }
+  T.water.repeat.set(1, 3);
+  scene.add(eaves);
   const wellRim = [0.3, 2.4, 4.1].map((a, i) => {
     const card = new THREE.Mesh(new THREE.PlaneGeometry(0.1, 0.22), M.fudaMat);
     const wx = world.well.x + Math.cos(a) * 0.5;
@@ -310,6 +419,9 @@ export function createRender(canvas, world) {
     burnerWorld: null,
     demoT: 0,
     outdoors: false,
+    swayT: 0,
+    strikeX: 0,
+    strikeY: 0,
   };
   if (world.well) {
     const b = propObjs.find(o => o.prop.type === "tsukue");
@@ -377,8 +489,8 @@ export function createRender(canvas, world) {
     const on = state.light;
     const k = on ? state.flicker * (0.55 + 0.45 * state.charge) : 0;
     torch.intensity = 36 * k;
-    beam.material.opacity = 0.6 * k;
-    motes.material.opacity = on ? 0.55 * k : 0;
+    beamMat.uniforms.uOpacity.value = 0.6 * k;
+    motes.material.opacity = on ? 0.65 * k : 0;
     motes.rotation.z = Math.sin(st.demoT * 0.3) * 0.08;
     muzzle.intensity = Math.max(0, muzzle.intensity - dt * 280);
     // Lightning: a brief lift of the moon and fill, scaled down for reduced motion.
@@ -386,7 +498,19 @@ export function createRender(canvas, world) {
     moon.intensity = base.moon * (1 + 3.2 * f);
     hemi.intensity = base.hemi * (1 + 2.4 * f + 1.1 * dawn);
     ambient.intensity = base.amb * (1 + 2 * f);
-    st.flash = Math.max(0, st.flash - dt * 5);
+    flashFill.intensity = 7 * f;
+    flashSun.intensity = 2.4 * f;
+    st.flash = Math.max(0, st.flash - dt * 4.2);
+    // The warm sources flicker a little, as a real flame does.
+    const t = st.demoT;
+    const fl = (k2, rate) => 0.92 + 0.08 * Math.sin(t * rate) + 0.04 * Math.sin(t * rate * 2.7 + k2);
+    if (lampLight) lampLight.intensity = baseFill.lamp * fl(1, 6.1) * (on ? 1 : 0.85);
+    if (hibachiLight) hibachiLight.intensity = baseFill.hibachi * fl(2, 8.3);
+    if (candleLight) candleLight.intensity = baseFill.candle * fl(3, 5.4);
+    if (burnerLight) burnerLight.intensity = baseFill.burner * fl(4, 3.1) * (st.smokeT > 0 ? 1.4 : 1);
+    for (const l of shojiLights) l.intensity = baseFill.shoji * (1 + 0.6 * dawn);
+    // The eaves water runs down.
+    T.water.offset.y = -t * 0.9;
   }
 
   function syncEntity(state, dt, now) {
@@ -403,6 +527,18 @@ export function createRender(canvas, world) {
     const shake = st.shake > 0 ? (Math.random() - 0.5) * 0.08 * st.shake * (reduced ? 0.3 : 1) : 0;
     camera.position.set(p.x + shake, 1.55 + bob, p.y + shake * 0.5);
     camera.rotation.set((view.pitch || 0) + st.recoil * (reduced ? 0.35 : 0.9), p.yaw, Math.sin(st.bobPhase) * (p.moving ? 0.004 : 0));
+    // Breathing and hand tremor. Both grow with fear and with a low battery, and are
+    // reduced for prefers-reduced-motion.
+    st.swayT += dt;
+    const fear = state.fear || 0;
+    const lowBat = state.light && state.charge < 0.2 ? 1 : 0;
+    const tremor = (0.0006 + 0.0024 * fear + 0.0012 * lowBat) * (reduced ? 0.3 : 1);
+    const breath = Math.sin(st.swayT * 1.25) * (0.0028 + 0.0028 * fear) * (reduced ? 0.4 : 1);
+    const tx = Math.sin(st.swayT * 6.3) * 0.6 + Math.sin(st.swayT * 13.1 + 0.8) * 0.4;
+    const ty = Math.sin(st.swayT * 4.7 + 1.9) * 0.6 + Math.sin(st.swayT * 9.9) * 0.4;
+    camera.rotation.x += breath + tx * tremor;
+    camera.rotation.y += ty * tremor;
+    camera.rotation.z += ty * tremor * 0.6;
     st.recoil = Math.max(0, st.recoil - dt * 6);
     st.shake = Math.max(0, st.shake - dt * 3);
   }
@@ -529,7 +665,7 @@ export function createRender(canvas, world) {
         updateDemo(now, dt);
         st.outdoors = true;
         torch.intensity = 0;
-        beam.material.opacity = 0;
+        beamMat.uniforms.uOpacity.value = 0;
         motes.material.opacity = 0;
         muzzle.intensity = 0;
         well.lid.position.copy(well.lidOpen.pos);
@@ -555,6 +691,11 @@ export function createRender(canvas, world) {
             break;
           case "lightning":
             st.flash = 1;
+            st.strikeX = e.x;
+            st.strikeY = e.y;
+            // The sun for the flash comes from above the strike point, so shadows fall away from it.
+            flashSun.target.position.set(e.x, 0, e.y);
+            flashSun.position.set(e.x + 5, 16, e.y - 3);
             if (e.figure) {
               figure.position.set(e.x, 0.95, e.y);
               figure.visible = true;
@@ -600,7 +741,8 @@ export function createRender(canvas, world) {
       renderer.dispose();
     },
     setExposure(v) {
-      renderer.toneMappingExposure = v;
+      // The slider sets the level; the base is brighter so the rooms read at the default.
+      renderer.toneMappingExposure = v * EXPOSURE_BASE;
     }
   };
 

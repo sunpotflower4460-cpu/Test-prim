@@ -11,7 +11,8 @@ export function createUI(doc = document) {
     progressBar: $("progressBar"), checklist: $("checklist"), basket: $("basket"),
     btnNote: $("btnNote"), btnPause: $("btnPause"),
     prompt: $("prompt"), promptText: $("promptText"),
-    timing: $("timing"), zone: $("zone"), needle: $("needle"),
+    timing: $("timing"), zone: $("zone"), needle: $("needle"), timingCue: $("timingCue"),
+    feedback: $("feedback"), holding: $("holding"), pMouth: $("pMouth"), pBrows: $("pBrows"),
     dragRing: $("dragRing"), dragText: $("dragText"), holdBar: $("holdBar"), holdFill: $("holdFill"),
     actions: $("actions"), btnAct: $("btnAct"), btnHelp: $("btnHelp"),
     joy: $("joy"), knob: $("knob"),
@@ -28,7 +29,25 @@ export function createUI(doc = document) {
   let hideTimer = 0;
   let typing = null;
   let toastTimer = 0;
+  let feedbackTimer = 0;
   let onBlip = null;
+
+  // The portrait beside auntie's words changes with the mood of the line.
+  const PORTRAIT = {
+    smile: { mouth: "M27 43q5 4 10 0", mouthFill: "none", brows: "M21 29q4-2 8-1M35 28q4-1 8 1" },
+    laugh: { mouth: "M25.5 42h13q-1 8-6.5 8t-6.5-8z", mouthFill: "#7a3430", brows: "M21 27q4-2 8-1M35 26q4-1 8 1" },
+    surprise: { mouth: "M30 42.5a2.2 2.6 0 1 0 4 0a2.2 2.6 0 1 0-4 0", mouthFill: "#7a3430", brows: "M21 26q4-2 8-1M35 25q4-1 8 1" },
+    worry: { mouth: "M27 45q2.5-2.5 5 0t5 0", mouthFill: "none", brows: "M21 30q4-1 8-3M35 29q4 0 8 2" }
+  };
+  function setPortrait(mood) {
+    const p = PORTRAIT[mood] || PORTRAIT.smile;
+    if (els.pMouth) {
+      els.pMouth.setAttribute("d", p.mouth);
+      els.pMouth.setAttribute("fill", p.mouthFill);
+      els.pMouth.setAttribute("stroke", p.mouthFill === "none" ? "#9b4b44" : "none");
+    }
+    if (els.pBrows) els.pBrows.setAttribute("d", p.brows);
+  }
 
   // Typewriter dialogue. Click or tap advances or finishes the line.
   function say(speaker, text, opts = {}) {
@@ -36,6 +55,7 @@ export function createUI(doc = document) {
     clearTimeout(hideTimer);
     clearInterval(typeTimer);
     els.speaker.textContent = speaker || "ちよおばちゃん";
+    setPortrait(opts.mood || "smile");
     els.line.textContent = "";
     els.talk.hidden = false;
     doc.body.classList.add("talking");
@@ -150,12 +170,35 @@ export function createUI(doc = document) {
     els.btnHelp.disabled = !!opts.helpDisabled;
   }
 
+  // The timing bar. The cue says 今、押す when the needle is inside the green zone.
   function timing(show, state) {
     els.timing.hidden = !show;
     if (!show || !state) return;
     els.zone.style.left = ((state.center - state.half) * 100).toFixed(2) + "%";
     els.zone.style.width = (state.half * 200).toFixed(2) + "%";
     els.needle.style.left = (state.pos * 100).toFixed(2) + "%";
+    const inZone = Math.abs(state.pos - state.center) <= state.half;
+    const cue = inZone ? "今、押す！" : "緑になったら押す";
+    if (els.timingCue.textContent !== cue) els.timingCue.textContent = cue;
+    els.timingCue.classList.toggle("now", inZone);
+  }
+
+  // A short word after each timed press: ぴったり！ / おしい / もうすこし.
+  function feedback(text, tone) {
+    if (!text) return;
+    els.feedback.textContent = text;
+    els.feedback.className = "feedback " + (tone || "");
+    els.feedback.hidden = false;
+    void els.feedback.offsetWidth;
+    els.feedback.classList.add("show");
+    clearTimeout(feedbackTimer);
+    feedbackTimer = setTimeout(() => { els.feedback.hidden = true; }, reduced ? 500 : 900);
+  }
+
+  // What the player is holding, in plain words. Empty when the hands are free.
+  function setHolding(text) {
+    els.holding.textContent = text ? "手に：" + text : "";
+    els.holding.hidden = !text;
   }
 
   function dragRing(show, x, y, progress, text) {
@@ -278,7 +321,7 @@ export function createUI(doc = document) {
     els,
     say, hideTalk, finishTyping, talkVisible, setBlip,
     setPhase, setDish, setStep, setChecklist, setBasket,
-    setPrompt, setActions, timing, dragRing, holdBar, joystick,
+    setPrompt, setActions, timing, feedback, setHolding, setPortrait, dragRing, holdBar, joystick,
     toast, finish,
     openDialog, closeDialogs, dialogOpen, openNode,
     renderMenu, renderNote, bindPause,

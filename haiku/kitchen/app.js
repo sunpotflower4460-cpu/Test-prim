@@ -11,8 +11,8 @@
 //   .perf({shadows, dpr})  turn shadows or pixel ratio off, to speed up slow headless runs
 //   .renderInfo()     draw calls, triangles and memory counts
 import * as THREE from "../vendor/three.module.js";
-import { buildWorld, updateWorld, STATION_ANCHORS, STATION_NAMES, BOUNDS, LAYOUT } from "./world.js";
-import { createAuntie, createPlayer, createUncle, createMisaki, animateWalk, setPose, blinkEyes, lookAt } from "./characters.js";
+import { buildWorld, buildEnvironment, updateWorld, STATION_ANCHORS, STATION_NAMES, BOUNDS, LAYOUT } from "./world.js";
+import { createAuntie, createPlayer, createUncle, createMisaki, animateWalk, setPose, blinkEyes, lookAt, setMood, updateFace } from "./characters.js";
 import { createFx } from "./fx.js";
 import { createProps } from "./props.js";
 import { createAudio } from "./audio.js";
@@ -79,6 +79,7 @@ function resize() {
 window.addEventListener("resize", resize);
 resize();
 
+buildEnvironment(renderer);
 const w3 = buildWorld(scene);
 const props = createProps(scene);
 const fx = createFx(scene);
@@ -126,6 +127,94 @@ const burnerIds = ["burnerL", "burnerR"];
 
 // ---------- Helpers -----------------------------------------------------------
 const clamp = (v, a, b) => Math.max(a, Math.min(b, v));
+const smooth = (a, b, x) => {
+  const k = clamp((x - a) / (b - a), 0, 1);
+  return k * k * (3 - 2 * k);
+};
+
+// Plain words for what the hand holds, shown in the HUD and the prompt.
+const ITEM_NAMES = {
+  pot: "鍋", pan: "フライパン", bowl: "ボウル", plate: "お皿", lid: "ふた", spoon: "スプーン", egg: "卵",
+  tofu: "豆腐", negi: "ねぎ", miso: "お味噌", beef: "牛肉", onion: "玉ねぎ", carrot: "にんじん",
+  potato: "じゃがいも", rice: "ご飯", onigiri: "おにぎり", tsukemono: "漬物", tamago: "卵焼き"
+};
+function handName(item) {
+  if (!item) return "";
+  if (item.kind === "bowl") {
+    if (item.beaten) return "溶き卵のボウル";
+    if (item.food) return "お椀（" + (item.food === "miso" ? "お味噌汁" : "肉じゃが") + "）";
+    return "ボウル";
+  }
+  if (item.kind === "pot" && item.water) return "水入りの鍋";
+  const base = ITEM_NAMES[item.kind] || "もの";
+  return item.cut ? "切った" + base : base;
+}
+
+// The guide: a small floating label and arrow over the station the player should go to next.
+// It is a soft hint in the scene, and it dims when the player is already standing there.
+const GUIDE_HEIGHT = { fridge: 2.35, shelf_pot: 2.25, shelf_pan: 2.25, shelf_bowl: 2.25, shelf_plate: 2.25, menu: 2.25, door: 1.9, veg_bin: 1.25, table: 1.5, plant0: 1.45, plant1: 1.45, plant2: 1.45, plant3: 1.45, plant4: 1.45, plant5: 1.6 };
+const guideTexCache = {};
+function guideTexture(name) {
+  if (guideTexCache[name]) return guideTexCache[name];
+  const c = document.createElement("canvas");
+  c.width = 360;
+  c.height = 132;
+  const g = c.getContext("2d");
+  const r = 26;
+  g.beginPath();
+  g.moveTo(r + 6, 8);
+  g.arcTo(352, 8, 352, 124, r);
+  g.arcTo(352, 124, 8, 124, r);
+  g.arcTo(8, 124, 8, 8, r);
+  g.arcTo(8, 8, 352, 8, r);
+  g.closePath();
+  g.fillStyle = "rgba(34,24,17,0.92)";
+  g.fill();
+  g.lineWidth = 6;
+  g.strokeStyle = "#ffd27a";
+  g.stroke();
+  g.textAlign = "center";
+  g.textBaseline = "middle";
+  g.fillStyle = "#ffd27a";
+  g.font = "bold 30px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif";
+  g.fillText("つぎは、ここ", 180, 42);
+  g.fillStyle = "#fff8ec";
+  let size = 46;
+  g.font = `bold ${size}px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif`;
+  while (g.measureText(name).width > 320 && size > 24) {
+    size -= 2;
+    g.font = `bold ${size}px 'Hiragino Maru Gothic ProN','Noto Sans JP',sans-serif`;
+  }
+  g.fillText(name, 180, 92);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  guideTexCache[name] = t;
+  return t;
+}
+function createGuide(sc) {
+  const group = new THREE.Group();
+  group.visible = false;
+  sc.add(group);
+  const pillMat = new THREE.SpriteMaterial({ map: guideTexture("作業台"), transparent: true, depthWrite: false, depthTest: false, opacity: 0 });
+  const pill = new THREE.Sprite(pillMat);
+  pill.scale.set(1.2, 0.44, 1);
+  pill.renderOrder = 10;
+  group.add(pill);
+  const arrowMat = new THREE.MeshBasicMaterial({ color: 0xffd27a, transparent: true, opacity: 0, depthWrite: false, depthTest: false });
+  const arrow = new THREE.Mesh(new THREE.ConeGeometry(0.07, 0.15, 18), arrowMat);
+  arrow.rotation.x = Math.PI;
+  arrow.renderOrder = 10;
+  group.add(arrow);
+  const glowMat = new THREE.MeshBasicMaterial({ map: TX.glowRing("#ffe39a"), transparent: true, opacity: 0, depthWrite: false });
+  const glow = new THREE.Mesh(new THREE.PlaneGeometry(1.5, 1.5), glowMat);
+  glow.rotation.x = -Math.PI / 2;
+  glow.position.y = 0.04;
+  glow.visible = false;
+  sc.add(glow);
+  return { group, pill, pillMat, arrow, arrowMat, glow, glowMat, target: null, label: "", fade: 0 };
+}
+const guide = createGuide(scene);
+let guideTarget = null;
 
 // Where the object itself sits, so the highlight ring lands on it rather than on the standing spot.
 const OBJECT_SPOTS = {
@@ -173,17 +262,21 @@ function burnerFor(into) {
   return "burnerL";
 }
 
+// A mood (smile, laugh, surprise, worry) shows in the portrait and on her face for a moment.
 function auntieSay(text, opts = {}) {
   if (!text) return;
   ui.say(AUNTIE, text, opts);
+  if (opts.mood) setMood(auntie, opts.mood, 1.8);
   auntieState.hopT = reduced ? 0 : 0.6;
   auntieState.tiltT = 0.9;
 }
 
 let familyLines = 0;
-function familySay(who, text) {
+function familySay(who, text, mood = "laugh") {
   familyLines += 1;
-  ui.say(who === "uncle" ? UNCLE : MISAKI, text, { family: true });
+  const char = who === "uncle" ? uncle : misaki;
+  ui.say(who === "uncle" ? UNCLE : MISAKI, text, { family: true, mood });
+  setMood(char, mood, 2.4);
 }
 
 function nextLine(list) {
@@ -239,7 +332,17 @@ function startDishUI(fresh) {
   ui.setDish(recipe.name);
   updateHud();
   if (fresh) {
-    sayStart(recipe.name);
+    // The first time a recipe starts, auntie gives two plain lines about the first step. Never again.
+    const tip = LINES.auntie.firstTip && LINES.auntie.firstTip[recipe.id];
+    if (tip && !save.tips[recipe.id]) {
+      save.tips[recipe.id] = true;
+      writeSave();
+      ui.say(AUNTIE, tip.join("\n"), { speed: 34, persist: false });
+      auntieState.hopT = reduced ? 0 : 0.6;
+      auntieState.tiltT = 0.9;
+    } else {
+      sayStart(recipe.name);
+    }
     audio.sfx.chime();
   }
   idleT = 0;
@@ -331,9 +434,11 @@ function updateHud() {
   if (!world || !recipe) {
     ui.setStep("", "", null);
     ui.setChecklist([]);
+    ui.setHolding("");
     ui.setActions(phase === "play", { helpDisabled: true });
     return;
   }
+  ui.setHolding(handName(world.hand));
   const hint = Sim.hintOf(world);
   const prog = Sim.progressOf(world);
   ui.setStep(hint ? hint.label : "できあがり", hint ? hint.hint : "", prog);
@@ -368,7 +473,7 @@ function handleEvents(events, ctx = {}) {
     } else if (e.type === "shell") {
       audio.sfx.crack(false);
       fx.shell(LAYOUT.counterSlot.x, 1.0, LAYOUT.counterSlot.z, 6);
-      auntieSay(nextLine(LINES.auntie.shell));
+      auntieSay(nextLine(LINES.auntie.shell), { mood: "surprise" });
     } else if (e.type === "counter") {
       if (e.action === "put") audio.sfx.step();
       else audio.sfx.cupboard();
@@ -395,7 +500,7 @@ function handleEvents(events, ctx = {}) {
     } else if (e.type === "layer") {
       auntieSay(nextLine(LINES.auntie.layerSet));
     } else if (e.type === "burnt") {
-      auntieSay(nextLine(LINES.auntie.burnt), { persist: false });
+      auntieSay(nextLine(LINES.auntie.burnt), { persist: false, mood: "surprise" });
     } else if (e.type === "session") {
       // Visual only. Handled when the session starts.
     } else if (e.type === "complete" || e.type === "run") {
@@ -452,6 +557,7 @@ function serveSequence(item) {
   props.serveDish(item);
   fx.sparkle(LAYOUT.table.x, 1.2, LAYOUT.table.z, 10);
   audio.sfx.cheer();
+  setMood(auntie, "laugh", 2.6);
   if (serveCount === 1) {
     setTimeout(() => familySay("misaki", pick(LINES.family.misaki.reactServe, lineIdx + 1)), 500);
     setTimeout(() => familySay("uncle", pick(LINES.family.uncle.reactServe, lineIdx + 2)), 2200);
@@ -500,7 +606,11 @@ function act() {
     if (world.session.type === "chop" || world.session.type === "crack") {
       const r = Sim.press(world);
       if (!r.ok) return;
-      if (r.grade === "miss") audio.sfx.miss();
+      if (r.grade) ui.feedback(LINES.auntie.grade[r.grade], r.grade === "nice" ? "nice" : r.grade === "good" ? "good" : "miss");
+      if (r.grade === "miss") {
+        audio.sfx.miss();
+        setMood(auntie, "worry", 1.1);
+      }
       idleT = 0;
       handleEvents(r.events);
       if (!r.hit && Math.random() < 0.25) auntieSay(nextLine(LINES.auntie.miss), { speed: 30 });
@@ -660,7 +770,7 @@ function segmentHit(a, b) {
   let tMin = 1;
   const dx = b.x - a.x, dz = b.z - a.z;
   for (const c of w3.colliders) {
-    if (c.h < 1.4) continue;
+    if (c.h < 1.4 || c.noCam) continue;
     const m = 0.2;
     const x0 = c.x0 - m, x1 = c.x1 + m, z0 = c.z0 - m, z1 = c.z1 + m;
     let t0 = 0, t1 = 1;
@@ -682,6 +792,9 @@ function segmentHit(a, b) {
   return tMin;
 }
 
+// The middle of the kitchen: the look point leans here while the player is at the stove side,
+// so the stove, counter and fridge stay in frame instead of the player filling the view.
+const KITCHEN_CORE = new THREE.Vector3(0.5, 1.1, -2.0);
 function updateCamera(dt) {
   let focus;
   let look;
@@ -693,7 +806,8 @@ function updateCamera(dt) {
     cam.pitch = 0.16;
   } else {
     focus = new THREE.Vector3(P.x, 1.1, P.z);
-    look = focus.clone();
+    const kitchenShare = 1 - smooth(2.6, 4.4, P.x);
+    look = focus.clone().lerp(KITCHEN_CORE, 0.3 * kitchenShare);
     if (ui.talkVisible() && auntieState.goal === null && auntie.position.distanceTo(player.position) < 6) {
       const ap = new THREE.Vector3(auntie.position.x, 1.1, auntie.position.z);
       look.lerp(ap, 0.2);
@@ -706,10 +820,13 @@ function updateCamera(dt) {
   const off = new THREE.Vector3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)).multiplyScalar(want);
   const desired = look.clone().add(off);
   const frac = segmentHit(look, desired);
-  const kept = Math.max(0.12, frac * 0.94);
+  let kept = Math.max(0.12, frac * 0.94);
+  // The ceiling and the wall tops are never in the lower part of the view: pull the camera down if it would rise above them.
+  const maxY = 2.85;
+  if (off.y > 0 && look.y + off.y * kept > maxY) kept = Math.max(0.12, Math.min(kept, (maxY - look.y) / off.y));
   const target = look.clone().add(off.clone().multiplyScalar(kept));
   const k = 1 - Math.exp(-dt * (reduced ? 4 : 7));
-  target.z = Math.min(target.z, 4.3);
+  target.z = Math.min(target.z, 5.8);
   if (!cam.ready) {
     cam.pos.copy(target);
     cam.ready = true;
@@ -718,6 +835,15 @@ function updateCamera(dt) {
   camera.position.copy(cam.pos);
   cam.look.lerp(look, k);
   camera.lookAt(cam.look);
+  // Cutaway walls: a wall that stands between the camera and the room fades, so it never fills the view.
+  for (const c of w3.anim.cutaways) {
+    let op;
+    if (c.front) op = clamp((4.9 - cam.pos.z) / 0.5, 0, 1);
+    else op = clamp((Math.abs(cam.pos.x - c.x) - 0.9) / 1.3, 0.1, 1);
+    c.mesh.material.opacity = op;
+    // A fully faded wall is not drawn at all (it would still cost fill on every frame).
+    c.mesh.visible = op > 0.02;
+  }
 }
 
 // ---------- Nearest station and prompt ---------------------------------------
@@ -754,6 +880,7 @@ function updateNearest() {
     const pk = Sim.peek(world, nearest);
     if (pk.ok && pk.label) text = STATION_NAMES[nearest] + "：" + pk.label;
     else if (pk.label && pk.reason !== "done") text = STATION_NAMES[nearest] + "：" + pk.label + HOLD_HINT[pk.reason];
+    else if (world.hand) text = STATION_NAMES[nearest] + "：" + handName(world.hand) + "は、ここでは使えません";
     else text = "";
   } else if (world && world.session) {
     text = "";
@@ -771,6 +898,90 @@ function updateNearest() {
 }
 
 // ---------- Character and world updates -----------------------------------
+// When the target is off screen, a pointer sits at the nearest screen edge and turns toward it.
+const edgeEl = document.getElementById("guideEdge");
+const edgeText = edgeEl.querySelector(".ge-text");
+let edgeShown = false;
+function updateGuideEdge(target) {
+  if (!target) {
+    if (edgeShown) { edgeEl.hidden = true; edgeShown = false; }
+    return false;
+  }
+  const o = objectSpot(target);
+  const p = screenOf(new THREE.Vector3(o.x, 1.0, o.z));
+  // The test uses where the floating label is, so it never sits under the HUD or off the edge.
+  const label = screenOf(new THREE.Vector3(o.x, GUIDE_HEIGHT[target] || 1.45, o.z));
+  const w = window.innerWidth;
+  const h = window.innerHeight;
+  const hud = document.getElementById("hud").getBoundingClientRect();
+  const top = Math.max(96, hud.bottom + 12);
+  const bottom = h - (touchDevice ? 150 : 110);
+  const pad = 90;
+  const inside = label.x > pad && label.x < w - pad && label.y > top && label.y < bottom && p.x > pad && p.x < w - pad && p.y > top && p.y < bottom;
+  if (inside) {
+    if (edgeShown) { edgeEl.hidden = true; edgeShown = false; }
+    return false;
+  }
+  const cx = w / 2;
+  const cy = (top + bottom) / 2;
+  let dx = p.x - cx;
+  let dy = p.y - cy;
+  if (Math.abs(dx) < 1 && Math.abs(dy) < 1) dx = 1;
+  const k = Math.min(
+    dx !== 0 ? Math.abs((w / 2 - pad) / dx) : Infinity,
+    dy !== 0 ? Math.abs(((bottom - top) / 2 - 8) / dy) : Infinity
+  );
+  const ex = cx + dx * k;
+  const ey = cy + dy * k;
+  edgeEl.style.left = clamp(ex, pad, w - pad) + "px";
+  edgeEl.style.top = clamp(ey, top, bottom) + "px";
+  edgeEl.style.setProperty("--a", Math.atan2(dy, dx) + "rad");
+  const name = STATION_NAMES[target] || target;
+  if (edgeText.textContent !== "つぎは、" + name) edgeText.textContent = "つぎは、" + name;
+  if (!edgeShown) { edgeEl.hidden = false; edgeShown = true; }
+  return true;
+}
+
+// Where the guide should point: the station of the next step. Passive waits and finished dishes have none.
+function updateGuide(dt) {
+  let target = null;
+  if (phase === "play" && world && !world.done && !world.session && !ui.dialogOpen() && !finishing) {
+    const hint = Sim.hintOf(world);
+    if (hint && hint.station) {
+      let st = Array.isArray(hint.station) ? hint.station[0] : hint.station;
+      if (st === "burner") st = burnerFor(hintInto(hint));
+      if (st && STATION_ANCHORS[st]) target = st;
+    }
+  }
+  if (target !== guideTarget) {
+    guideTarget = target;
+    if (target) {
+      const name = STATION_NAMES[target] || target;
+      guide.pillMat.map = guideTexture(name);
+      guide.pillMat.needsUpdate = true;
+    }
+  }
+  const want = target ? (nearest === target ? 0.3 : 1) : 0;
+  guide.fade += (want - guide.fade) * Math.min(1, dt * 5);
+  // Off screen, the edge pointer takes over from the 3D marker.
+  const edgeOn = updateGuideEdge(target);
+  const show = guide.fade > 0.01 && !!target && !edgeOn;
+  guide.group.visible = show;
+  guide.glow.visible = show;
+  if (target) {
+    const o = objectSpot(target);
+    const h = GUIDE_HEIGHT[target] || 1.45;
+    guide.group.position.set(o.x, h, o.z);
+    guide.glow.position.set(o.x, 0.04, o.z);
+  }
+  const bob = Math.sin(t * 2.4) * 0.03;
+  guide.arrow.position.y = 0.2 + bob;
+  guide.pill.position.y = 0.5 + bob * 0.5;
+  guide.pillMat.opacity = 0.96 * guide.fade;
+  guide.arrowMat.opacity = 0.9 * guide.fade;
+  guide.glowMat.opacity = (0.3 + 0.1 * Math.sin(t * 2.4)) * guide.fade;
+}
+
 function updateAuntie(dt) {
   const ud = auntie.userData;
   let speed = 0;
@@ -808,6 +1019,7 @@ function updateAuntie(dt) {
     ud.parts.head.rotation.y *= 0.9;
   }
   blinkEyes(auntie, dt);
+  updateFace(auntie, dt);
   if (!reduced) ud.parts.bun.rotation.z = Math.sin(t * 1.3) * 0.02;
   if (!auntieState.goal) {
     const want = phase === "title" ? 0 : Math.PI;
@@ -824,7 +1036,8 @@ function updateFamily(dt) {
     u.reactT = (u.reactT || 0) + dt;
     const hopAmp = u.reactT < 0.9 && !reduced ? Math.sin(u.reactT * 14) * (dir === "misaki" ? 0.05 : 0.02) : 0;
     char.position.y = Math.max(0, hopAmp);
-    blinkEyes({ userData: { parts: { eyes: [] }, blink: 3 } }, dt);
+    blinkEyes(char, dt);
+    updateFace(char, dt);
     u.parts.head.rotation.y = Math.sin(t * 0.5 + (dir === "uncle" ? 0 : 2)) * 0.12;
     if (dir === "misaki" && u.reactT < 1.2) u.parts.armL.rotation.x = -1.8 + Math.sin(t * 9) * 0.3;
     else if (dir === "misaki") u.parts.armL.rotation.x = -0.8;
@@ -842,6 +1055,11 @@ function updatePlayerTools(dt) {
   } else if (sess && sess.type === "drag") {
     armR.rotation.x = -1.0 + 0.2 * Math.sin(t * 6);
     armR.rotation.z = 0.25 * Math.sin(t * 6.5);
+  } else if (world && world.hand) {
+    // Carrying something: the right hand comes forward and out, so the item reads clearly.
+    const k = Math.min(1, dt * 8);
+    armR.rotation.x += (-0.95 - armR.rotation.x) * k;
+    armR.rotation.z += (0.14 - armR.rotation.z) * k;
   } else {
     armR.rotation.z *= 0.85;
     if (!input.moving) armR.rotation.x *= 0.9;
@@ -850,7 +1068,6 @@ function updatePlayerTools(dt) {
   const state = props.holdItem(handHolder, holding, handState);
   handState.key = state.key;
   handState.obj = state.obj;
-  void dt;
 }
 
 function updateEffects(dt) {
@@ -903,9 +1120,11 @@ function updateEffects(dt) {
   }
 }
 
+let stirState = null;
 function updateSessions(dt) {
   const sess = world && world.session;
   if (!sess) {
+    stirState = null;
     ui.timing(false);
     ui.dragRing(false);
     ui.holdBar(false);
@@ -930,6 +1149,13 @@ function updateSessions(dt) {
     const s = screenOf(p);
     const prog = Math.min(1, sess.progress / sess.need);
     ui.dragRing(true, s.x, s.y, prog, sess.metric === "rot" ? "ぐるぐる" : "さっさっと");
+    // One short word as the stir passes each third.
+    if (!stirState || stirState.step !== sess.stepId) stirState = { step: sess.stepId, mark: 0 };
+    const mark = prog >= 0.9 ? 3 : prog >= 0.66 ? 2 : prog >= 0.33 ? 1 : 0;
+    if (mark > stirState.mark) {
+      stirState.mark = mark;
+      ui.feedback(LINES.auntie.stir[mark - 1], "nice");
+    }
     // Keyboard players hold an arrow key (or E) to make the same motion as a drag.
     const keyDrag = !(input.drag && input.drag.down) && (input.actDown || ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS"].some((k) => input.keys.has(k)));
     if (keyDrag) {
@@ -1227,6 +1453,7 @@ function frame(now) {
     }
     updateSessions(dt);
     updateNearest();
+    updateGuide(dt);
     updatePlayerTools(dt);
     updateAuntie(dt);
     updateFamily(dt);
@@ -1264,6 +1491,8 @@ window.obachanKitchenDebug = {
       cam: camera.position.toArray().map((v) => +v.toFixed(2)),
       indicator: Sim.indicatorOf(world || { session: null }),
       familyLines: familyLines,
+      guide: guideTarget,
+      tips: save.tips || {},
       servedDishes: serveCount,
       player: [P.x, P.z],
       save: save

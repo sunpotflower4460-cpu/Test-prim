@@ -24,6 +24,7 @@ export function createAudio() {
   let melodyIdx = 0;
   let melodyT = 0;
   let breathT = 1;
+  let patterT = 0;
   let rnd = 0.37;
 
   function rand() {
@@ -183,6 +184,7 @@ export function createAudio() {
     const humLP = ctx.createBiquadFilter();
     humLP.type = "lowpass";
     humLP.frequency.value = 1300;
+    humLP.Q.value = 0.5;
     const humG = ctx.createGain();
     humG.gain.value = 0;
     const pan = ctx.createStereoPanner();
@@ -208,7 +210,7 @@ export function createAudio() {
     dLP.connect(dripOut);
     dripOut.connect(master);
     nodes = {
-      rainG, rainLP, windG, hum, humG, pan, vib, delay,
+      rainG, rainLP, windG, hum, humLP, humG, pan, vib, delay,
       humVol: 0,
       humFreq: 392
     };
@@ -232,9 +234,18 @@ export function createAudio() {
     if (!ctx || !nodes || ctx.state !== "running") return;
     const t = ctx.currentTime;
     const n = nodes;
-    const rainLevel = info.outdoors ? 0.2 : 0.07;
+    // The rain swells and eases over about ten seconds, and it is brighter outdoors.
+    const gust = 0.5 + 0.5 * Math.sin(t * 0.63) * Math.sin(t * 0.21 + 1.3);
+    const rainLevel = (info.outdoors ? 0.2 : 0.07) * (0.8 + 0.4 * gust);
     n.rainG.gain.setTargetAtTime(rainLevel, t, 0.4);
-    n.rainLP.frequency.setTargetAtTime(info.outdoors ? 3200 : 900, t, 0.5);
+    n.rainLP.frequency.setTargetAtTime((info.outdoors ? 2600 : 900) + 900 * gust, t, 0.5);
+    // Single drops ticking on the eaves and the stones. Denser outdoors, and in gusts.
+    patterT -= dt;
+    if (patterT <= 0 && enabled) {
+      patterT = (info.outdoors ? 0.05 : 0.14) + rand() * (info.outdoors ? 0.18 : 0.5) / (0.5 + gust);
+      const vol = (info.outdoors ? 0.012 : 0.006) * (0.5 + gust);
+      burst(t, { filter: "highpass", freq: 2800 + rand() * 3400, q: 0.9, peak: vol * (0.5 + rand()), attack: 0.001, decay: 0.012 + rand() * 0.02 });
+    }
     // Hum: pitch follows the melody; volume follows proximity.
     melodyT -= dt;
     if (melodyT <= 0) {
@@ -248,6 +259,8 @@ export function createAudio() {
     }
     n.humG.gain.setTargetAtTime(info.humVol || 0, t, 0.15);
     n.pan.pan.setTargetAtTime(info.humPan || 0, t, 0.1);
+    // Far away the hum is dull as well as quiet; near, it opens up.
+    n.humLP.frequency.setTargetAtTime(380 + 1000 * (info.humProx || 0), t, 0.25);
     // Breathing: heavier and quicker as breath runs short.
     const br = info.breath || 0;
     if (br > 0.02) {
@@ -298,17 +311,25 @@ export function createAudio() {
     }
   }
 
+  // Three surfaces, three sounds: tatami is a soft thud and a rustle of rush; wood is a
+  // knock with an occasional creak; mud is a wet squelch with a few bubbles.
   function footstep(surface, running) {
     if (!ensure() || !enabled) return;
     const t = ctx.currentTime;
     const k = running ? 1.25 : 1;
     if (surface === "tatami") {
-      burst(t, { filter: "lowpass", freq: 340, q: 0.7, peak: 0.16 * k, attack: 0.004, decay: 0.12 });
+      burst(t, { filter: "lowpass", freq: 240, q: 0.6, peak: 0.15 * k, attack: 0.012, decay: 0.2 });
+      burst(t + 0.02, { filter: "bandpass", freq: 1300, q: 0.5, peak: 0.028 * k, attack: 0.02, decay: 0.16 });
     } else if (surface === "wood") {
-      burst(t, { filter: "bandpass", freq: 620, q: 1.2, peak: 0.12 * k, attack: 0.003, decay: 0.09 });
-      if (rand() < 0.35) burst(t + 0.05, { filter: "bandpass", freq: 1500, q: 2.5, peak: 0.05, attack: 0.002, decay: 0.05 });
+      burst(t, { filter: "bandpass", freq: 480, q: 2.2, peak: 0.17 * k, attack: 0.002, decay: 0.07 });
+      burst(t, { filter: "highpass", freq: 2400, q: 0.8, peak: 0.035 * k, attack: 0.001, decay: 0.02 });
+      if (rand() < 0.25) {
+        tone(t + 0.04, { type: "triangle", f0: 190 + rand() * 60, f1: 120, peak: 0.022, attack: 0.02, decay: 0.28 });
+      }
     } else if (surface === "earth" || surface === "mud") {
-      burst(t, { filter: "lowpass", freq: 520 + rand() * 200, q: 1.5, peak: 0.2 * k, attack: 0.004, decay: 0.16 });
+      burst(t, { filter: "lowpass", freq: 360 + rand() * 120, q: 1.1, peak: 0.24 * k, attack: 0.02, decay: 0.26 });
+      burst(t + 0.06 + rand() * 0.03, { filter: "bandpass", freq: 900 + rand() * 500, q: 4, peak: 0.035, attack: 0.002, decay: 0.05 });
+      if (rand() < 0.6) burst(t + 0.13 + rand() * 0.05, { filter: "bandpass", freq: 700, q: 5, peak: 0.02, attack: 0.002, decay: 0.07 });
     } else if (surface === "stone" || surface === "tile") {
       burst(t, { filter: "highpass", freq: 1800, q: 1, peak: 0.07 * k, attack: 0.002, decay: 0.05 });
       burst(t, { filter: "bandpass", freq: 900, q: 1.5, peak: 0.1 * k, attack: 0.003, decay: 0.08 });
@@ -509,6 +530,15 @@ export function createAudio() {
     tone(ctx.currentTime, { f0: 1400, peak: 0.03, attack: 0.002, decay: 0.03 });
   }
 
+  // She sees you for the first time: a low drop, a thin tremor of high tone, a breath.
+  function shiver() {
+    if (!ensure() || !enabled) return;
+    const t = ctx.currentTime;
+    tone(t, { type: "sine", f0: 90, f1: 55, peak: 0.16, attack: 0.01, decay: 0.55 });
+    tone(t + 0.02, { type: "triangle", f0: 1450, f1: 1380, peak: 0.02, attack: 0.08, decay: 0.7 });
+    burst(t, { filter: "bandpass", freq: 2600, q: 5, peak: 0.05, attack: 0.03, decay: 0.5 });
+  }
+
   function flash() {
     if (!ensure() || !enabled) return;
     burst(ctx.currentTime, { filter: "bandpass", freq: 3500, q: 3, peak: 0.12, attack: 0.001, decay: 0.03 });
@@ -596,6 +626,7 @@ export function createAudio() {
     burn,
     msg,
     flash,
+    shiver,
     voice,
   };
 }
