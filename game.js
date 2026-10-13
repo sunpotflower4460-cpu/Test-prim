@@ -155,9 +155,10 @@
 
   function freshPlayer() {
     return {
-      x: 0, y: 0, r: 16, hp: 100, maxHp: 100, speed: 220, damage: 22, fireRate: .44, fireCd: .1,
-      bolts: 1, orbit: 0, magnet: 135, regen: 0, frost: 0, pulse: 0, nova: 0, novaCd: 5,
-      luck: 1, invuln: 0, dashCd: 0, dashTime: 0, dashX: 0, dashY: -1, dashSerial: 0,
+      x: 0, y: 0, r: 16, hp: 100, maxHp: 100, speed: 235, damage: 22, fireRate: .44, fireCd: .15,
+      bolts: 1, orbit: 0, magnet: 175, regen: 0, frost: 0, pulse: 0, nova: 0, novaCd: 5,
+      pierce: 0, crit: 0, ward: 0, echo: 0, projectileSpeed: 1, dashCooldown: 1.85,
+      luck: 1, invuln: .8, dashCd: 0, dashTime: 0, dashX: 0, dashY: -1, dashSerial: 0,
       facingX: 0, facingY: -1, walk: 0, perkLevels: {}
     };
   }
@@ -167,8 +168,8 @@
       player: freshPlayer(), stage: 0, stageTime: 0, time: 0,
       enemies: [], shots: [], hostile: [], orbs: [], kills: 0, level: 1,
       xp: 0, totalXp: 0, bossSpawned: false, bossId: null,
-      spawned: 0, spawnCd: 1.5, nextId: 1, hudCd: 0, settled: false,
-      score: 0
+      spawned: 0, spawnCd: .28, nextId: 1, hudCd: 0, settled: false,
+      rerolls: 2, previousOffers: [], score: 0
     };
     particles.length = 0; rings.length = 0; texts.length = 0;
     musicAt = clock; beat = 0;
@@ -177,9 +178,19 @@
   }
   function beginChapter() {
     const t = themes[game.stage];
-    game.stageTime = 0; game.spawnCd = .7; game.bossSpawned = false; game.bossId = null;
+    game.stageTime = 0; game.spawnCd = .38; game.bossSpawned = false; game.bossId = null;
     game.enemies.length = 0; game.shots.length = 0; game.hostile.length = 0;
+    game.orbs.length = 0;
+    game.rerolls = Math.min(3, game.rerolls + (game.stage > 0 ? 1 : 0));
     game.player.hp = Math.min(game.player.maxHp, game.player.hp + 24);
+    // Introduce the first shadows within view, before the timer starts to ramp.
+    const starters = game.stage === 0 ? 3 : 4;
+    for (let i = 0; i < starters; i++) {
+      const angle = TWO * (i + .16) / starters;
+      spawnEnemy("wisp", game.player.x + Math.cos(angle) * Math.min(W * .39, 215),
+        game.player.y + Math.sin(angle) * Math.min(H * .3, 200));
+    }
+    game.spawned += starters;
     ui.chapter.textContent = t.name;
     ui.bossbar.classList.add("hidden");
     setScene("playing");
@@ -230,7 +241,7 @@
     bindButton("nextChapter", () => { game.stage++; beginChapter(); });
   }
 
-  function expNeed() { return Math.floor(16 + game.level * 13 + Math.pow(game.level, 1.26) * 3); }
+  function expNeed() { return Math.floor(12 + game.level * 8 + Math.pow(game.level, 1.23) * 2.3); }
   function addExp(amount) {
     if (!game) return;
     const value = Math.round(amount * game.player.luck);
@@ -301,8 +312,10 @@
   }
   function spawnRandom() {
     if (game.enemies.length >= 55) return;
-    const a = rand(0, TWO), r = Math.max(W, H) * .62 + rand(70, 190);
-    const x = game.player.x + Math.cos(a) * r, y = game.player.y + Math.sin(a) * r;
+    const a = rand(0, TWO);
+    // Stay close to the visible action on portrait and landscape screens.
+    const x = game.player.x + Math.cos(a) * (Math.min(W * .43, 285) + rand(26, 62));
+    const y = game.player.y + Math.sin(a) * (Math.min(H * .36, 275) + rand(26, 62));
     const n = Math.random();
     let type = "wisp";
     if (game.stageTime > 12 && n < .22) type = "runner";
@@ -315,8 +328,9 @@
   function spawnBoss() {
     if (game.bossSpawned) return;
     game.bossSpawned = true;
-    const a = rand(0, TWO), r = Math.max(W, H) * .53;
-    const e = spawnEnemy("boss", game.player.x + Math.cos(a) * r, game.player.y + Math.sin(a) * r);
+    const a = rand(0, TWO);
+    const e = spawnEnemy("boss", game.player.x + Math.cos(a) * Math.min(W * .48, 330),
+      game.player.y + Math.sin(a) * Math.min(H * .38, 310));
     game.bossId = e.id;
     ui.bossName.textContent = themes[game.stage].boss;
     ui.bossbar.classList.remove("hidden");
@@ -508,10 +522,10 @@
     if (!g.bossSpawned && g.stageTime < 60) {
       g.spawnCd -= dt;
       if (g.spawnCd <= 0) {
-        const interval = Math.max(.23, 1.23 - g.stage * .21 - g.stageTime * .008);
+        const interval = Math.max(.34, .83 - g.stage * .13 - g.stageTime * .0062);
         g.spawnCd += interval;
         spawnRandom();
-        if (g.stageTime > 33 && Math.random() < .35) spawnRandom();
+        if (g.stageTime > 23 && Math.random() < .28) spawnRandom();
       }
     }
     if (!g.bossSpawned && g.stageTime >= 60) spawnBoss();
@@ -602,8 +616,8 @@
       const o = g.orbs[i];
       o.phase += dt * 4; o.age = (o.age || 0) + dt;
       const dx = p.x - o.x, dy = p.y - o.y, dist = Math.max(1, Math.hypot(dx, dy));
-      if (dist < p.magnet || o.age > 4.5) {
-        const speed = dist < p.magnet ? clamp((p.magnet - dist) * 3.6, 140, 800) : 50 + Math.min(125, (o.age - 4.5) * 18);
+      if (dist < p.magnet || o.age > 1.6) {
+        const speed = dist < p.magnet ? clamp((p.magnet - dist) * 4.2, 170, 900) : 195 + Math.min(250, (o.age - 1.6) * 32);
         o.x += dx / dist * speed * dt;
         o.y += dy / dist * speed * dt;
       }
@@ -648,7 +662,7 @@
     ui.level.textContent = "LV " + g.level;
     ui.kills.textContent = "✧ " + g.kills;
     ui.time.textContent = String(Math.floor(g.stageTime / 60)).padStart(2, "0") + ":" + String(Math.floor(g.stageTime % 60)).padStart(2, "0");
-    ui.hint.textContent = g.bossSpawned ? "守護者を浄化せよ" : "守護者まで " + Math.max(0, Math.ceil(60 - g.stageTime)) + " 秒";
+    ui.hint.textContent = g.bossSpawned ? "守護者を浄化せよ" : g.stageTime < 5 && g.stage === 0 ? "移動とダッシュ · 攻撃は自動" : "守護者まで " + Math.max(0, Math.ceil(60 - g.stageTime)) + " 秒";
     const boss = g.enemies.find(e => e.id === g.bossId);
     if (boss) ui.bossFill.style.width = (100 * Math.max(0, boss.hp) / boss.maxHp) + "%";
     const dashRatio = clamp(p.dashCd / 2.35, 0, 1);
