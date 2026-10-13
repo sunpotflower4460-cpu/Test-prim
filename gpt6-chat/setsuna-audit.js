@@ -117,7 +117,7 @@ function runSetsunaAudit(source, gameHtml, shelfHtml) {
     return q.get().scene==="playing"&&q.get().saved.best===0;
   });
   check("Pointer joystick resets after release",()=>{
-    const m=setup(),q=m.qa;q.startRun(),pad=m.$("pad");
+    const m=setup(),q=m.qa,pad=m.$("pad");q.startRun();
     pad.handlers.pointerdown[0]({pointerId:7,clientX:87,clientY:630,preventDefault:noop});
     pad.handlers.pointermove[0]({pointerId:7,clientX:125,clientY:630,preventDefault:noop});
     m.step(3);const start=q.get().player.x;
