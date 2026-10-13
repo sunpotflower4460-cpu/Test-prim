@@ -266,6 +266,7 @@
     saveProgress(); saved.best = 3; saved.wins++;
     persist();
     setScene("won");
+    ui.bossbar.classList.add("hidden");
     flash(.55); sound("win");
     overlayCard("THE STARS REMEMBER YOU", "世界に、光が戻った。", "最後の星は、ずっとあなたの中にあった。<br>そして庭は、また花を咲かせる。", '<div class="special">✦</div><div class="stats"><span><strong>' + game.kills + '</strong>浄化した影</span><span><strong>' + game.level + '</strong>レベル</span><span><strong>' + Math.floor(game.time / 60) + ':' + String(Math.floor(game.time % 60)).padStart(2, "0") + '</strong>旅の時間</span></div><button class="primary" id="retry">新しい夜明けへ <b>↗</b></button><br><button class="secondary" id="quit">タイトルへ戻る</button>');
     bindButton("retry", startRun); bindButton("quit", backHome);
@@ -275,6 +276,7 @@
     if (game.stage === 2) { win(); return; }
     saveProgress(); saved.best = Math.max(saved.best, game.stage + 2); persist();
     setScene("chapter");
+    ui.bossbar.classList.add("hidden");
     const t = themes[game.stage + 1];
     sound("level"); flash(.36);
     overlayCard("CHAPTER COMPLETE", themes[game.stage].short + "に光が戻った", "守護者の星核を受け取った。<br>次は、" + t.short + "へ。",
@@ -420,7 +422,7 @@
       id: game.nextId++, type, x, y, hp: m[0] * scale, maxHp: m[0] * scale,
       speed: m[1] * (1 + game.stage * .13), radius: m[2] + (type === "boss" ? game.stage * 4 : 0),
       damage: m[3] + game.stage * 3, phase: rand(0, TWO), cd: rand(.4, 2.6), hitFx: 0,
-      slow: 0, orbitHit: 0, dashSerial: -1, windup: 0, score: type === "boss" ? 100 : 1
+      slow: 0, orbitHit: 0, dashSerial: -1, windup: 0, aimX: 0, aimY: 0, score: type === "boss" ? 100 : 1
     };
     if (type === "boss") { e.hp *= 1 + game.stage * .28; e.maxHp = e.hp; e.cd = 1.5; }
     game.enemies.push(e);
@@ -654,7 +656,7 @@
       const critical = Math.random() < p.crit;
       game.shots.push({ x: p.x + Math.cos(a) * 17, y: p.y + Math.sin(a) * 17,
         vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: critical ? 6.4 : 5,
-        life: 1.35 * p.projectileSpeed, damage: p.damage * (critical ? 1.85 : 1),
+        life: 1.35, damage: p.damage * (critical ? 1.85 : 1),
         critical, pierce: p.pierce, hits: new Set(), slow: p.frost, trail: [] });
     }
     burst(p.x + Math.cos(angle) * 16, p.y + Math.sin(angle) * 16, 2, "#f3ffe8", .18);
@@ -729,18 +731,29 @@
       e.slow = Math.max(0, e.slow - dt); e.orbitHit = Math.max(0, e.orbitHit - dt);
       const dx = p.x - e.x, dy = p.y - e.y, dist = Math.max(1, Math.hypot(dx, dy));
       let move = 1;
-      if (e.type === "archer") move = dist < 185 ? -.45 : dist < 265 ? .13 : .82;
+      if (e.type === "archer") move = e.windup > 0 ? .04 : dist < 185 ? -.45 : dist < 265 ? .13 : .82;
       if (e.type === "boss") move = dist < 135 ? .15 : 1;
       const slowness = e.slow > 0 ? .55 : 1;
       const weave = e.type === "runner" ? Math.sin(e.phase * 1.7) * 26 : 0;
       e.x += ((dx / dist * e.speed * move) + (-dy / dist * weave)) * slowness * dt;
       e.y += ((dy / dist * e.speed * move) + (dx / dist * weave)) * slowness * dt;
       e.cd -= dt;
-      if (e.type === "archer" && e.cd <= 0 && dist < 550 && g.hostile.length < 115) {
-        e.cd = rand(2.1, 3);
-        const speed = 170 + g.stage * 25;
-        g.hostile.push({ x: e.x, y: e.y, vx: dx / dist * speed, vy: dy / dist * speed, r: 6, life: 4, damage: 12 + g.stage * 3 });
-        ring(e.x, e.y, 25, "#ffaad8", .38);
+      // Archers mark their destination before firing: the warning remains
+      // aimed at the *old* position, so moving out of the lane is meaningful.
+      if (e.type === "archer" && e.cd <= 0 && e.windup <= 0 && dist < 550 && g.hostile.length < 115) {
+        e.cd = rand(2.5, 3.35);
+        e.windup = .62; e.aimX = p.x; e.aimY = p.y;
+        ring(e.x, e.y, 31, "#ffaddf", .62);
+      }
+      if (e.type === "archer" && e.windup > 0) {
+        e.windup -= dt;
+        if (e.windup <= 0 && g.hostile.length < 115) {
+          const ax = e.aimX - e.x, ay = e.aimY - e.y, length = Math.max(1, Math.hypot(ax, ay));
+          const speed = 174 + g.stage * 26;
+          g.hostile.push({ x: e.x, y: e.y, vx: ax / length * speed, vy: ay / length * speed,
+            r: 6, life: 4, damage: 12 + g.stage * 3, origin: "archer" });
+          burst(e.x, e.y, 5, "#dcbaff", .25);
+        }
       }
       // Boss strikes have a visible wind-up: the player can read and dodge the attack.
       if (e.type === "boss" && e.cd <= 0 && e.windup <= 0 && dist < 730) {
@@ -760,8 +773,16 @@
             const a = j / n * TWO + offset, speed = 122 + g.stage * 19;
             g.hostile.push({ x: e.x, y: e.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: 6, life: 4.6, damage: 13 + g.stage * 2 });
           }
-          ring(e.x, e.y, 125, "#ffd3d0", .45);
-          burst(e.x, e.y, 14, "#ffc2c6", .6);
+          if (g.stage === 2) {
+            // Last Night adds an aimed five-star fan after the regular ring.
+            for (let j = -2; j <= 2 && g.hostile.length < 115; j++) {
+              const a = aim + j * .19, speed = 185;
+              g.hostile.push({ x: e.x, y: e.y, vx: Math.cos(a) * speed, vy: Math.sin(a) * speed,
+                r: 5.5, life: 4, damage: 13, origin: "fan" });
+            }
+          }
+          ring(e.x, e.y, 125, g.stage === 0 ? "#aee5c5" : g.stage === 1 ? "#b4c3ff" : "#ffd3d0", .45);
+          burst(e.x, e.y, 14, themes[g.stage].orb, .6);
           shake = Math.max(shake, 4);
         }
       }
@@ -1056,16 +1077,32 @@
     const r = e.radius;
     ctx.save(); ctx.translate(e.x, e.y + Math.sin(e.phase * .6) * 2);
     ctx.rotate(isBoss ? Math.sin(clock * .6) * .09 : Math.sin(e.phase) * .16);
-    const base = e.type === "runner" ? "#ffb6ca" : e.type === "brute" ? "#c4ace4" : e.type === "archer" ? "#c5c1fd" : isBoss ? "#ff9ac1" : "#78b4bb";
+    const base = isBoss ? ["#90d5b5", "#9eaff4", "#ffabc8"][game.stage]
+      : e.type === "runner" ? "#ffb6ca" : e.type === "brute" ? "#c4ace4"
+      : e.type === "archer" ? "#c5c1fd" : "#78b4bb";
     ctx.shadowColor = base; ctx.shadowBlur = isBoss ? 28 : 12;
     if (isBoss) {
       for (let j = 0; j < 10; j++) {
         const a = j / 10 * TWO + clock * .17;
-        ctx.fillStyle = j % 2 ? "rgba(238,132,180,.55)" : "rgba(176,142,213,.55)";
+        ctx.fillStyle = j % 2 ? t.orb : base;
+        ctx.globalAlpha = j % 2 ? .38 : .21;
         ctx.beginPath(); ctx.ellipse(Math.cos(a) * r * .92, Math.sin(a) * r * .92, r * .55, r * .2, a, 0, TWO); ctx.fill();
       }
-      ctx.strokeStyle = "rgba(255,218,234,.62)"; ctx.lineWidth = 1.3;
+      ctx.globalAlpha = 1;
+      ctx.strokeStyle = t.accent; ctx.lineWidth = 1.3;
       ctx.beginPath(); ctx.arc(0, 0, r + 10, 0, TWO); ctx.stroke();
+      ctx.save(); ctx.rotate(clock * (game.stage === 1 ? -.24 : .12));
+      const points = game.stage === 0 ? 6 : game.stage === 1 ? 8 : 10;
+      ctx.strokeStyle = t.orb; ctx.globalAlpha = .45;
+      ctx.beginPath();
+      for (let j = 0; j <= points; j++) {
+        const a = TWO * j / points;
+        const rr = r * (j % 2 === 0 ? 1.65 : 1.28);
+        if (j === 0) ctx.moveTo(Math.cos(a) * rr, Math.sin(a) * rr);
+        else ctx.lineTo(Math.cos(a) * rr, Math.sin(a) * rr);
+      }
+      ctx.stroke(); ctx.restore();
+      ctx.globalAlpha = 1;
     } else if (e.type === "brute") {
       for (let j = 0; j < 5; j++) {
         const a = j / 5 * TWO;
@@ -1076,6 +1113,11 @@
     } else if (e.type === "archer") {
       ctx.strokeStyle = "#cfbbfb"; ctx.lineWidth = 2.2;
       ctx.beginPath(); ctx.arc(0, 0, r + 7, .1, Math.PI * 1.6); ctx.stroke();
+      if (e.windup > 0) {
+        ctx.strokeStyle = "#ffe4c8"; ctx.lineWidth = 2.5;
+        ctx.beginPath(); ctx.arc(0, 0, r + 12, -Math.PI / 2,
+          -Math.PI / 2 + TWO * (1 - e.windup / .62)); ctx.stroke();
+      }
     }
     ctx.fillStyle = e.hitFx > 0 ? "#fffef1" : base;
     ctx.beginPath();
@@ -1124,6 +1166,15 @@
       ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, TWO); ctx.stroke();
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    for (const e of g.enemies) if (e.hp > 0 && e.type === "archer" && e.windup > 0) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(255,193,223,.47)";
+      ctx.lineWidth = 1.35; ctx.setLineDash([5, 7]);
+      ctx.beginPath(); ctx.moveTo(e.x, e.y); ctx.lineTo(e.aimX, e.aimY); ctx.stroke();
+      ctx.setLineDash([]); ctx.restore();
+      ctx.save(); ctx.strokeStyle = "rgba(255,200,221,.64)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(e.aimX, e.aimY, 12 + Math.sin(clock * 12) * 1.5, 0, TWO); ctx.stroke(); ctx.restore();
+    }
     for (const e of g.enemies) if (e.hp > 0) drawEnemy(e);
     for (const s of g.shots) {
       ctx.strokeStyle = "rgba(138,241,212,.47)"; ctx.lineWidth = 3;
