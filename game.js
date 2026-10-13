@@ -211,7 +211,8 @@
   }
   function beginChapter() {
     const t = themes[game.stage];
-    game.stageTime = 0; game.spawnCd = .38; game.bossSpawned = false; game.bossId = null;
+    game.stageTime = 0; game.spawnCd = .38; game.waveMark = 0; game.bossMinionCd = 9;
+    game.combo = 0; game.comboTimer = 0; game.bossSpawned = false; game.bossId = null;
     game.enemies.length = 0; game.shots.length = 0; game.hostile.length = 0;
     game.orbs.length = 0;
     game.rerolls = Math.min(3, game.rerolls + (game.stage > 0 ? 1 : 0));
@@ -460,15 +461,21 @@
     if (dmg >= 25 || Math.random() < .3) rise(e.x + rand(-8, 8), e.y - 18, String(Math.ceil(dmg)), "#fff0be");
     if (e.hp <= 0) {
       game.kills += 1; game.score += e.score * 8;
+      game.combo = game.comboTimer > 0 ? game.combo + 1 : 1;
+      game.comboTimer = 3.8;
+      if (game.combo > 0 && game.combo % 8 === 0 && e.type !== "boss") {
+        game.xp += 5; game.totalXp += 5;
+        rise(e.x, e.y - 35, "✧ CHAIN " + game.combo, "#fce2a6");
+        ring(e.x, e.y, 78, "#e8d8b2", .36);
+      }
       const color = e.type === "boss" ? "#ffdfb6" : themes[game.stage].orb;
       burst(e.x, e.y, e.type === "boss" ? 55 : 10, color, e.type === "boss" ? 2 : .75);
       ring(e.x, e.y, e.type === "boss" ? 240 : 45, color, e.type === "boss" ? 1.1 : .35);
       if (e.type === "boss" || game.kills % 3 === 0) sound("kill");
       if (e.type === "boss") {
-        for (let i = 0; i < 24; i++) {
-          const a = i / 24 * TWO, d = rand(25, 105);
-          game.orbs.push({ x: e.x + Math.cos(a) * d, y: e.y + Math.sin(a) * d, value: 12, r: 6, phase: rand(0, TWO), age: 0 });
-        }
+        // The old boss orbs vanished in the chapter reset; carry their reward forward.
+        game.chapterReward = Math.round((80 + game.stage * 40) * game.player.luck);
+        game.player.hp = Math.min(game.player.maxHp, game.player.hp + 18 + game.stage * 5);
         game.bossId = null;
         game.enemies = game.enemies.filter(mob => mob.type !== "boss");
         chapterClear();
@@ -480,7 +487,9 @@
         const neighbors = game.enemies.filter(other => other !== e && other.hp > 0 && distance(other, e) < range).slice(0, 4);
         if (neighbors.length) {
           ring(e.x, e.y, range, "#fce7b6", .45);
-          neighbors.forEach(other => hurtEnemy(other, 8 + game.player.echo * 9, other.x, other.y, true));
+          neighbors.forEach(other => hurtEnemy(other,
+            (8 + game.player.echo * 9) * (activeResonance(game.player, "lightchain") ? 1.3 : 1),
+            other.x, other.y, true));
         }
       }
       const drop = e.type === "brute" ? 10 : e.type === "archer" ? 8 : 6;
@@ -492,11 +501,12 @@
     const p = game.player;
     if (p.invuln > 0 || p.dashTime > 0 || scene !== "playing") return;
     const grace = game.stage === 0 && game.stageTime < 10 ? .6 : 1;
-    p.hp = Math.max(0, p.hp - Math.max(1, Math.round(dmg * grace * (1 - p.ward))));
+    const actual = Math.max(1, Math.round(dmg * grace * (1 - p.ward)));
+    p.hp = Math.max(0, p.hp - actual);
     p.invuln = game.stageTime < 10 ? 1.05 : .82; shake = Math.max(shake, 10);
     ring(p.x, p.y, 42, "#ff9aaa", .24);
     burst(p.x, p.y, 13, "#ffb6bc", .85);
-    rise(p.x + 8, p.y - 26, "−" + Math.round(dmg), "#ffa9ba");
+    rise(p.x + 8, p.y - 26, "−" + actual, "#ffa9ba");
     sound("hit"); haptic(40); flash(.18);
     if (p.hp <= 0) gameOver();
   }
@@ -508,7 +518,7 @@
     const d = Math.hypot(dx, dy);
     p.dashX = d > .12 ? dx / d : p.facingX;
     p.dashY = d > .12 ? dy / d : p.facingY;
-    p.dashTime = .24; p.dashCd = p.dashCooldown; p.invuln = .39; p.dashSerial++;
+    p.dashTime = activeResonance(p, "afterglow") ? .30 : .24; p.dashCd = p.dashCooldown; p.invuln = .39; p.dashSerial++;
     sound("dash"); haptic(18);
     ring(p.x, p.y, 70 + p.pulse * 25, "#b4fff0", .36);
     burst(p.x, p.y, 19, "#caffed", .9);
@@ -632,13 +642,15 @@
     for (const e of game.enemies) {
       if (e.hp <= 0) continue;
       const v = (e.x - p.x) ** 2 + (e.y - p.y) ** 2;
-      if (v < d2) { d2 = v; target = e; }
+      if (v < d2 && v < Math.max(320, Math.min(550, Math.max(W, H) * .63)) ** 2) {
+        d2 = v; target = e;
+      }
     }
-    if (!target || d2 > 740 ** 2) return;
+    if (!target) return;
     const angle = Math.atan2(target.y - p.y, target.x - p.x);
     for (let i = 0; i < p.bolts; i++) {
       const spread = (i - (p.bolts - 1) / 2) * .17;
-      const a = angle + spread, speed = 530 * p.projectileSpeed;
+      const a = angle + spread, speed = 530 * p.projectileSpeed * (activeResonance(p, "stardust") ? 1.15 : 1);
       const critical = Math.random() < p.crit;
       game.shots.push({ x: p.x + Math.cos(a) * 17, y: p.y + Math.sin(a) * 17,
         vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: critical ? 6.4 : 5,
@@ -652,13 +664,15 @@
   function update(dt) {
     const g = game, p = g.player;
     g.time += dt; g.stageTime += dt;
+    g.comboTimer = Math.max(0, g.comboTimer - dt);
+    if (g.comboTimer <= 0) g.combo = 0;
     // Pause and modal transitions never advance this time budget.
     // Walking animation is calmer while standing still.
     const walking = readMove();
     p.walk += dt * ((Math.hypot(walking[0], walking[1]) > .06 || p.dashTime > 0) ? 10 : 1.3);
     p.fireCd -= dt; p.invuln = Math.max(0, p.invuln - dt);
     p.dashCd = Math.max(0, p.dashCd - dt);
-    p.hp = Math.min(p.maxHp, p.hp + p.regen * dt);
+    p.hp = Math.min(p.maxHp, p.hp + p.regen * dt * (p.hp < p.maxHp * .4 && activeResonance(p, "lifegarden") ? 2 : 1));
     p.novaCd -= dt;
     const [mx, my] = readMove();
     if (p.dashTime > 0) {
@@ -678,6 +692,7 @@
       burst(p.x, p.y, 28, "#ffedae", .8);
       for (const e of g.enemies) if (distance(e, p) < 260) {
         hurtEnemy(e, 22 + p.nova * 22);
+        if (activeResonance(p, "moonwave")) e.slow = Math.max(e.slow, 3.5);
         if (scene !== "playing") return;
       }
     }
@@ -691,6 +706,21 @@
       }
     }
     if (!g.bossSpawned && g.stageTime >= 60) spawnBoss();
+    if (g.bossSpawned) {
+      g.bossMinionCd -= dt;
+      if (g.bossMinionCd <= 0) {
+        g.bossMinionCd = Math.max(6.5, 11 - g.stage);
+        if (g.enemies.filter(e => e.hp > 0 && e.type !== "boss").length < 9) {
+          spawnRandom();
+          if (g.stage > 0) spawnRandom();
+        }
+      }
+    } else if (g.stageTime >= (g.waveMark + 1) * 15 && g.stageTime < 59.5) {
+      g.waveMark++;
+      ring(p.x, p.y, 128, themes[g.stage].orb, .62);
+      rise(p.x, p.y - 60, ["", "✦ 光のさざ波", "✧ 影の群れ", "✦ 星の気配"][g.waveMark] || "✦ 影が近づく", "#f6e5bf");
+      if (g.waveMark >= 2) spawnRandom();
+    }
 
     for (let i = g.enemies.length - 1; i >= 0; i--) {
       const e = g.enemies[i];
@@ -753,12 +783,15 @@
     }
 
     for (let i = g.shots.length - 1; i >= 0; i--) {
-      const s = g.shots[i];
+      const s = g.shots[i], oldX = s.x, oldY = s.y;
       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
       let hit = false;
       for (const e of g.enemies) {
         if (e.hp <= 0 || s.hits.has(e.id)) continue;
-        if ((e.x - s.x) ** 2 + (e.y - s.y) ** 2 < (e.radius + s.r) ** 2) {
+        const ux = s.x - oldX, uy = s.y - oldY;
+        const t = clamp(((e.x - oldX) * ux + (e.y - oldY) * uy) / Math.max(.001, ux * ux + uy * uy), 0, 1);
+        const hx = oldX + ux * t, hy = oldY + uy * t;
+        if ((e.x - hx) ** 2 + (e.y - hy) ** 2 < (e.radius + s.r) ** 2) {
           s.hits.add(e.id);
           if (s.critical) rise(e.x, e.y - 32, "✦ CRIT", "#ffe4a5");
           hurtEnemy(e, s.damage, s.x, s.y);
@@ -825,7 +858,7 @@
     ui.hpLabel.textContent = Math.ceil(p.hp) + " / " + p.maxHp;
     ui.xp.style.width = (100 * clamp(g.xp / expNeed(), 0, 1)) + "%";
     ui.level.textContent = "LV " + g.level;
-    ui.kills.textContent = "✧ " + g.kills;
+    ui.kills.textContent = "✧ " + g.kills + (g.combo >= 4 ? " · ×" + g.combo : "");
     ui.time.textContent = String(Math.floor(g.stageTime / 60)).padStart(2, "0") + ":" + String(Math.floor(g.stageTime % 60)).padStart(2, "0");
     ui.hint.textContent = g.bossSpawned ? "守護者を浄化せよ" : g.stageTime < 5 && g.stage === 0 ? "移動とダッシュ · 攻撃は自動" : "守護者まで " + Math.max(0, Math.ceil(60 - g.stageTime)) + " 秒";
     const boss = g.enemies.find(e => e.id === g.bossId);
