@@ -622,8 +622,9 @@
   }
   ui.dash.addEventListener("pointerdown", event => { event.preventDefault(); dash(); });
   ui.dash.addEventListener("click", event => { if (event.detail === 0) dash(); });
-  $("openGameBtn").addEventListener("click", () => { setScene("home"); showToast("星灯りの庭へ"); });
-  $("returnPortalBtn").addEventListener("click", () => { game = null; setScene("launcher"); });
+  // Only the GPT6 CHAT door opens its own two-work shelf. Other authors' doors are untouched.
+  $("openGameBtn").addEventListener("click", () => { window.location.href = "gpt6-chat/index.html"; });
+  $("returnPortalBtn").addEventListener("click", () => { game = null; window.location.href = "gpt6-chat/index.html"; });
   $("startBtn").addEventListener("click", startRun);
   $("pauseBtn").addEventListener("click", pause);
   ui.sound.addEventListener("click", () => { saved.music = !saved.music; persist(); if (saved.music) audioInit(); loadRecord(); });
@@ -660,6 +661,8 @@
   document.addEventListener("visibilitychange", () => { if (document.hidden && scene === "playing") pause(); });
   document.addEventListener("contextmenu", event => event.preventDefault());
   loadRecord();
+  // The first work remains in its original place, linked from the GPT6 CHAT shelf.
+  if (window.location.hash === "#lumina") setScene("home");
   if ("serviceWorker" in navigator && location.protocol === "https:" && !location.hostname.includes("htmlpreview")) {
     navigator.serviceWorker.register("./sw.js").catch(() => {});
   }
