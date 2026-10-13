@@ -145,7 +145,8 @@ export function createAuntie() {
   const skirtMesh = new THREE.Mesh(skirt, cloth("auntieSkirt", 0x4f6685, { side: THREE.DoubleSide }));
   skirtMesh.castShadow = true;
   root.add(skirtMesh);
-  const cardigan = lathe([[0.3, 0.84], [0.31, 0.98], [0.27, 1.12], [0.22, 1.24], [0.16, 1.3], [0.0, 1.31]]);
+  // The collar sits low enough that the mouth on the face is not hidden behind it.
+  const cardigan = lathe([[0.3, 0.84], [0.31, 0.98], [0.27, 1.11], [0.21, 1.19], [0.15, 1.24], [0.0, 1.25]]);
   const cardMesh = new THREE.Mesh(cardigan, cloth("cardigan", 0xc8b5e6, { side: THREE.DoubleSide }));
   cardMesh.castShadow = true;
   root.add(cardMesh);
