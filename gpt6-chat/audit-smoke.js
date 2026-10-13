@@ -64,8 +64,8 @@ function runAudit(luminaSource,kazaneSource,rootHtml,shelfHtml) {
     return {...m,qa:m.win.__qa};
   }
   ok("JavaScript syntax of both games",()=>{new Function(luminaSource);new Function(kazaneSource);return true});
-  ok("GPT6 shelf links both titles",()=>shelfHtml.includes("../index.html#lumina")&&shelfHtml.includes('href="sen.html"'));
-  ok("root menu labels GPT6 as two works",()=>rootHtml.includes("LUMINA &amp; KAZANE · 2 WORKS"));
+  ok("GPT6 shelf links all three titles",()=>shelfHtml.includes("../index.html#lumina")&&shelfHtml.includes('href="sen.html"')&&shelfHtml.includes('href="setsuna.html"'));
+  ok("root menu labels GPT6 as three works",()=>rootHtml.includes("LUMINA · KAZANE · SETSUNA · 3 WORKS"));
   ok("LUMINA button and Enter open the same shelf",()=>{
     const m=lumina();m.key("Enter");const a=m.win.location.href;
     m.win.location.href="/index.html";m.$("openGameBtn").click();
@@ -137,8 +137,11 @@ if(typeof require==="function" && typeof module!=="undefined" && require.main===
   const fs=require("node:fs"),path=require("node:path");
   const repo=path.resolve(__dirname,"..");
   const read=file=>fs.readFileSync(path.join(repo,file),"utf8");
-  const results=runAudit(read("game.js"),read("gpt6-chat/sen.js"),
+  const previous=runAudit(read("game.js"),read("gpt6-chat/sen.js"),
     read("index.html"),read("gpt6-chat/index.html"));
+  const {runSetsunaAudit}=require("./setsuna-audit.js");
+  const results=previous.concat(runSetsunaAudit(read("gpt6-chat/setsuna.js"),
+    read("gpt6-chat/setsuna.html"),read("gpt6-chat/index.html")));
   for(const r of results)console.log((r.pass?"PASS":"FAIL")+"  "+r.label+(r.error?"\n    "+r.error:""));
   const count=results.filter(r=>r.pass).length;
   console.log("\n"+count+" / "+results.length+" checks passed");
