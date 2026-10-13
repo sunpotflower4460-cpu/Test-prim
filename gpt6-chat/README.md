@@ -66,3 +66,26 @@ DOM and canvas, including:
 
 Physical iOS/Android screenshots and audio-output listening are recommended before
 treating the visual/audio design as fully device-certified.
+
+
+## Repeatable regression checks (2026-10-13)
+
+From the repository root, run:
+
+```sh
+node gpt6-chat/audit-smoke.js
+```
+
+This dependency-free script currently checks 12 cases, including both titles'
+JavaScript syntax, the gallery/navigation, LUMINA's enemy loop,
+combo experience under the luck upgrade, guardian experience carryover, swept
+projectile collision, KAZANE's keyboard/touch-adjacent input/undo, defensive
+saved-game parsing and the complete 12-garden unlock/ending path.
+
+A separate physical movement simulation also steered the seed using the
+game's keyboard-force physics and found valid routes for **all 12** gardens,
+including moving hazards. It is a computational test, not a substitute for
+testing real browser pointer events, canvas appearance, audio latency and
+battery consumption on actual phones.
+
+Bug fixes from this audit are recorded in `AUDIT.md`.
