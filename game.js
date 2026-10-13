@@ -248,6 +248,7 @@
     bindButton("quit", backHome);
   }
   function backHome() {
+    if (game) saveProgress();
     game = null;
     setScene("home");
     ui.bossbar.classList.add("hidden");
@@ -957,7 +958,9 @@
     rg.addColorStop(1, "rgba(64,95,161,0)");
     ctx.fillStyle = rg; ctx.fillRect(0, 0, W, H);
     for (const m of motes) {
-      const x = (m.x * W + Math.sin(clock * .21 + m.t) * 12 + W) % W, y = (m.y * H + Math.sin(clock * .25 + m.t) * 16 + H) % H;
+      const drift = reducedMotion ? 0 : clock;
+      const x = (m.x * W + Math.sin(drift * .21 + m.t) * 12 + W) % W;
+      const y = (m.y * H + Math.sin(drift * .25 + m.t) * 16 + H) % H;
       const twinkle = .19 + .38 * (Math.sin(clock * m.z + m.t) ** 2);
       ctx.fillStyle = "rgba(213,247,232," + twinkle + ")";
       ctx.beginPath(); ctx.arc(x, y, m.s * .6, 0, TWO); ctx.fill();
@@ -1209,7 +1212,8 @@
   function drawGame() {
     const g = game, p = g.player, theme = themes[g.stage];
     ctx.save();
-    const wobbleX = shake > .1 ? rand(-shake, shake) : 0, wobbleY = shake > .1 ? rand(-shake, shake) : 0;
+    const wobbleX = !reducedMotion && shake > .1 ? rand(-shake, shake) : 0;
+    const wobbleY = !reducedMotion && shake > .1 ? rand(-shake, shake) : 0;
     ctx.translate(-camX + wobbleX, -camY + wobbleY);
     terrain(); landmarks();
     for (const o of g.orbs) {
@@ -1314,7 +1318,7 @@
     glow.addColorStop(0, "rgba(182,249,218,.20)"); glow.addColorStop(.3, "rgba(94,192,193,.09)"); glow.addColorStop(1, "rgba(96,167,200,0)");
     ctx.fillStyle = glow; ctx.fillRect(0, 0, W, H);
     ctx.save(); ctx.translate(cx, cy);
-    ctx.rotate(clock * .06);
+    ctx.rotate(reducedMotion ? 0 : clock * .06);
     for (let i = 0; i < 12; i++) {
       const a = i / 12 * TWO;
       ctx.strokeStyle = "rgba(181,234,222," + (.05 + .05 * Math.sin(clock * .5 + i)) + ")";
