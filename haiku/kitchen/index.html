@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="description" content="おばちゃんの台所。ちよおばちゃんといっしょに、ごはんをつくる、あたたかな3Dの料理ゲーム。">
+<meta name="theme-color" content="#f6ecd9">
+<title>おばちゃんの台所 | Haiku 5.5</title>
+<link rel="icon" href="../../icon.svg" type="image/svg+xml">
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="phase-title" data-phase="title">
+<a class="back-link" href="../index.html"><span aria-hidden="true">‹</span> Haiku 5.5</a>
+<canvas id="stage" aria-label="台所の3D画面"></canvas>
+
+<section id="title" class="screen title" aria-labelledby="titleH">
+  <div class="title-card">
+    <p class="kicker">ちよおばちゃんの家</p>
+    <h1 id="titleH">おばちゃんの台所</h1>
+    <p class="sub">いっしょに、ごはんをつくろう</p>
+    <div class="title-buttons">
+      <button id="btnStart" class="btn primary" type="button">はじめる</button>
+      <button id="btnContinue" class="btn" type="button" hidden>つづきから</button>
+    </div>
+    <p class="fine">操作は、画面の「する」ボタンか E キーだけで大丈夫です。</p>
+  </div>
+</section>
+
+<div id="hud" class="hud" hidden>
+  <div class="card dish-card">
+    <p class="dish-name" id="dishName"></p>
+    <p class="step-label" id="stepLabel"></p>
+    <p class="step-hint" id="stepHint"></p>
+    <div class="progress" aria-hidden="true"><span id="progressBar"></span></div>
+    <ol class="checklist" id="checklist"></ol>
+  </div>
+  <div class="hud-tools">
+    <button class="tool-btn" id="btnNote" type="button" aria-label="レシピノート">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h10a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z" fill="none" stroke="currentColor" stroke-width="2"/><path d="M9 9h6M9 13h6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <span>レシピノート</span>
+    </button>
+    <button class="tool-btn icon" id="btnPause" type="button" aria-label="メニュー">
+      <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="5" width="4" height="14" rx="1" fill="currentColor"/><rect x="14" y="5" width="4" height="14" rx="1" fill="currentColor"/></svg>
+    </button>
+  </div>
+  <p class="basket" id="basket" hidden></p>
+</div>
+
+<div id="prompt" class="prompt" hidden><span class="prompt-key" aria-hidden="true">E</span><span id="promptText"></span></div>
+<div id="timing" class="timing" hidden aria-hidden="true"><div class="zone" id="zone"></div><div class="needle" id="needle"></div></div>
+<div id="dragRing" class="drag-ring" hidden><span id="dragText"></span></div>
+<div id="holdBar" class="hold-bar" hidden><span id="holdFill"></span></div>
+<div class="actions" id="actions" hidden>
+  <button class="btn-help" id="btnHelp" type="button">おばちゃんにまかせる</button>
+  <button class="btn-act" id="btnAct" type="button">する</button>
+</div>
+<div class="joy" id="joy" hidden aria-hidden="true"><span class="knob" id="knob"></span></div>
+
+<section id="talk" class="talk" hidden aria-live="polite">
+  <div class="portrait" aria-hidden="true">
+    <svg viewBox="0 0 64 64" width="60" height="60">
+      <circle cx="32" cy="32" r="31" fill="#e9e0f6"/>
+      <circle cx="32" cy="14" r="7" fill="#5a4a45"/>
+      <ellipse cx="32" cy="34" rx="17" ry="18" fill="#f6cfae"/>
+      <path d="M15 30c0-12 7-18 17-18s17 6 17 18c-3-6-8-8-17-8s-14 2-17 8z" fill="#6d5d57"/>
+      <circle cx="25" cy="34" r="5" fill="none" stroke="#8a6a3c" stroke-width="1.6"/>
+      <circle cx="39" cy="34" r="5" fill="none" stroke="#8a6a3c" stroke-width="1.6"/>
+      <path d="M30 34h4" stroke="#8a6a3c" stroke-width="1.4"/>
+      <circle cx="25" cy="34" r="1.4" fill="#2b1d18"/>
+      <circle cx="39" cy="34" r="1.4" fill="#2b1d18"/>
+      <circle cx="21" cy="41" r="2.6" fill="#f08c96" opacity=".7"/>
+      <circle cx="43" cy="41" r="2.6" fill="#f08c96" opacity=".7"/>
+      <path d="M27 43q5 4 10 0" fill="none" stroke="#9b4b44" stroke-width="1.6" stroke-linecap="round"/>
+    </svg>
+  </div>
+  <div class="talk-body">
+    <p class="speaker" id="speaker">ちよおばちゃん</p>
+    <p class="line" id="line"></p>
+  </div>
+</section>
+
+<section id="dlgMenu" class="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="menuH">
+  <div class="sheet">
+    <header class="sheet-head"><h2 id="menuH">今日のお品書き</h2><button class="btn ghost" type="button" data-close>閉じる</button></header>
+    <p class="sheet-note">どれから作っても大丈夫。はじめてのかたは「おにぎり」が、いちばんやさしいわよ。</p>
+    <div class="menu-list" id="menuList"></div>
+  </div>
+</section>
+
+<section id="dlgNote" class="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="noteH">
+  <div class="sheet book">
+    <header class="sheet-head"><h2 id="noteH">レシピノート</h2><button class="btn ghost" type="button" data-close>閉じる</button></header>
+    <div class="tabs" id="noteTabs" role="tablist"></div>
+    <article class="card-page" id="noteCard" aria-live="polite"></article>
+  </div>
+</section>
+
+<section id="dlgPause" class="dialog" hidden role="dialog" aria-modal="true" aria-labelledby="pauseH">
+  <div class="sheet narrow">
+    <header class="sheet-head"><h2 id="pauseH">ひと休み</h2></header>
+    <label class="row">音楽
+      <input id="musicVol" type="range" min="0" max="100" step="5">
+    </label>
+    <label class="row">効果音
+      <input id="sfxVol" type="range" min="0" max="100" step="5">
+    </label>
+    <label class="row check"><input id="mute" type="checkbox"> ぜんぶ消す</label>
+    <div class="pause-buttons">
+      <button class="btn primary" id="btnResume" type="button">つづける</button>
+      <button class="btn" id="btnToTitle" type="button">タイトルへ</button>
+    </div>
+    <p class="fine"><a href="../index.html">‹ Haiku 5.5 の一覧へ</a></p>
+  </div>
+</section>
+
+<div id="finish" class="finish" hidden role="status">
+  <div class="finish-card">
+    <p class="finish-title" id="finishTitle">できあがり！</p>
+    <p class="finish-sub" id="finishSub"></p>
+    <button class="btn primary" id="finishOk" type="button">つづける</button>
+  </div>
+</div>
+<div id="toast" class="toast" role="status" hidden></div>
+
+<script src="recipes.js"></script>
+<script src="sim.js"></script>
+<script src="lines.js"></script>
+<script type="module" src="app.js"></script>
+</body>
+</html>

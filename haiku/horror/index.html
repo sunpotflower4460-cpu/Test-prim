@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="description" content="鳴き井戸 — 祖母の家の井戸から、わたしを呼ぶ声がする。和風ホラーFPS。">
+  <title>鳴き井戸 — NAKI-IDO | Haiku 5.5</title>
+  <link rel="icon" href="../../icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="style.css">
+  <script src="levels.js"></script>
+  <script src="story.js"></script>
+  <script src="sim.js"></script>
+</head>
+<body>
+  <canvas id="view" aria-label="鳴き井戸の三次元の画面"></canvas>
+  <canvas id="glass" aria-hidden="true"></canvas>
+  <div id="vignette" aria-hidden="true"></div>
+  <div id="fade" aria-hidden="true"></div>
+
+  <main id="hud" hidden>
+    <div class="hud-tl">
+      <div id="roomName" class="room"></div>
+      <div id="objective" class="objective">札 0/3</div>
+      <div id="diaryCount" class="sub">日記 0/3</div>
+    </div>
+    <div class="hud-br">
+      <div class="shells" aria-label="二連銃の装填">
+        <span id="shell0" class="shell" data-v="empty"></span>
+        <span id="shell1" class="shell" data-v="empty"></span>
+        <span class="reserve">残 <span id="reserveCount">2</span></span>
+      </div>
+      <div class="battery">
+        <div class="bar"><div id="batteryFill"></div></div>
+        <span id="batteryCount" class="sub">電池 0</span>
+      </div>
+      <div id="lightState" class="sub">消灯</div>
+    </div>
+    <div id="crosshair" aria-hidden="true"></div>
+    <div id="prompt" class="prompt" role="status"></div>
+    <div id="subs" class="subs" role="status" aria-live="polite"></div>
+    <div id="lockHint" class="lock-hint" hidden>クリックして視点を固定</div>
+    <button id="btnPauseTouch" class="pause-touch" type="button" hidden>一時停止</button>
+  </main>
+
+  <div id="touch" class="touch" hidden>
+    <div id="stick" class="stick" hidden><div id="stickKnob" class="knob"></div></div>
+    <div class="actions">
+      <button type="button" class="act run" data-act="run" aria-label="走る（押し続ける）">走る</button>
+      <button type="button" class="act" data-act="flash" aria-label="懐中電灯">灯</button>
+      <button type="button" id="actInteract" class="act" data-act="interact" aria-label="調べる"><span id="actInteractLabel">調べる</span></button>
+      <button type="button" class="act" data-act="reload" aria-label="装填">装填</button>
+      <button type="button" class="act fire" data-act="fire" aria-label="撃つ">撃つ</button>
+    </div>
+  </div>
+
+  <section id="title" class="screen" aria-labelledby="titleName">
+    <a class="back" href="../index.html">‹ Haiku 5.5</a>
+    <div class="title-inner">
+      <p class="en">NAKI-IDO</p>
+      <h1 id="titleName">鳴き井戸</h1>
+      <p class="tagline">呼ばれても、返事をしてはいけない。</p>
+      <div class="menu">
+        <button id="btnNew" class="btn primary" type="button">はじめから</button>
+        <button id="btnContinue" class="btn" type="button" hidden>続きから</button>
+      </div>
+      <div class="controls">
+        <h2>操作</h2>
+        <dl id="controlsList"></dl>
+      </div>
+    </div>
+  </section>
+
+  <section id="pause" class="screen" aria-labelledby="pauseTitle" hidden>
+    <a class="back" href="../index.html">‹ Haiku 5.5</a>
+    <div class="panel">
+      <h2 id="pauseTitle">一時停止</h2>
+      <button id="btnResume" class="btn primary" type="button">再開</button>
+      <label class="row">見回しの速さ
+        <input id="sensRange" type="range" min="0.2" max="3" step="0.1" value="1">
+      </label>
+      <label class="row">明るさ
+        <input id="gammaRange" type="range" min="0.6" max="1.6" step="0.05" value="1">
+      </label>
+      <button id="soundToggle" class="btn" type="button" aria-pressed="true">音 あり</button>
+      <button id="btnTitle" class="btn" type="button">タイトルへ</button>
+    </div>
+  </section>
+
+  <section id="diary" class="screen paper-screen" aria-labelledby="diaryTitle" hidden>
+    <div class="sheet">
+      <p id="diaryPlace" class="place"></p>
+      <h2 id="diaryTitle"></h2>
+      <div id="diaryBody" class="body"></div>
+      <button id="diaryClose" class="btn" type="button">閉じる</button>
+    </div>
+  </section>
+
+  <section id="choice" class="choice" role="alertdialog" aria-labelledby="choiceText" hidden>
+    <div class="choice-box">
+      <p id="choiceText">返事を、しますか。</p>
+      <div class="choice-btns">
+        <button id="btnAnswer" class="btn danger" type="button">返事をする</button>
+        <button id="btnSilence" class="btn" type="button">黙る</button>
+      </div>
+      <div class="bar" aria-hidden="true"><div id="choiceBar"></div></div>
+    </div>
+  </section>
+
+  <section id="card" class="card-screen" aria-live="assertive" hidden>
+    <div class="card-inner">
+      <h2 id="cardTitle"></h2>
+      <p id="cardBody"></p>
+    </div>
+  </section>
+
+  <script type="module" src="main.js"></script>
+</body>
+</html>
