@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#102737">
+<meta name="description" content="KAZANE — 風の楽譜。指先で風を描き、小さな種に記憶を集めて花を咲かせる、12の庭の物語。">
+<title>KAZANE — 風の楽譜 | GPT6 CHAT</title>
+<link rel="stylesheet" href="sen.css">
+</head>
+<body>
+<div id="app" class="app">
+<header class="site-header">
+<a class="back-link" href="index.html" aria-label="GPT6 CHAT のふたつの庭へ戻る"><span>←</span> TWO GARDENS</a>
+<a class="logo" href="index.html" aria-label="GPT6 CHAT 作品一覧へ">✦ <span>GPT6 CHAT</span></a>
+<div class="settings">
+<button type="button" id="soundBtn" class="icon-button" aria-pressed="true" aria-label="サウンドを消す">♫</button>
+<button type="button" id="motionBtn" class="icon-button motion-button" aria-pressed="false" aria-label="演出を静かにする">◌</button>
+</div>
+</header>
+<main class="main-layout">
+<section class="side-panel" aria-label="風の楽譜の物語と進行状況">
+<div class="work-mark">ORIGINAL WORK · 02 / 02</div>
+<h1>KAZANE<span class="title-sigil">✧</span></h1>
+<p class="jp-title">風の楽譜</p>
+<p class="intro">風を描くたび、<br>森がひとつ、音を思い出す。</p>
+<div class="ornament"><span></span> ✦ <span></span></div>
+<div class="chapter-info"><span id="chapterMark">第一楽章 / 木漏れ日</span><strong id="sceneName">風が目を覚ます場所</strong><p id="storyText">最初の一枚を、風に預けよう。</p></div>
+<div class="journey">
+<div class="journey-top"><span>GARDENS REMEMBERED</span><span id="gardenCount">0 / 12</span></div>
+<div class="progress-track"><div id="overallProgress" class="progress-fill"></div></div>
+<div id="chapterDots" class="chapter-dots" aria-label="全12庭の進行状況"></div>
+</div>
+<div class="instructions"><span class="instructions-kicker">HOW TO PLAY</span>
+<p><strong>指で風を描く。</strong> 種の近くを、行きたい方向にすっとなぞる。記憶の音符を集めたら、花へ。</p>
+<div class="keyboard-guide">TOUCH / DRAG · MOUSE / DRAG<br>WASD / ←↑→↓ · 風を送る</div>
+</div>
+<button id="selectBtn" class="text-button" type="button">庭を選ぶ <span>↗</span></button>
+</section>
+<section class="play-panel" aria-label="ゲームエリア">
+<div class="stage-title"><div><span class="stage-prefix">THE WIND SCORE</span><strong id="levelTitle">01 — 最初のそよぎ</strong></div>
+<span id="stars" class="stage-stars">✧ ✧ ✧</span></div>
+<div class="canvas-frame">
+<canvas id="garden" width="480" height="700" aria-label="風で種を運び、音符を集めて花に届けるゲーム。キャンバスをドラッグして風を描く。キーボードの矢印キーでも操作可能" tabindex="0"></canvas>
+<div class="inset-top" aria-hidden="true"><div class="breath-label">WIND</div><div class="breath-bar"><div id="breathFill"></div></div></div>
+<div class="inset-bottom"><span id="notesLabel">記憶の音符 0 / 1</span><span id="strokeLabel">風の筆跡 0</span></div>
+<div id="notice" class="notice" role="status" aria-live="polite"></div>
+</div>
+<div class="toolbar" aria-label="ゲーム操作">
+<button type="button" id="undoBtn" class="tool-button" aria-label="ひとつ前の操作を戻す"><span>↶</span> もどす</button>
+<button type="button" id="resetBtn" class="tool-button" aria-label="現在の庭を最初からやり直す"><span>◌</span> やり直す</button>
+<button type="button" id="hintBtn" class="tool-button" aria-label="庭のヒントを見る"><span>✧</span> ヒント</button>
+<button type="button" id="pauseBtn" class="tool-button" aria-label="一時停止"><span>Ⅱ</span> 休息</button>
+</div>
+<div class="bottom-hint">描いた風は、種をそっと動かします。<span>✦</span> 急がなくても大丈夫。</div>
+</section>
+</main>
+<footer>MADE OF BREATH · LIGHT · AND REMEMBERED SONGS</footer>
+</div>
+<div class="overlay" id="overlay" aria-live="polite">
+<div class="dialog" id="dialog"></div>
+</div>
+<script src="sen.js" defer></script>
+</body></html>
