@@ -81,6 +81,11 @@
       saved.clears = Math.max(0,Number(value.clears)||0);
     }
   } catch (_) {}
+  // Honor system preferences on a first visit, while preserving any user choice.
+  try {
+    if (!localStorage.getItem(STORAGE) && window.matchMedia)
+      saved.still = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+  } catch (_) {}
   const persist = () => { try { localStorage.setItem(STORAGE, JSON.stringify(saved)); } catch (_) {} };
   const state = { mode:"home", index:0, seed:{x:103,y:368,vx:0,vy:0}, notes:[],
     rocks:[],ed:[],movers:[],breath:1,strokes:0,elapsed:0,musicAt:0,
@@ -298,6 +303,7 @@
       capVelocity();
     }
     state.breath=clamp(state.breath-len*.00038,0,1);
+    els.breath.style.width=(state.breath*100).toFixed(0)+"%";
     if(!saved.still){
       const points=Math.min(12,Math.max(1,Math.ceil(len/19)));
       for(let i=0;i<points && state.particles.length<220;i++){
@@ -400,6 +406,7 @@
   }
   function update(dt) {
     state.elapsed+=dt;fxThrottle-=dt;state.breath=clamp(state.breath+dt*.13,0,1);
+    els.breath.style.width=(state.breath*100).toFixed(0)+"%";
     const seed=state.seed,lvl=levels[state.index];
     const axes=[0,0];
     for(const k of state.held){
@@ -420,7 +427,7 @@
       }
     });
     const goal=pos(lvl.flower);
-    const nearest=state.notes.find(n=>!n.taken);
+    const nearest=state.notes.filter(n=>!n.taken).sort((a,b)=>dist(a,seed)-dist(b,seed))[0];
     const attractor=nearest||goal;
     const dd=dist(seed,attractor);
     if(dd<67){
@@ -560,13 +567,14 @@
       ctx.restore();
     }
     for(const m of state.movers){
-      ctx.save();ctx.shadowColor=theme.glow;ctx.shadowBlur=25;
-      circle(m.x,m.y,m.r,"rgba(238,236,255,.25)");
-      ctx.strokeStyle=theme.glow;ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(m.x,m.y,m.r+5,0,TAU);ctx.stroke();
+      ctx.save();ctx.translate(m.x,m.y);
+      ctx.shadowColor=theme.glow;ctx.shadowBlur=25;
+      circle(0,0,m.r,"rgba(238,236,255,.25)");
+      ctx.strokeStyle=theme.glow;ctx.lineWidth=1.6;ctx.beginPath();ctx.arc(0,0,m.r+5,0,TAU);ctx.stroke();
       ctx.rotate(t*.3);
       for(let i=0;i<7;i++){
         const a=i*TAU/7;
-        leaf(m.x+Math.cos(a)*m.r*.58,m.y+Math.sin(a)*m.r*.58,11,a,theme.glow,.5);
+        leaf(Math.cos(a)*m.r*.58,Math.sin(a)*m.r*.58,11,a,theme.glow,.5);
       }
       ctx.restore();
     }
