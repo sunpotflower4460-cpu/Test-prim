@@ -308,6 +308,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   font-weight: 700;
 }
 .talking .prompt { bottom: calc(176px + var(--safe-b)); }
+.touch .prompt-key { display: none; }
 
 .actions {
   position: fixed;
@@ -693,7 +694,7 @@ button:focus-visible, a:focus-visible, input:focus-visible {
   .btn-act { width: 76px; height: 76px; font-size: 17px; }
   .talk { width: calc(100vw - 32px); bottom: calc(132px + var(--safe-b)); }
   .talking .prompt { bottom: calc(250px + var(--safe-b)); }
-  .prompt { bottom: calc(106px + var(--safe-b)); max-width: calc(100vw - 32px); }
+  .prompt { bottom: calc(106px + var(--safe-b)); max-width: calc(100vw - 32px); font-size: 13px; padding: 7px 12px; text-align: center; line-height: 1.4; border-radius: 16px; }
   .btn-help { font-size: 12px; padding: 8px 12px; }
   .menu-list { grid-template-columns: 1fr; }
   .title-card { padding: 22px 20px 16px; }

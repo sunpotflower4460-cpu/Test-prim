@@ -68,7 +68,15 @@ function waitFor(world, stepId) {
   tickUntil(world, () => Sim.isDone(world, stepId));
 }
 
-// Scripted solutions. Each line is a player action, written out in full.
+// Waits for the pan's egg layer to reach a state, as the player would between pours.
+function waitLayer(world, layer) {
+  tickUntil(world, () => {
+    const pan = world.burners.burnerL.vessel || world.burners.burnerR.vessel;
+    return !!pan && pan.layer === layer;
+  });
+}
+
+// Scripted solutions. Each line is one player action: the station to use, or a wait.
 const SOLUTIONS = {
   miso: [
     ["shelf_pot"], ["sink"], ["burnerL"], ["burnerL"],
@@ -76,8 +84,7 @@ const SOLUTIONS = {
     ["fridge"], ["board"], ["burnerL"],
     ["fridge"], ["board"], ["burnerL"],
     ["burnerL"],
-    ["miso"], ["burnerL"],
-    ["burnerL"],
+    ["miso"], ["burnerL"], ["burnerL"],
     ["shelf_bowl"], ["burnerL"], ["table"],
     ["shelf_bowl"], ["burnerL"], ["table"]
   ],
@@ -88,12 +95,17 @@ const SOLUTIONS = {
     ["shelf_pan"], ["burnerL"], ["oil"], ["burnerL"],
     () => waitFor(SOLUTIONS._w, "hot_pan"),
     ["counter"], ["burnerL"],
-    () => waitFor(SOLUTIONS._w, "roll"),
-    ["counter"], ["burnerL"],
-    ["sink"], ["burnerL"],
-    () => waitFor(SOLUTIONS._w, "lift"),
-    ["board"], ["shelf_plate"], ["counter"],
-    ["counter"], ["table"]
+    () => waitLayer(SOLUTIONS._w, "set"),
+    ["burnerL"],
+    ["burnerL"],
+    () => waitLayer(SOLUTIONS._w, "set"),
+    ["burnerL"],
+    ["sink"],
+    ["shelf_plate"], ["counter"],
+    ["burnerL"],
+    ["board"],
+    ["counter"], ["counter"],
+    ["table"]
   ],
   niku: [
     ["shelf_pot"], ["burnerL"], ["burnerL"],
@@ -103,29 +115,37 @@ const SOLUTIONS = {
     ["veg_bin"], ["sink"], ["board"], ["burnerL"],
     ["veg_bin"], ["sink"], ["board"], ["burnerL"],
     ["kettle"],
+    ["burnerL"],
     ["rack_lid"], ["burnerL"],
     ["drawer_spoon"],
-    ["sugar"], ["mirin"], ["shoyu"], ["shoyu"], ["shoyu"], ["burnerL"],
+    ["sugar"], ["sugar"], ["mirin"], ["shoyu"], ["shoyu"], ["shoyu"], ["burnerL"],
     () => waitFor(SOLUTIONS._w, "simmer"),
     ["shelf_bowl"], ["burnerL"], ["table"],
     ["shelf_bowl"], ["burnerL"], ["table"]
   ],
   onigiri: [
     ["salt"], ["shelf_plate"], ["counter"],
-    ["ricecooker"], ["counter"], ["ricecooker"], ["counter"], ["ricecooker"], ["counter"],
+    ["ricecooker"], ["counter"], ["counter"],
+    ["ricecooker"], ["counter"], ["counter"],
+    ["ricecooker"], ["counter"], ["counter"],
     ["fridge"], ["counter"],
-    ["fridge"], ["counter"],
-    ["counter"], ["table"]
+    ["counter"],
+    ["table"]
   ]
 };
 
 function playSolution(id, seed) {
   const world = Sim.createWorld(id, seed);
   SOLUTIONS._w = world;
-  for (const line of SOLUTIONS[id]) {
-    if (typeof line === "function") line();
-    else act(world, line[0]);
-  }
+  SOLUTIONS[id].forEach((line, i) => {
+    try {
+      if (typeof line === "function") line();
+      else act(world, line[0]);
+    } catch (e) {
+      e.message = id + " step " + i + " (" + (typeof line === "function" ? "wait" : line[0]) + "): " + e.message;
+      throw e;
+    }
+  });
   return world;
 }
 
@@ -211,12 +231,13 @@ test("each recipe completes via its scripted solution and yields a served dish",
 test("chopping: the green zone is generous, misses do not lose progress, and presses are judged", () => {
   // Pure judgement at the centre, inside the zone edge, and outside.
   assert.equal(Sim.judgeTiming(0.5, 0.5, 0.17), "nice");
-  assert.equal(Sim.judgeTiming(0.5 + 0.17, 0.5, 0.17), "good");
+  assert.equal(Sim.judgeTiming(0.5 + 0.1, 0.5, 0.17), "good");
   assert.equal(Sim.judgeTiming(0.5 + 0.2, 0.5, 0.17), "miss");
-  // The indicator is a triangle wave: 0 at t=0, 1 at half a period, back to 0 at one period.
+  // The indicator rises across one period and falls across the next: 0 -> 1 -> 0.
   assert.equal(Sim.sweep(0, 1), 0);
-  assert.ok(Math.abs(Sim.sweep(0.5, 1) - 1) < 1e-9);
-  assert.ok(Math.abs(Sim.sweep(1, 1)) < 1e-9);
+  assert.ok(Math.abs(Sim.sweep(0.5, 1) - 0.5) < 1e-9);
+  assert.ok(Math.abs(Sim.sweep(1, 1) - 1) < 1e-9);
+  assert.ok(Math.abs(Sim.sweep(2, 1)) < 1e-9);
   // A miss keeps the session open with no progress.
   const w = Sim.createWorld("miso", 2);
   act(w, "shelf_pot");

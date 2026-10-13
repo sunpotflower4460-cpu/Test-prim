@@ -1,5 +1,5 @@
 /* おばちゃんの台所: pure game logic.
- * No DOM, no clock, no Math.random. Every timed action takes its time from the
+ * No DOM, no clock, no ambient randomness. Every timed action takes its time from the
  * caller (tick, press, drag, hold), and randomness comes from a seeded RNG kept in
  * the world, so the same inputs always produce the same world.
  * Recipe data lives in recipes.js. */
@@ -33,8 +33,8 @@
   var PAN_SET_TIME = 2.4;   // seconds over 75 degrees before the layer sets
   var PAN_BURN_TIME = 8.5;  // seconds of heat before it counts as burnt (never blocks)
   var SIMMER_MIN_TEMP = 52; // a lidded pot counts simmer time above this
-  var CHOP_PERIOD = 1.1;
-  var CRACK_PERIOD = 1.3;
+  var CHOP_PERIOD = 0.85;
+  var CRACK_PERIOD = 1.0;
   var CHOP_HALF = 0.17;     // green zone half-width, out of a 0..1 bar
   var CRACK_HALF = 0.12;
   var DEFAULT_PROFILE = { sweet: { ideal: 3, tol: 1 }, salt: { ideal: 3, tol: 1 } };
@@ -881,7 +881,7 @@
     var obj;
     try {
       obj = JSON.parse(text);
-    } catch (e) {
+    } catch {
       return null;
     }
     return validateSave(obj);

@@ -380,23 +380,6 @@ export function boardTop() {
   return toTexture(c, 1, 1);
 }
 
-// Fine flower and leaf pattern for the cardigan or the book page.
-export function paperNotes() {
-  const c = makeCanvas(512, 512);
-  const g = c.getContext("2d");
-  g.fillStyle = "#fbf4e4";
-  g.fillRect(0, 0, 512, 512);
-  g.strokeStyle = "rgba(140,110,80,0.12)";
-  g.lineWidth = 2;
-  for (let y = 40; y < 512; y += 36) {
-    g.beginPath();
-    g.moveTo(0, y);
-    g.lineTo(512, y);
-    g.stroke();
-  }
-  return c;
-}
-
 export function glowRing(color = "#ffd27a") {
   const c = makeCanvas(128, 128);
   const g = c.getContext("2d");
@@ -410,8 +393,4 @@ export function glowRing(color = "#ffd27a") {
   const t = new THREE.CanvasTexture(c);
   t.colorSpace = THREE.SRGBColorSpace;
   return t;
-}
-
-export function fruitDetail() {
-  return null;
 }

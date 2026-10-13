@@ -1,13 +1,15 @@
 // おばちゃんの台所: the controller. It connects the pure sim (sim.js) to the 3D scene, input, camera, audio and save.
 //
-// Test hook: window.obachanKitchenDebug (read-only snapshot plus a few helpers for browser tests).
-//   .state()          current phase, recipe, step and hand
+// Debug hook: window.obachanKitchenDebug. It is a read-only snapshot plus helpers for the browser checks.
+//   .state()          phase, recipe, step hint, hand, session, timing indicator, family lines, served dishes
 //   .world()          a copy of the sim world
-//   .run(stationId)   perform the player action at a station (same path as the E key)
+//   .run(stationId)   the player action at a station (same path as the E key)
 //   .assist()         auntie does the current step (same path as the button)
 //   .teleport(id)     move the player next to a station
 //   .startDish(id)    start a recipe directly
 //   .save()           the save object as stored
+//   .perf({shadows, dpr})  turn shadows or pixel ratio off, to speed up slow headless runs
+//   .renderInfo()     draw calls, triangles and memory counts
 import * as THREE from "../vendor/three.module.js";
 import { buildWorld, updateWorld, STATION_ANCHORS, STATION_NAMES, BOUNDS, LAYOUT } from "./world.js";
 import { createAuntie, createPlayer, createUncle, createMisaki, animateWalk, setPose, blinkEyes, lookAt } from "./characters.js";
@@ -31,7 +33,7 @@ const MISAKI = "みさきちゃん";
 function readSave() {
   try {
     return Sim.parseSave(localStorage.getItem(Sim.SAVE_KEY)) || Sim.emptySave();
-  } catch (e) {
+  } catch {
     return Sim.emptySave();
   }
 }
@@ -40,14 +42,14 @@ function writeSave() {
   try {
     const text = Sim.serializeSave(Object.assign({}, save, { dish: world && !world.done ? world : null }));
     if (text) localStorage.setItem(Sim.SAVE_KEY, text);
-  } catch (e) {
+  } catch {
     /* storage can be blocked: the game still works */
   }
 }
 function hasSave() {
   try {
     return localStorage.getItem(Sim.SAVE_KEY) !== null;
-  } catch (e) {
+  } catch {
     return false;
   }
 }
@@ -71,6 +73,7 @@ function resize() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, touchDevice ? 1.5 : 2));
   renderer.setSize(w, h, false);
   camera.aspect = w / h;
+  camera.fov = w < h ? 58 : 50;
   camera.updateProjectionMatrix();
 }
 window.addEventListener("resize", resize);
@@ -88,13 +91,14 @@ uncle.position.set(LAYOUT.seats.uncle.x, 0, LAYOUT.seats.uncle.z);
 uncle.rotation.y = LAYOUT.seats.uncle.rot;
 misaki.position.set(LAYOUT.seats.misaki.x, 0, LAYOUT.seats.misaki.z);
 misaki.rotation.y = LAYOUT.seats.misaki.rot;
+document.body.classList.toggle("touch", touchDevice);
 const audio = createAudio();
 audio.setSettings(save.settings);
 const ui = createUI();
 ui.setBlip(() => audio.sfx.blip());
 const handHolder = player.userData.parts.handR;
 player.visible = false;
-const auntieHome = { x: 1.0, z: -2.25 };
+const auntieHome = { x: -2.3, z: -1.9 };
 auntie.position.set(auntieHome.x, 0, auntieHome.z);
 auntie.rotation.y = Math.PI;
 
@@ -116,7 +120,6 @@ const handState = { key: "", obj: null };
 const basket = {};
 const sizzleOn = { pot: false, pan: false };
 const emitT = { bubbles: 0, steam: 0, sizzle: 0 };
-let chopLast = 0;
 let serveCount = 0;
 let finishing = false;
 const burnerIds = ["burnerL", "burnerR"];
@@ -132,6 +135,20 @@ const OBJECT_SPOTS = {
   nori: [0.95, -1.25], salt: [1.4, -1.25], shelf_pot: [-4.1, -1.0], shelf_pan: [-4.1, -1.6],
   shelf_bowl: [-4.1, -0.2], shelf_plate: [-4.1, 0.4], rack_lid: [4.3, -0.9], veg_bin: [3.2, 0.9],
   menu: [-4.43, 1.1], door: [-4.5, 3.0], table: [7.6, 0.4]
+};
+// Short reason shown after a step's name when it cannot run yet.
+const HOLD_HINT = {
+  "not-ready": "（もう少し待ってね）",
+  "hand-full": "（手を空けてから）",
+  "hand-empty": "（手に持ってから）",
+  "wrong-item": "（今は別のもの）",
+  "no-vessel": "（鍋かフライパンを先に）",
+  "no-counter": "（作業台にお皿かボウルを）",
+  "locked": "（前の手順から）",
+  "occupied": "（ほかのものがあるわ）",
+  "enough": "（もう十分）",
+  "passive": "",
+  "busy": ""
 };
 function objectSpot(id) {
   const o = OBJECT_SPOTS[id];
@@ -310,7 +327,6 @@ function closeFinish() {
 }
 
 // ---------- HUD ---------------------------------------------------------------
-let hudT = 0;
 function updateHud() {
   if (!world || !recipe) {
     ui.setStep("", "", null);
@@ -572,7 +588,7 @@ function hintInto(hint) {
 
 function auntieGoTo(st) {
   const p = stationPos(st) || { x: auntieHome.x, z: auntieHome.z };
-  auntieState.goal = { x: p.x, z: p.z + (p.z < -1 ? 0.45 : 0) };
+  auntieState.goal = { x: p.x - 0.55, z: p.z + (p.z < -1 ? 0.2 : 0) };
 }
 
 // ---------- Movement and camera ---------------------------------------------
@@ -640,10 +656,11 @@ function normalizeAngle(a) {
 }
 
 function segmentHit(a, b) {
-  // First hit of segment a->b against the colliders, returned as a fraction 0..1.
+  // First hit of segment a->b against the tall colliders, returned as a fraction 0..1.
   let tMin = 1;
-  const dx = b.x - a.x, dy = b.y - a.y, dz = b.z - a.z;
+  const dx = b.x - a.x, dz = b.z - a.z;
   for (const c of w3.colliders) {
+    if (c.h < 1.4) continue;
     const m = 0.2;
     const x0 = c.x0 - m, x1 = c.x1 + m, z0 = c.z0 - m, z1 = c.z1 + m;
     let t0 = 0, t1 = 1;
@@ -660,7 +677,7 @@ function segmentHit(a, b) {
         if (t0 > t1) { ok = false; break; }
       }
     }
-    if (ok && a.y + dy * t0 < 3.2 && t0 < tMin && t0 > 0) tMin = t0;
+    if (ok && t0 < tMin && t0 > 0) tMin = t0;
   }
   return tMin;
 }
@@ -679,10 +696,14 @@ function updateCamera(dt) {
     look = focus.clone();
     if (ui.talkVisible() && auntieState.goal === null && auntie.position.distanceTo(player.position) < 6) {
       const ap = new THREE.Vector3(auntie.position.x, 1.1, auntie.position.z);
-      look.lerp(ap, 0.3);
+      look.lerp(ap, 0.2);
     }
   }
-  const off = new THREE.Vector3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)).multiplyScalar(cam.dist);
+  // Narrow (portrait) screens need more distance to show the same width of kitchen.
+  const aspect = camera.aspect || 1;
+  const portraitGain = aspect < 1 ? 1 + (1 - aspect) * 0.6 : 1;
+  const want = cam.dist * portraitGain;
+  const off = new THREE.Vector3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch)).multiplyScalar(want);
   const desired = look.clone().add(off);
   const frac = segmentHit(look, desired);
   const kept = Math.max(0.12, frac * 0.94);
@@ -732,8 +753,7 @@ function updateNearest() {
   } else if (world && !world.done && !world.session) {
     const pk = Sim.peek(world, nearest);
     if (pk.ok && pk.label) text = STATION_NAMES[nearest] + "：" + pk.label;
-    else if (pk.label && pk.reason !== "done") text = STATION_NAMES[nearest] + "：" + pk.label + "（" + (LINES.auntie.refuse[pk.reason] ? "まだ" : "") + "）";
-    else if (pk.reason === "nothing") text = "";
+    else if (pk.label && pk.reason !== "done") text = STATION_NAMES[nearest] + "：" + pk.label + HOLD_HINT[pk.reason];
     else text = "";
   } else if (world && world.session) {
     text = "";
@@ -910,7 +930,13 @@ function updateSessions(dt) {
     const s = screenOf(p);
     const prog = Math.min(1, sess.progress / sess.need);
     ui.dragRing(true, s.x, s.y, prog, sess.metric === "rot" ? "ぐるぐる" : "さっさっと");
-    if (sess.metric === "rot" && input.drag) audio.sfx.stirLoop(input.drag.moving === true);
+    // Keyboard players hold an arrow key (or E) to make the same motion as a drag.
+    const keyDrag = !(input.drag && input.drag.down) && (input.actDown || ["ArrowLeft", "ArrowRight", "ArrowUp", "ArrowDown", "KeyA", "KeyD", "KeyW", "KeyS"].some((k) => input.keys.has(k)));
+    if (keyDrag) {
+      const r = Sim.drag(world, sess.metric === "rot" ? { angle: 4.5 * dt, dist: 0 } : { angle: 0, dist: 60 * dt });
+      if (r.events && r.events.length) handleEvents(r.events, { before: null });
+    }
+    if (sess.metric === "rot") audio.sfx.stirLoop(keyDrag || (input.drag && input.drag.moving === true));
   } else if (sess.type === "hold") {
     ui.timing(false);
     ui.dragRing(false);
@@ -977,10 +1003,6 @@ function updateBasketCheck() {
 }
 
 // ---------- Input -------------------------------------------------------------
-const UI_SELECTOR = "button, input, label, a, .dialog, .sheet, .talk, .card, .hud-tools, .actions";
-function isUiTarget(target) {
-  return !!(target && target.closest && target.closest(UI_SELECTOR));
-}
 
 window.addEventListener("keydown", (e) => {
   if (e.target && (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA")) return;

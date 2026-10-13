@@ -167,6 +167,12 @@ async function playDesktop(browser) {
   await page.keyboard.press("Escape");
   await page.waitForTimeout(150);
 
+  // Reloading shows 「つづきから」 because a save exists.
+  await page.reload({ waitUntil: "load" });
+  await page.waitForFunction(() => !!window.obachanKitchenDebug, null, { timeout: 20000 });
+  await page.waitForTimeout(400);
+  assert.equal(await page.locator("#btnContinue").isVisible(), true, "continue button after a saved cook");
+
   assert.deepEqual(errors, [], "no console errors on the desktop run");
   await context.close();
 }

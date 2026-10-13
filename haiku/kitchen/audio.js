@@ -20,7 +20,7 @@ export function createAudio() {
       const AC = window.AudioContext || window.webkitAudioContext;
       if (!AC) return null;
       ctx = new AC();
-    } catch (e) {
+    } catch {
       ctx = null;
       return null;
     }
@@ -134,8 +134,8 @@ export function createAudio() {
       h.gain.gain.cancelScheduledValues(t);
       h.gain.gain.setTargetAtTime(0, t, 0.05);
       h.stopAt = t + 0.3;
-      h.nodes.forEach((n) => { try { n.stop(t + 0.35); } catch (e) { /* already ended */ } });
-    } catch (e) {
+      h.nodes.forEach((n) => { try { n.stop(t + 0.35); } catch { /* already ended */ } });
+    } catch {
       /* ignore */
     }
     delete loops[key];
@@ -485,7 +485,7 @@ export function createAudio() {
   function dispose() {
     stopMusic();
     if (ctx) {
-      try { ctx.close(); } catch (e) { /* closed */ }
+      try { ctx.close(); } catch { /* closed */ }
     }
     ctx = null;
   }

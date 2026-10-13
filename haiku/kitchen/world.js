@@ -124,7 +124,8 @@ export function buildWorld(scene) {
     add(parent, mesh, cast, true);
     return mesh;
   };
-  const collide = (x0, x1, z0, z1) => colliders.push({ x0, x1, z0, z1 });
+  // Walls and tall furniture block the camera too. Low furniture (h below 1.4) only blocks walking.
+  const collide = (x0, x1, z0, z1, h = 3.2) => colliders.push({ x0, x1, z0, z1, h });
 
   const wallTex = T.plasterWall("#f3e6cf");
   const wallMat = mat("wall", { map: wallTex, roughness: 0.95 });
@@ -141,7 +142,6 @@ export function buildWorld(scene) {
   const grassMat = mat("grass", { map: T.grass(), roughness: 1 });
   const soilMat = mat("soil", { map: T.soil(), roughness: 1 });
   const stoneMat = mat("stone", { color: 0xcfc6b2, roughness: 0.95 });
-  const roofMat = mat("roof", { color: 0x9a7b67, roughness: 0.9 });
 
   const root = new THREE.Group();
   root.name = "kitchen";
@@ -229,7 +229,14 @@ export function buildWorld(scene) {
   // Counter: carcass and worktop
   boxAt(root, 8.8, 0.9, 0.7, cabinet, 0, 0.45, -4.05);
   boxAt(root, 8.9, 0.04, 0.78, counterTop, 0, 0.92, -4.02);
-  collide(-4.45, 4.45, -4.45, -3.55);
+  collide(-4.45, 4.45, -4.45, -3.55, 0.95);
+  // Cutting board on the counter, with a knife block beside it
+  boxAt(root, 0.82, 0.035, 0.48, mat("boardTop", { map: T.boardTop() }), -0.3, 0.9375, -3.9);
+  boxAt(root, 0.2, 0.26, 0.14, cabinet, -1.02, 1.05, -3.95);
+  for (let i = 0; i < 3; i++) {
+    const knife = boxAt(root, 0.022, 0.2, 0.012, mat("knifeBlade", { color: 0xd9dde0, roughness: 0.3, metalness: 0.5 }), -1.07 + i * 0.05, 1.2, -3.98, false, false);
+    knife.rotation.z = (i - 1) * 0.12;
+  }
   // Splashback tiles
   boxAt(root, 8.8, 0.9, 0.04, tileMat, 0, 1.45, -4.42, false, true);
   // Stove top
@@ -264,7 +271,7 @@ export function buildWorld(scene) {
   // Seasoning island in front of the counter. Each jar is a station at its own spot.
   boxAt(root, 3.5, 0.08, 0.6, counterTop, 0.15, 0.9, -1.25);
   boxAt(root, 3.3, 0.84, 0.56, cabinet, 0.15, 0.48, -1.25);
-  collide(-1.6, 1.9, -1.55, -0.95);
+  collide(-1.6, 1.9, -1.55, -0.95, 0.95);
   const jarSpots = [
     ["お味噌", -1.3, 0x7a4a24], ["砂糖", -0.85, 0xf5f0e0], ["みりん", -0.4, 0xe9c96a], ["醤油", 0.05, 0x6b3a22],
     ["油", 0.5, 0xf0d070], ["海苔", 0.95, 0x2f4a3b], ["お塩", 1.4, 0xfbfbf6]
@@ -317,14 +324,13 @@ export function buildWorld(scene) {
   fridge.add(fridgeBody);
   boxAt(fridge, 0.86, 0.02, 0.02, steel, 0, 1.33, 0.46, false, false);
   boxAt(fridge, 0.86, 0.02, 0.02, steel, 0, 0.5, 0.46, false, false);
-  const magnetCols = [0xe66c5c, 0x5aa8d8, 0xf3c24c];
   for (let i = 0; i < 3; i++) {
     const pg = new THREE.Mesh(new THREE.PlaneGeometry(0.16, 0.12), new THREE.MeshBasicMaterial({ map: T.jarLabel(["写真", "地図", "絵"][i], "#fffdf6") }));
     geoCache.push(pg.geometry);
     pg.position.set(-0.2 + i * 0.22, 1.5 - (i % 2) * 0.22, 0.465);
     fridge.add(pg);
   }
-  collide(3.5, 4.5, -4.5, -3.0);
+  collide(3.5, 4.5, -4.5, -3.0, 1.95);
 
   // Ceiling fan
   const fan = new THREE.Group();
@@ -382,10 +388,13 @@ export function buildWorld(scene) {
   boxAt(root, 0.16, 0.6, 1.6, wallMat, -4.54, 2.9, 3.0);
   boxAt(root, 0.16, H, 0.85, wallMat, -4.54, H / 2, 4.1);
   // Shelf unit for pots, pans, bowls, plates
-  boxAt(root, 0.5, 1.95, 2.4, cabinet, -4.1, 0.975, -1.4);
+  // Open shelving: a back panel, two sides and the boards, so the cookware is visible.
+  boxAt(root, 0.05, 1.95, 2.4, cabinet, -4.42, 0.975, -1.4);
+  boxAt(root, 0.42, 1.95, 0.05, cabinet, -4.19, 0.975, -2.6);
+  boxAt(root, 0.42, 1.95, 0.05, cabinet, -4.19, 0.975, -0.2);
   collide(-4.35, -3.85, -2.6, -0.2);
   for (const [yy, things] of [[0.6, "pot"], [1.12, "bowl"], [1.5, "plate"], [1.85, "pan"]]) {
-    boxAt(root, 0.48, 0.03, 2.3, cabinet, -4.1, yy, -1.4, false, false);
+    boxAt(root, 0.42, 0.03, 2.4, cabinet, -4.19, yy, -1.4, false, false);
     if (things === "pot") {
       const pot = cyl(root, 0.16, 0.14, 0.2, 18, steel, -4.1, yy + 0.12, -1.9);
       pot.name = "shelfpot";
@@ -411,7 +420,7 @@ export function buildWorld(scene) {
     const v = sph(basket, 0.08, mat("veg" + i, { color: vegCols[i % vegCols.length], roughness: 0.6 }), -0.15 + (i % 3) * 0.15, 0.36 + Math.floor(i / 3) * 0.06, 0.05 * (i % 2 ? 1 : -1), 1, 0.8, 1);
     v.name = "veg";
   }
-  collide(2.8, 3.6, 0.5, 1.3);
+  collide(2.8, 3.6, 0.5, 1.3, 0.5);
 
   // Front wall: full height. Camera collision keeps the view inside.
   boxAt(root, 9.2, H, 0.16, wallMat, 0, H / 2, 4.55);
@@ -432,7 +441,7 @@ export function buildWorld(scene) {
   // Sideboard and vase along the back wall
   boxAt(root, 2.2, 0.8, 0.5, cabinet, 9.6, 0.4, -4.0);
   boxAt(root, 2.25, 0.04, 0.55, counterTop, 9.6, 0.82, -4.0, false, true);
-  collide(8.5, 10.7, -4.3, -3.6);
+  collide(8.5, 10.7, -4.3, -3.6, 0.9);
   // The vase with sunflowers
   const vase = cyl(root, 0.1, 0.07, 0.3, 16, mat("vase", { color: 0x6aa6c9, roughness: 0.3 }), 10.2, 1.0, -4.0);
   vase.name = "vase";
@@ -467,7 +476,7 @@ export function buildWorld(scene) {
     const dish = cyl(table, 0.12, 0.09, 0.02, 18, white, -0.5 + i * 0.5, 0.78, 0.0);
     dish.name = "dish";
   }
-  collide(6.3, 8.9, -0.3, 1.1);
+  collide(6.3, 8.9, -0.3, 1.1, 0.85);
   for (const seat of [LAYOUT.seats.uncle, LAYOUT.seats.misaki]) {
     const chair = new THREE.Group();
     chair.position.set(seat.x, 0, seat.z);
@@ -661,7 +670,7 @@ export function buildWorld(scene) {
   boxAt(gardenRoot, 6.2, 0.05, 0.06, stakeMat, -8.1, 0.82, -6.5, false, false);
   boxAt(gardenRoot, 6.2, 0.05, 0.06, stakeMat, -8.1, 0.45, -6.5, false, false);
   // Colliders for the beds
-  for (const x of rowsX) collide(x - 0.45, x + 0.45, -4.1, 4.1);
+  for (const x of rowsX) collide(x - 0.45, x + 0.45, -4.1, 4.1, 0.2);
 
   // Lights: warm afternoon sun through the window, soft sky-and-earth fill, warm stove glow.
   const hemi = new THREE.HemisphereLight(0xcfe9ff, 0xf1c08b, 0.95);

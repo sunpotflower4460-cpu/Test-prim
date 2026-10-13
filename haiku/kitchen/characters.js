@@ -67,7 +67,6 @@ export function createAuntie() {
   apron.rotation.x = -0.05;
   part(root, new THREE.BoxGeometry(0.5, 0.04, 0.03), mat("apronBand", { color: 0xf6f0e2 }), 0, 1.12, 0.36);
 
-  const body = root;
   // Legs and slippers
   const legL = group(root, -0.1, 0.36, 0);
   part(legL, new THREE.CylinderGeometry(0.06, 0.06, 0.34, 10), skin(), 0, -0.17, 0);
