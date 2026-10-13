@@ -18,12 +18,12 @@
     {name:"最後の間",story:"もう、斬る理由を知っている。",bg:["#161d33","#37334e"],floor:"#29263f",light:"#ffdfae",enemy:"#ef9da7"}
   ];
   const waveTypes=[
-    ["blade","blade","blade"],
-    ["blade","blade","spear","blade"],
-    ["blade","spear","archer","archer"],
-    ["spear","spear","shade","archer","blade"],
-    ["spear","shade","shade","archer","archer","blade"],
-    ["boss"]
+    [["blade","blade"],["blade","spear","blade"]],
+    [["blade","spear"],["spear","blade","archer"]],
+    [["blade","archer","archer"],["spear","shade","archer"]],
+    [["spear","shade","archer"],["spear","shade","shade","archer"]],
+    [["spear","shade","archer","archer"],["spear","shade","shade","archer"]],
+    [["spear","shade","archer"],["boss"]]
   ];
   const enemyTemplates={
     blade:{hp:58,r:15,speed:79,range:62,windup:.66,cooldown:1.95,dmg:13,color:"#ffa69d",score:14},
@@ -58,6 +58,7 @@
   let player=null,scene="title",gate=0,enemies=[],shots=[],effects=[],traces=[],texts=[],time=0,stageTime=0;
   let last=0,dpr=1,shake=0,hitstop=0,slow=0,cleared=false,spawnCd=0,idSerial=1,calloutTime=0,rafId=0;
   let kills=0,chain=0,bestChain=0,chainCd=0,relicCounts={},selectedRelics=[],bossPhase=0;
+  let waveIndex=0,parries=0,totalElapsed=0,bossReinforcements=false;
   const input={keys:new Set(),stick:{x:0,y:0,id:null,cx:0,cy:0},attackHeld:false,attackTimer:0};
   const ui={gate:$("gateNumber"),name:$("gateName"),hp:$("hpBar"),hpText:$("hpText"),
     energy:$("energyBar"),energyText:$("energyText"),kills:$("killCount"),combo:$("combo"),
@@ -102,7 +103,7 @@
     ui.hpText.textContent=p?Math.ceil(p.hp)+" / "+p.maxHp:"100 / 100";
     ui.energy.style.width=p?clamp(p.energy,0,100)+"%":"0%";
     ui.energyText.textContent=p?Math.floor(p.energy)+" / 100":"0 / 100";
-    ui.wave.textContent=gate===5?"最終ノ間":"第"+["壱","弐","参","肆","伍"][gate]+"門";
+    ui.wave.textContent="第"+["壱","弐","参"][waveIndex]+"陣 / "+waveTypes[gate].length+"陣";
     const boss=enemies.find(e=>e.type==="boss"&&e.hp>0);
     ui.hint.textContent=boss?"守り手を超えろ":scene==="playing"?"残る影 "+enemies.filter(e=>e.hp>0).length:"攻撃を見切れ";
     ui.dash.classList.toggle("cooling",!!p&&p.dashCd>0);
@@ -142,24 +143,31 @@
     persist();
   }
   function startRun(){
-    soundInit();gate=0;kills=0;chain=0;bestChain=0;chainCd=0;selectedRelics=[];relicCounts={};
+    soundInit();gate=0;kills=0;chain=0;bestChain=0;chainCd=0;parries=0;totalElapsed=0;
+    selectedRelics=[];relicCounts={};
     player=freshPlayer();beginGate();
   }
   function beginGate(){
     scene="playing";cleared=false;time=0;stageTime=0;bossPhase=0;spawnCd=0;slow=0;hitstop=0;
+    waveIndex=0;bossReinforcements=false;
     effects=[];traces=[];texts=[];shots=[];enemies=[];shake=0;
     player.x=W/2;player.y=440;player.invuln=1.2;
     player.hp=Math.min(player.maxHp,player.hp+(gate===0?0:18));
     player.dashCd=0;player.parryCd=0;player.atkCd=0;
     player.parryTime=0;player.dashTime=0;player.combo=0;player.comboWindow=0;
     input.keys.clear();input.attackHeld=false;resetStick();hideDialogue();
-    // Stagger spawns for readable pacing. The opening foe starts in view.
-    for(let i=0;i<waveTypes[gate].length;i++){
-      const t=waveTypes[gate][i],theta=TAU*(i+.11)/waveTypes[gate].length;
-      const r=t==="boss"?165:155+((i%2)*44);
-      spawn(t,clamp(240+Math.cos(theta)*r,55,W-55),clamp(295+Math.sin(theta)*r,110,495),i*.52);
-    }
+    spawnWave();
     hud();announce(colors[gate].name,2.3);
+  }
+  function spawnWave(){
+    const group=waveTypes[gate][waveIndex];
+    for(let i=0;i<group.length;i++){
+      const t=group[i],theta=TAU*(i+.16+waveIndex*.21)/group.length;
+      const radius=t==="boss"?159:149+((i%2)*42);
+      spawn(t,clamp(240+Math.cos(theta)*radius,55,W-55),
+        clamp(291+Math.sin(theta)*radius,113,495),i*.47);
+    }
+    ring(player.x,player.y,93,colors[gate].light,.48);
   }
   function spawn(type,x,y,delay=0){
     const t=enemyTemplates[type],mult=1+gate*.13;
@@ -248,7 +256,7 @@
     player.parryCd=Math.min(player.parryCd,.19);
     player.invuln=Math.max(player.invuln,.33);
     player.guardFlash=.7;gain(26);slow=.68;hitstop=.12;
-    chain++;chainCd=4.3;bestChain=Math.max(bestChain,chain);
+    chain++;chainCd=4.3;bestChain=Math.max(bestChain,chain);parries++;
     if(e&&!e.dead){
       const damage=Math.round(33*player.counter);
       hurtEnemy(e,damage,player.x,player.y);
@@ -319,8 +327,9 @@
   }
   function statsHtml(){
     return '<div class="results"><span><strong>'+kills+'</strong>浄化した影</span>'+
-      '<span><strong>×'+bestChain+'</strong>最長連斬</span>'+
-      '<span><strong>'+String(gate+1).padStart(2,"0")+'</strong>到達した門</span></div>';
+      '<span><strong>'+parries+'</strong>見切った数</span>'+
+      '<span><strong>×'+bestChain+'</strong>最長連斬</span></div>'+
+      '<p>到達：第'+(gate+1)+'門 · '+Math.floor(totalElapsed/60)+':'+String(Math.floor(totalElapsed%60)).padStart(2,"0")+'</p>';
   }
   function victory(){
     if(scene!=="playing")return;
@@ -513,7 +522,7 @@
   }
   function update(dt){
     if(scene!=="playing")return;
-    time+=dt;stageTime+=dt;
+    time+=dt;stageTime+=dt;totalElapsed+=dt;
     if(chainCd>0){chainCd-=dt;if(chainCd<=0)chain=0}
     if(calloutTime>0){calloutTime-=dt;if(calloutTime<=0)ui.callout.classList.remove("show")}
     if(hitstop>0){hitstop-=dt;hud();return;}
@@ -535,8 +544,24 @@
     }
     updateShots(worldDt);
     if(scene!=="playing")return;
+    const boss=enemies.find(e=>e.type==="boss"&&!e.dead);
+    if(boss&&!bossReinforcements&&boss.hp<boss.maxHp*.54){
+      bossReinforcements=true;
+      spawn("shade",89,198,.6);
+      spawn("archer",389,214,1.1);
+      announce("守り手の影が、目を覚ます",1.8);
+      ring(boss.x,boss.y,182,"#ffd4ba",.8);
+    }
     if(input.attackHeld){input.attackTimer-=dt;if(input.attackTimer<=0){slash();input.attackTimer=.22}}
-    if(enemies.length&&enemies.every(e=>e.dead))clearedGate();
+    if(enemies.length&&enemies.every(e=>e.dead)){
+      if(waveIndex+1<waveTypes[gate].length){
+        waveIndex++;
+        player.hp=Math.min(player.maxHp,player.hp+7);
+        gain(7);
+        enemies=[];shots=[];spawnWave();
+        announce("次の影が、近づく",1.2);
+      }else clearedGate();
+    }
     shake*=Math.pow(.84,dt*60);
     hud();
   }
