@@ -470,15 +470,11 @@
     if (scene !== "playing") return;
     const p = game.player;
     if (p.dashCd > 0 || p.dashTime > 0) return;
-    let dx = stick.x, dy = stick.y;
-    if (Math.abs(dx) + Math.abs(dy) < .15) {
-      dx = (keys.has("arrowright") || keys.has("d") ? 1 : 0) - (keys.has("arrowleft") || keys.has("a") ? 1 : 0);
-      dy = (keys.has("arrowdown") || keys.has("s") ? 1 : 0) - (keys.has("arrowup") || keys.has("w") ? 1 : 0);
-    }
+    const [dx, dy] = readMove();
     const d = Math.hypot(dx, dy);
     p.dashX = d > .12 ? dx / d : p.facingX;
     p.dashY = d > .12 ? dy / d : p.facingY;
-    p.dashTime = .25; p.dashCd = 2.35; p.invuln = .39; p.dashSerial++;
+    p.dashTime = .24; p.dashCd = p.dashCooldown; p.invuln = .39; p.dashSerial++;
     sound("dash"); haptic(18);
     ring(p.x, p.y, 70 + p.pulse * 25, "#b4fff0", .36);
     burst(p.x, p.y, 19, "#caffed", .9);
@@ -500,28 +496,57 @@
   function resetStick() {
     stick.x = 0; stick.y = 0; stick.id = null;
     ui.stick.style.transform = "translate(0px, 0px)";
+    const zone = $("joystick");
+    zone.style.transform = "";
+    const base = zone.querySelector(".joystick-base");
+    if (base) base.style.transform = "";
   }
   function moveStick(event) {
     const x = event.clientX - stick.centerX, y = event.clientY - stick.centerY;
     const len = Math.hypot(x, y), d = Math.min(42, len);
-    stick.x = len ? x / len * Math.min(1, len / 42) : 0;
-    stick.y = len ? y / len * Math.min(1, len / 42) : 0;
+    const amount = clamp((len - 5) / 38, 0, 1);
+    stick.x = len ? x / len * amount : 0;
+    stick.y = len ? y / len * amount : 0;
     ui.stick.style.transform = "translate(" + (len ? x / len * d : 0) + "px," + (len ? y / len * d : 0) + "px)";
   }
-  $("joystick").addEventListener("pointerdown", event => {
-    if (scene !== "playing") return;
+  const stickZone = $("joystick"), stickBase = stickZone.querySelector(".joystick-base");
+  function beginStick(event, floating = false) {
+    if (scene !== "playing" || stick.id !== null) return;
     event.preventDefault();
     stick.id = event.pointerId;
-    const r = $("joystick").getBoundingClientRect();
-    stick.centerX = r.left + r.width / 2; stick.centerY = r.top + r.height / 2 - 1;
-    $("joystick").setPointerCapture(event.pointerId);
-    moveStick(event);
-  });
-  $("joystick").addEventListener("pointermove", event => {
+    stickZone.style.transform = "";
+    if (stickBase) stickBase.style.transform = "";
+    const r = stickZone.getBoundingClientRect();
+    if (floating) {
+      // Keep the control in the layout so the DASH button stays on the right.
+      const offsetX = clamp(event.clientX - (r.left + r.width / 2), -r.left + 16, W - r.right - 16);
+      const offsetY = event.clientY - (r.top + r.height / 2);
+      stickZone.style.transform = "translate(" + offsetX + "px," + offsetY + "px)";
+    } else if (stickBase) {
+      const dx = clamp(event.clientX - (r.left + r.width / 2), -24, 24);
+      const dy = clamp(event.clientY - (r.top + r.height / 2), -24, 24);
+      stickBase.style.transform = "translate(" + dx + "px," + dy + "px)";
+    }
+    stick.centerX = event.clientX; stick.centerY = event.clientY;
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  stickZone.addEventListener("pointerdown", event => beginStick(event));
+  stickZone.addEventListener("pointermove", event => {
     if (stick.id === event.pointerId) { event.preventDefault(); moveStick(event); }
   });
-  for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
-    $("joystick").addEventListener(type, event => { if (stick.id === event.pointerId) resetStick(); });
+  // Touching the lower-left play field creates a floating steering origin.
+  canvas.addEventListener("pointerdown", event => {
+    if (event.pointerType === "mouse" || scene !== "playing" || foreignActive()) return;
+    if (event.clientX > W * .59 || event.clientY < Math.max(125, H * .16)) return;
+    beginStick(event, true);
+  });
+  canvas.addEventListener("pointermove", event => {
+    if (stick.id === event.pointerId) { event.preventDefault(); moveStick(event); }
+  });
+  for (const target of [stickZone, canvas]) {
+    for (const type of ["pointerup", "pointercancel", "lostpointercapture"]) {
+      target.addEventListener(type, event => { if (stick.id === event.pointerId) resetStick(); });
+    }
   }
   ui.dash.addEventListener("pointerdown", event => { event.preventDefault(); dash(); });
   ui.dash.addEventListener("click", event => { if (event.detail === 0) dash(); });
@@ -542,6 +567,14 @@
     // Enter on a focused door must open only that door. The shortcut below would also open LUMINA.
     if (onControl && k === "enter" && scene !== "playing") return;
     if (!onControl && ["arrowup", "arrowdown", "arrowleft", "arrowright", " ", "spacebar"].includes(k)) event.preventDefault();
+    if (scene === "upgrade") {
+      if (["1", "2", "3"].includes(k)) {
+        event.preventDefault();
+        const choice = $("upgradeList")?.querySelectorAll(".upgrade")[Number(k) - 1];
+        if (choice) choice.click();
+      } else if (k === "r") { event.preventDefault(); $("rerollUpgrade")?.click(); }
+      return;
+    }
     keys.add(k === " " ? "space" : k);
     if ((k === "shift" || (k === " " && !onControl)) && !event.repeat) dash();
     if ((k === "escape" || k === "p") && !event.repeat) {
@@ -586,7 +619,9 @@
     const g = game, p = g.player;
     g.time += dt; g.stageTime += dt;
     // Pause and modal transitions never advance this time budget.
-    p.walk += dt * 8;
+    // Walking animation is calmer while standing still.
+    const walking = readMove();
+    p.walk += dt * ((Math.hypot(walking[0], walking[1]) > .06 || p.dashTime > 0) ? 10 : 1.3);
     p.fireCd -= dt; p.invuln = Math.max(0, p.invuln - dt);
     p.dashCd = Math.max(0, p.dashCd - dt);
     p.hp = Math.min(p.maxHp, p.hp + p.regen * dt);
@@ -594,8 +629,8 @@
     const [mx, my] = readMove();
     if (p.dashTime > 0) {
       p.dashTime -= dt;
-      p.x += p.dashX * 700 * dt;
-      p.y += p.dashY * 700 * dt;
+      p.x += p.dashX * 760 * dt;
+      p.y += p.dashY * 760 * dt;
       if (Math.random() < .85) burst(p.x, p.y, 2, "#bfffe6", .18);
     } else {
       p.x += mx * p.speed * dt;
@@ -761,9 +796,12 @@
     ui.hint.textContent = g.bossSpawned ? "守護者を浄化せよ" : g.stageTime < 5 && g.stage === 0 ? "移動とダッシュ · 攻撃は自動" : "守護者まで " + Math.max(0, Math.ceil(60 - g.stageTime)) + " 秒";
     const boss = g.enemies.find(e => e.id === g.bossId);
     if (boss) ui.bossFill.style.width = (100 * Math.max(0, boss.hp) / boss.maxHp) + "%";
-    const dashRatio = clamp(p.dashCd / 2.35, 0, 1);
+    const dashRatio = clamp(p.dashCd / p.dashCooldown, 0, 1);
     ui.dashProgress.style.transform = "scaleY(" + dashRatio + ")";
     ui.dash.classList.toggle("recharging", p.dashCd > 0);
+    const dashText = ui.dash.querySelector(".dash-text");
+    if (dashText) dashText.textContent = p.dashCd > 0 ? p.dashCd.toFixed(1) + "s" : "DASH";
+    ui.dash.setAttribute("aria-label", p.dashCd > 0 ? "ダッシュ再使用まで " + p.dashCd.toFixed(1) + "秒" : "ダッシュ");
   }
 
   function background() {
