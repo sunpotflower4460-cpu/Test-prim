@@ -355,6 +355,9 @@
     state.pointer=null;updateUI();
   }
   ["pointerup","pointercancel","lostpointercapture"].forEach(k=>canvas.addEventListener(k,endPointer));
+  // Safari can release outside the canvas if pointer capture is interrupted.
+  // These listeners are harmless when the canvas already handled the event.
+  ["pointerup","pointercancel"].forEach(k=>window.addEventListener(k,endPointer));
   canvas.addEventListener("contextmenu",e=>e.preventDefault());
   const keyDirections={arrowleft:[-1,0],a:[-1,0],arrowright:[1,0],d:[1,0],
     arrowup:[0,-1],w:[0,-1],arrowdown:[0,1],s:[0,1]};
