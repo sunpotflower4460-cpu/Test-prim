@@ -269,3 +269,91 @@ body.code-active #flash,body.sync-active #flash{display:none}
 .launcher-button-opus:active{background:linear-gradient(115deg,#2c4470,#4a6a54 55%,#e2bd6248)}
 /* nine doors: pairs in two columns, the last one across the whole row */
 @media(orientation:landscape) and (min-width:600px){.launcher-button-gpt6sol{grid-column:auto}.launcher-button-opus{grid-column:1/-1}}
+
+
+/* LUMINA OCT 2026 POLISH — scoped to GPT6 CHAT surfaces only. */
+#topbar{
+  background:linear-gradient(180deg,rgba(2,12,29,.93),rgba(3,18,34,.68) 64%,transparent);
+}
+#topbar .chapter{color:#fff2cc;text-shadow:0 0 18px rgba(194,246,212,.35)}
+#topbar .hp,#topbar .xp{box-shadow:inset 0 0 0 1px rgba(232,251,228,.18),0 0 15px rgba(131,221,210,.07)}
+#topbar .xp{height:6px}
+#topbar .xp>div{background:linear-gradient(90deg,#66c3d8,#c6ffe4,#ffdfad)}
+#topbar .toolbtn{background:rgba(8,30,49,.78);border-color:rgba(219,255,232,.3);box-shadow:inset 0 0 15px rgba(159,234,218,.08)}
+#topbar .toolbtn:active{transform:scale(.94)}
+#mobileControls .joystick-base{
+  background:radial-gradient(circle at 45% 39%,rgba(146,246,222,.18),rgba(10,41,66,.48) 70%,rgba(4,26,47,.29));
+  border-color:rgba(202,255,231,.47);
+  box-shadow:0 0 0 7px rgba(182,246,226,.03),0 0 35px rgba(73,208,203,.08),inset 0 0 25px rgba(166,239,222,.12);
+}
+#mobileControls .joystick-knob{
+  background:linear-gradient(145deg,rgba(232,255,241,.7),rgba(79,176,181,.43));
+  box-shadow:0 0 30px rgba(109,247,217,.3),inset 0 2px 13px rgba(254,255,245,.22);
+}
+#mobileControls .dash-btn{border:1px solid rgba(251,229,187,.67);box-shadow:inset 0 0 0 5px rgba(7,24,42,.3),0 0 29px rgba(251,220,166,.15)}
+#mobileControls .dash-btn:not(.recharging){background:radial-gradient(circle at 43% 31%,rgba(255,228,161,.38),rgba(16,67,79,.66) 75%);box-shadow:0 0 25px rgba(242,219,149,.2),inset 0 0 0 5px rgba(7,24,42,.3)}
+#mobileControls .dash-btn .dash-text{font-weight:700;font-variant-numeric:tabular-nums;letter-spacing:.11em}
+#overlay{background:radial-gradient(ellipse at 50% 25%,rgba(34,76,87,.36),rgba(3,12,27,.83) 72%);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px)}
+#overlay .card{
+  width:min(440px,100%);border:1px solid rgba(231,248,221,.29);border-radius:21px;
+  background:linear-gradient(150deg,rgba(26,57,73,.97),rgba(10,27,52,.98) 58%,rgba(17,29,50,.97));
+  box-shadow:0 28px 90px rgba(0,6,17,.67),inset 0 1px 0 rgba(242,255,228,.1),0 0 50px rgba(131,211,204,.1);
+}
+#overlay .card h2{text-shadow:0 0 27px rgba(244,231,189,.13)}
+#overlay .upgrade-build{
+  padding:11px 12px;border:1px solid rgba(153,230,217,.22);border-radius:10px;
+  background:linear-gradient(95deg,rgba(114,209,198,.1),rgba(232,199,139,.06));
+  text-align:center;font:10px/1.8 Arial,sans-serif;letter-spacing:.08em;color:#d4eee3
+}
+#overlay .upgrade-list{gap:9px;margin:14px 0 10px}
+#overlay .upgrade{
+  --upgrade-accent:#a5f4d9;
+  position:relative;overflow:hidden;min-height:92px;padding:12px 14px;
+  border:1px solid rgba(188,233,213,.25);border-left:3px solid var(--upgrade-accent);
+  border-radius:12px;
+  background:linear-gradient(106deg,rgba(141,232,214,.12),rgba(117,165,204,.065) 63%,rgba(171,208,193,.06));
+  box-shadow:inset 0 1px 0 rgba(254,255,240,.045);
+  transition:transform .18s ease,border-color .18s ease,background .18s ease
+}
+#overlay .upgrade:before{content:"";position:absolute;inset:-70% auto auto -30%;width:50%;height:240%;pointer-events:none;background:linear-gradient(90deg,transparent,rgba(255,255,255,.04),transparent);transform:rotate(27deg)}
+#overlay .upgrade-defense{--upgrade-accent:#ffb9b9}
+#overlay .upgrade-mobility{--upgrade-accent:#b9c7ff}
+#overlay .upgrade-support{--upgrade-accent:#ffe0a9}
+#overlay .upgrade:hover,#overlay .upgrade:focus-visible{transform:translateY(-2px);border-color:rgba(230,255,233,.75);border-left-color:var(--upgrade-accent);background:linear-gradient(110deg,rgba(161,233,214,.2),rgba(121,173,207,.11))}
+#overlay .upgrade:active{transform:scale(.985)}
+#overlay .upgrade-icon{
+  flex:0 0 52px;min-width:52px;height:52px;font-size:27px;color:var(--upgrade-accent);
+  border-color:color-mix(in srgb,var(--upgrade-accent) 41%,transparent);
+  background:radial-gradient(circle,rgba(255,245,214,.15),rgba(255,255,255,.015));
+  box-shadow:0 0 23px rgba(179,226,210,.06)
+}
+#overlay .upgrade-body{flex:1;min-width:0}
+#overlay .upgrade-meta{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:5px;color:var(--upgrade-accent);font:9px Arial,sans-serif;letter-spacing:.14em}
+#overlay .upgrade-meta span:last-child{color:#8eabb4;font-size:8px;letter-spacing:.08em}
+#overlay .upgrade-title{font-size:14px;margin-bottom:3px;color:#fff5d8}
+#overlay .upgrade-desc{font-size:10.5px;line-height:1.6}
+#overlay .upgrade-rank{color:#e0cda8;font-variant-numeric:tabular-nums}
+#overlay .upgrade-harmony{display:block;margin-top:6px;font:9px Arial,sans-serif;letter-spacing:.07em;color:#e8d69a}
+#overlay .upgrade-reroll{
+  display:block;width:100%;min-height:40px;border:1px solid rgba(203,235,213,.33);border-radius:10px;
+  background:rgba(64,109,121,.16);color:#e5f2e9;
+  font:11px Arial,sans-serif;letter-spacing:.11em;transition:background .17s ease
+}
+#overlay .upgrade-reroll:not(:disabled):hover{background:rgba(92,161,158,.28)}
+#overlay .upgrade-reroll:disabled{opacity:.4;cursor:default}
+#overlay .card .upgrade-help{margin:9px 0 0;font:9px/1.6 Arial,sans-serif;color:#9cbbc0;letter-spacing:.07em}
+@media(max-width:390px),(max-height:730px){
+  #overlay .card{padding:20px 14px 17px}
+  #overlay .card h2{margin:7px 0 8px}
+  #overlay .card p{margin:5px auto 11px;line-height:1.65}
+  #overlay .upgrade-list{gap:7px;margin:10px 0 8px}
+  #overlay .upgrade{min-height:75px;padding:9px 10px;gap:11px}
+  #overlay .upgrade-icon{height:43px;min-width:43px;flex-basis:43px;font-size:24px}
+  #overlay .upgrade-title{font-size:12px}
+  #overlay .upgrade-desc{font-size:9px}
+  #overlay .upgrade-build{padding:7px 9px;font-size:9px}
+  #overlay .upgrade-reroll{min-height:35px}
+}
+@media(prefers-reduced-motion:reduce){
+  #overlay .upgrade,#mobileControls .dash-btn{transition:none}
+}
