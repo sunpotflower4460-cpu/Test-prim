@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a1f2b">
+<meta name="description" content="GPT6 CHATの作品棚。LUMINA 星灯りの庭とKAZANE 風の楽譜、ふたつの物語を遊ぶ。">
+<title>GPT6 CHAT | ふたつの庭</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=Noto+Serif+JP:wght@400;500;600&display=swap');
+:root{color-scheme:dark;--cream:#f7eedf;--muted:#b9d2cf;--mint:#c0edda}
+*{box-sizing:border-box}
+html{min-height:100%;background:#081c29}body{margin:0;min-height:100vh;min-height:100dvh;color:var(--cream);font-family:"Noto Serif JP",serif;background:radial-gradient(ellipse at 18% 20%,rgba(77,151,144,.23),transparent 43%),radial-gradient(ellipse at 86% 70%,rgba(156,113,152,.20),transparent 45%),linear-gradient(160deg,#081926 0%,#0b2934 63%,#0b192b);overflow-x:hidden}
+body:before{content:"";position:fixed;inset:0;pointer-events:none;opacity:.45;background-image:radial-gradient(circle,#cfebdf 0.75px,transparent 1px);background-size:51px 57px;mask-image:linear-gradient(100deg,transparent,#fff 60%,transparent)}
+a{color:inherit;text-decoration:none}button,a{-webkit-tap-highlight-color:transparent}a:focus-visible{outline:2px solid #e4f7cf;outline-offset:6px}
+.shell{max-width:1100px;min-height:100dvh;margin:auto;padding:clamp(22px,5vw,56px) clamp(18px,5vw,64px) 38px;display:flex;flex-direction:column}
+.back{align-self:flex-start;display:inline-flex;align-items:center;gap:12px;font:11px Arial,sans-serif;letter-spacing:.19em;color:#b6d0c9;padding:11px 0;transition:color .2s}.back:hover{color:#fff}
+.head{text-align:center;margin:clamp(18px,4vh,50px) 0 34px}
+.eyebrow{font:10px Arial,sans-serif;letter-spacing:.32em;color:#a4d9cc}.symbol{font-size:40px;line-height:1.6;color:#d8efcf;text-shadow:0 0 30px #95dbcaaa}
+h1{font:500 clamp(54px,8vw,90px)/1.05 "Cormorant Garamond",Georgia,serif;letter-spacing:.1em;margin:8px 0 14px}h1 em{font-style:normal;color:#c3e9d8}
+.jp{font-size:15px;letter-spacing:.3em;margin:0 0 16px}.lead{font-size:12px;line-height:2.1;letter-spacing:.08em;color:var(--muted);margin:0}
+.gallery{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(15px,3vw,27px)}
+.work{position:relative;display:flex;flex-direction:column;overflow:hidden;border:1px solid rgba(217,242,222,.26);border-radius:22px;background:rgba(9,30,44,.6);box-shadow:0 22px 60px rgba(0,10,22,.26);transition:transform .25s ease,border-color .25s,box-shadow .25s}
+.work:hover{transform:translateY(-5px);border-color:#d2f6dc99;box-shadow:0 25px 70px rgba(0,10,22,.4),0 0 50px #8bddcc14}.work:active{transform:scale(.987)}
+.art{height:clamp(230px,30vw,340px);position:relative;isolation:isolate;overflow:hidden}
+.lumina .art{background:radial-gradient(ellipse at 50% 74%,#277b7890,transparent 53%),linear-gradient(#0a1c36,#113c48 65%,#071e34)}
+.kazane .art{background:radial-gradient(ellipse at 60% 70%,#d8bd8369,transparent 56%),linear-gradient(#1e334a,#3b6574 56%,#15494b)}
+.art:before{content:"";position:absolute;inset:-30%;background:repeating-conic-gradient(from 10deg,transparent 0 12deg,#eef8e614 13deg 14deg,transparent 15deg 36deg);border-radius:50%;transform:scale(.55);opacity:.4}
+.lumina .disc{position:absolute;top:22%;left:50%;height:150px;width:150px;margin-left:-75px;border:1px solid #e7ffdf91;border-radius:50%;box-shadow:0 0 0 17px #b4eee409,0 0 0 48px #b4eee407,0 0 85px #7ddbc97c;animation:float 7s ease-in-out infinite}
+.lumina .disc:after{content:"✦";position:absolute;inset:0;display:grid;place-items:center;color:#f8ffe2;font-size:90px;text-shadow:0 0 45px #9ce8c0}
+.kazane .disc{position:absolute;top:19%;left:50%;width:168px;height:168px;margin-left:-84px;border-radius:50%;border:1px solid #fff3cf80;box-shadow:0 0 0 26px #f9efce09,0 0 65px #fae4a75e;animation:float 8s ease-in-out infinite}
+.kazane .disc:before,.kazane .disc:after{content:"";position:absolute;left:50%;bottom:-36px;width:70px;height:170px;border:1px solid #f6efd4c7;border-radius:95% 0 95% 0;background:linear-gradient(30deg,#fff9d028,transparent);transform:rotate(-38deg);transform-origin:bottom}
+.kazane .disc:after{transform:rotate(35deg);border-radius:0 95% 0 95%}
+.hills{position:absolute;inset:auto -15% -30px;height:120px;background:#0b2835;border-radius:50% 50% 0 0/90% 90% 0 0;box-shadow:0 -12px 40px #72d2b315}.kazane .hills{background:#1b4a49;box-shadow:0 -16px 50px #f3d49b27}
+.light{position:absolute;top:15%;right:18%;height:5px;width:5px;background:#e8ffe7;border-radius:50%;box-shadow:-120px 80px 0 1px #d1ffe3,70px 98px 0 #f6f3c8,-56px 150px 0 #bcf7e3,18px -30px 0 #fff2df,100px 15px 0 #fffbd7;filter:drop-shadow(0 0 7px #c8ffdf)}
+.info{padding:26px clamp(19px,3vw,33px) 29px;flex:1;display:flex;flex-direction:column;gap:8px}.number{font:10px Arial,sans-serif;letter-spacing:.25em;color:#a5cbc3}.info h2{font:500 clamp(34px,4vw,49px)/1.05 "Cormorant Garamond",Georgia,serif;letter-spacing:.1em;margin:6px 0 0}.info .subtitle{font-size:12px;letter-spacing:.22em;color:#f7ecd3}.info p{font-size:11px;line-height:2;color:#b6d0cb;margin:12px 0 18px;min-height:48px}.action{margin-top:auto;display:flex;justify-content:space-between;align-items:center;border-top:1px solid #d6eee52b;padding-top:18px;font:11px Arial,sans-serif;letter-spacing:.16em;color:#e3f4e1}.action span{font:26px Georgia}
+.footer{margin:auto 0 0;padding-top:28px;text-align:center;font:9px Arial,sans-serif;letter-spacing:.22em;color:#87a8a5}
+@keyframes float{50%{transform:translateY(-12px) rotate(8deg)}}
+@media(max-width:670px){.gallery{grid-template-columns:1fr}.art{height:220px}.head{margin:12px 0 25px}.shell{padding-bottom:24px}.info{padding:19px 23px 22px}.info p{min-height:0;margin-bottom:8px}}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body><div class="shell">
+<a class="back" href="../index.html" aria-label="Test primに戻る">← &nbsp; TEST PRIM にもどる</a>
+<header class="head"><div class="eyebrow">GPT6 CHAT / ORIGINAL WORKS</div><div class="symbol" aria-hidden="true">✦</div>
+<h1>Two <em>Gardens</em></h1><p class="jp">ふたつの庭</p>
+<p class="lead">戦う光と、風に託す光。<br>どちらの世界から、旅をはじめますか。</p></header>
+<main class="gallery" aria-label="GPT6 CHAT の作品">
+<a class="work lumina" href="../index.html#lumina" aria-label="LUMINA 星灯りの庭を遊ぶ">
+<div class="art" aria-hidden="true"><div class="disc"></div><div class="light"></div><div class="hills"></div></div>
+<div class="info"><span class="number">WORK 01 · ACTION</span><h2>LUMINA</h2>
+<span class="subtitle">星灯りの庭</span><p>３つの夜を巡り、影を浄化する。<br>祝福を育てる幻想サバイバルアクション。</p>
+<div class="action">星灯りの庭へ <span>↗</span></div></div></a>
+<a class="work kazane" href="sen.html" aria-label="新作 KAZANE 風の楽譜を遊ぶ">
+<div class="art" aria-hidden="true"><div class="disc"></div><div class="light"></div><div class="hills"></div></div>
+<div class="info"><span class="number">WORK 02 · WIND & MEMORY · NEW</span><h2>KAZANE</h2>
+<span class="subtitle">風の楽譜</span><p>指先で風を描き、ちいさな種を花へ導く。<br>記憶と音を紡ぐ、12の庭の旅。</p>
+<div class="action">風の楽譜をひらく <span>↗</span></div></div></a>
+</main><footer class="footer">MADE FOR THE MOMENTS BETWEEN SOUNDS · 2026</footer></div>
+</body></html>
