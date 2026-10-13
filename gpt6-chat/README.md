@@ -1,14 +1,53 @@
-# GPT6 CHAT — Two Gardens
+# GPT6 CHAT — Three Worlds
 
-A small collection of two independent, browser-playable original games.
+Three independent, browser-playable original games made by GPT6 CHAT.
 
 | Work | Entry | Kind |
 | --- | --- | --- |
 | **01 — LUMINA / 星灯りの庭** | `../index.html#lumina` | Three-chapter light-survival action |
 | **02 — KAZANE / 風の楽譜** | `sen.html` | Twelve-garden wind-and-memory puzzle |
+| **03 — SETSUNA / 刹那の剣** | `setsuna.html` | Six-gate precision sword action (12 encounters) |
 
 The shared Test prim front door leads to `gpt6-chat/index.html` via **GPT6 CHAT**.
 No other model's door, game directory, UI or source has been changed by this installation.
+
+
+## SETSUNA — an art of the last second
+
+**「ひと呼吸の静寂。その一瞬が、勝負を変える。」**
+
+SETSUNA deliberately moves away from LUMINA's automatic fire and KAZANE's
+relaxed puzzle flow. It is a **manual, timing-first sword action game**:
+
+- **Attack** — three-hit sword combinations; the third strike is stronger
+- **Parry** — a short active guard window, with perfect-parry counter damage,
+  enemy stun, brief time dilation and resonance energy
+- **Dash** — directional short-range escape with a temporary invulnerable window
+- **Finish** — a wide-area release when the resonance meter reaches 100
+- **Six gates, two encounters per gate** — new enemy archetypes are introduced
+  across the journey, culminating in a guardian with a reinforcement phase
+- **Five between-gate blessings** — choose from nine relic types to shape your
+  sword, guard, vitality, timing, speed and finishing power
+- **Fail-and-retry** — replay the current gate with restored vitality and
+  earned blessings intact; restarting an entire campaign is optional
+- **Records** — best gate, clears, kills and best sword chain in localStorage
+
+### SETSUNA controls
+
+| Action | Keyboard | Touch |
+| --- | --- | --- |
+| Move | WASD / arrow keys | Left thumb-stick, or drag lower-left play field |
+| Attack | J | 斬 (hold for successive strokes) |
+| Parry | K | 受 |
+| Dash | L / Shift | 避 |
+| Finish | Space | 閃 |
+| Pause | P / Escape | Ⅱ button |
+| Help | ? button | ? button |
+
+The game uses a standalone 480×720 logical canvas. The 4 combat buttons
+are intentionally independent of the joystick for two-thumb control.
+All sound is synthesized locally with Web Audio; no audio assets, external
+API, or server is required.
 
 ## KAZANE — design intention
 
@@ -41,7 +80,7 @@ No personal data is transmitted.
 
 ## Implementation
 
-- `index.html` — standalone two-work gallery
+- `index.html` — standalone three-work gallery
 - `sen.html` — KAZANE shell and accessible DOM
 - `sen.css` — responsive visual design, mobile-first playing order
 - `sen.js` — handwritten levels, canvas illustration, sound synthesis, simulation and saves
@@ -89,3 +128,25 @@ testing real browser pointer events, canvas appearance, audio latency and
 battery consumption on actual phones.
 
 Bug fixes from this audit are recorded in `AUDIT.md`.
+
+
+## Third-work QA (2026-10-13)
+
+Run the complete cross-game suite from the repository root:
+
+```sh
+node gpt6-chat/audit-smoke.js
+```
+
+This combines the previous LUMINA + KAZANE checks with the new
+`node gpt6-chat/setsuna-audit.js` checks (**28 total**). The third
+game suite exercises opening enemies, sword contact and hitboxes,
+perfect parry, dash invulnerability, projectile defense, finishing
+meter, two encounter waves per gate, guardian reinforcement,
+relic selection, defeat/retry, pause/help, touch release, corrupt
+saves, six-gate completion and continuous input-driven combat.
+
+The continuous input-driven mock successfully reached the sixth
+gate's clear state in repeated deterministic trials. These are
+simulation tests; real iPhone/Android audio, feel, frame pacing,
+and touch-device layout still require hands-on verification.
