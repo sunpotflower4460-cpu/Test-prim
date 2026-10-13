@@ -444,7 +444,9 @@
       id: game.nextId++, type, x, y, hp: m[0] * scale, maxHp: m[0] * scale,
       speed: m[1] * (1 + game.stage * .13), radius: m[2] + (type === "boss" ? game.stage * 4 : 0),
       damage: m[3] + game.stage * 3, phase: rand(0, TWO), cd: rand(.4, 2.6), hitFx: 0,
-      slow: 0, orbitHit: 0, dashSerial: -1, windup: 0, aimX: 0, aimY: 0, score: type === "boss" ? 100 : 1
+      slow: 0, orbitHit: 0, dashSerial: -1, windup: 0, aimX: 0, aimY: 0,
+      chargeCd: rand(3.0, 4.5), chargeWindup: 0, chargeTime: 0, chargeX: 0, chargeY: 0,
+      score: type === "boss" ? 100 : 1
     };
     if (type === "boss") { e.hp *= 1 + game.stage * .28; e.maxHp = e.hp; e.cd = 1.5; }
     game.enemies.push(e);
@@ -759,8 +761,33 @@
       if (e.type === "boss") move = dist < 135 ? .15 : 1;
       const slowness = e.slow > 0 ? .55 : 1;
       const weave = e.type === "runner" ? Math.sin(e.phase * 1.7) * 26 : 0;
-      e.x += ((dx / dist * e.speed * move) + (-dy / dist * weave)) * slowness * dt;
-      e.y += ((dy / dist * e.speed * move) + (dx / dist * weave)) * slowness * dt;
+      if (e.type === "brute") {
+        e.chargeCd -= dt;
+        if (e.chargeTime > 0) {
+          e.chargeTime -= dt;
+          e.x += e.chargeX * 330 * slowness * dt;
+          e.y += e.chargeY * 330 * slowness * dt;
+          if (Math.random() < .36) burst(e.x, e.y, 1, "#cbbde5", .14);
+        } else if (e.chargeWindup > 0) {
+          e.chargeWindup -= dt;
+          if (e.chargeWindup <= 0) {
+            e.chargeTime = .34;
+            ring(e.x, e.y, 35, "#dfc6f0", .32);
+          }
+        } else {
+          e.x += dx / dist * e.speed * slowness * dt;
+          e.y += dy / dist * e.speed * slowness * dt;
+          if (e.chargeCd <= 0 && dist > 65 && dist < 275) {
+            e.chargeWindup = .72;
+            e.chargeCd = rand(4.2, 6.2);
+            e.chargeX = dx / dist; e.chargeY = dy / dist;
+            tone(155, .21, "triangle", .012, .8);
+          }
+        }
+      } else {
+        e.x += ((dx / dist * e.speed * move) + (-dy / dist * weave)) * slowness * dt;
+        e.y += ((dy / dist * e.speed * move) + (dx / dist * weave)) * slowness * dt;
+      }
       e.cd -= dt;
       // Archers mark their destination before firing: the warning remains
       // aimed at the *old* position, so moving out of the lane is meaningful.
@@ -1169,6 +1196,11 @@
     ctx.strokeStyle = "rgba(255,248,229,.28)"; ctx.lineWidth = 1.1;
     ctx.beginPath(); ctx.arc(0, 0, r * .7, Math.PI * 1.03, Math.PI * 1.93); ctx.stroke();
     ctx.restore();
+    if (e.type === "brute" && e.chargeTime > 0) {
+      ctx.save(); ctx.strokeStyle = "rgba(229,200,255,.44)";
+      ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(e.x - e.chargeX * 40, e.y - e.chargeY * 40);
+      ctx.lineTo(e.x, e.y); ctx.stroke(); ctx.restore();
+    }
     if (e.type === "brute" && e.hp < e.maxHp) {
       ctx.fillStyle = "rgba(0,6,20,.5)"; ctx.fillRect(e.x - 17, e.y - r - 12, 34, 3);
       ctx.fillStyle = t.orb; ctx.fillRect(e.x - 17, e.y - r - 12, 34 * (e.hp / e.maxHp), 3);
@@ -1191,6 +1223,14 @@
       ctx.beginPath(); ctx.arc(a.x, a.y, a.r, 0, TWO); ctx.stroke();
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 0;
+    for (const e of g.enemies) if (e.hp > 0 && e.type === "brute" && e.chargeWindup > 0) {
+      ctx.save(); ctx.strokeStyle = "rgba(223,191,255,.45)"; ctx.lineWidth = 7; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(e.x, e.y);
+      ctx.lineTo(e.x + e.chargeX * 155, e.y + e.chargeY * 155); ctx.stroke();
+      ctx.strokeStyle = "rgba(255,242,219,.7)"; ctx.lineWidth = 1.2;
+      ctx.beginPath(); ctx.arc(e.x, e.y, e.radius + 10 + (1 - e.chargeWindup / .72) * 6, 0, TWO); ctx.stroke();
+      ctx.restore();
+    }
     for (const e of g.enemies) if (e.hp > 0 && e.type === "archer" && e.windup > 0) {
       ctx.save();
       ctx.strokeStyle = "rgba(255,193,223,.47)";
