@@ -126,7 +126,7 @@ async function waitFor(page, fn, arg, timeout = 8000) {
 
     // Diary: pick up the first diary page (on the low table in the living room) with E.
     await desk.waitForTimeout(700);
-    await desk.evaluate(() => window.nakiIdoDebug.teleport(2.5, 8.6, yawTo(2.5, 8.6, 2.5, 7.4)));
+    await desk.evaluate(yaw => window.nakiIdoDebug.teleport(2.5, 8.6, yaw), yawTo(2.5, 8.6, 2.5, 7.4));
     await desk.waitForTimeout(150);
     await desk.keyboard.press("KeyE");
     await waitFor(desk, () => window.nakiIdoDebug.mode() === "diary", null, 15000);
@@ -135,8 +135,8 @@ async function waitFor(page, fn, arg, timeout = 8000) {
     await waitFor(desk, () => window.nakiIdoDebug.mode() === "play", null, 15000);
     log("diary ok");
 
-    // Pause menu and its controls.
-    await desk.keyboard.press("Escape");
+    // Pause menu: releasing pointer lock (as Escape does in a real browser) pauses the run.
+    await desk.evaluate(() => document.exitPointerLock && document.exitPointerLock());
     await waitFor(desk, () => window.nakiIdoDebug.mode() === "pause", null, 15000);
     assert.equal(await desk.locator("#pause a.back").getAttribute("href"), "../index.html");
     await desk.click("#btnResume");
@@ -146,6 +146,12 @@ async function waitFor(page, fn, arg, timeout = 8000) {
     ov = await overflowOf(desk);
     assert.ok(ov.sw <= ov.cw, "no horizontal scroll during play at 1280x800");
     await desk.screenshot({ path: path.join(SHOT_DIR, "play-1280x800.png") });
+
+    // The prompt names the target in the middle of the run (it is shown while facing a door).
+    log("prompt text:", JSON.stringify(await desk.locator("#prompt").innerText()));
+
+    // Close the desktop page first: a running WebGL page starves the next one in a CI sandbox.
+    await desk.close();
 
     // ---------- phone, portrait, touch ----------
     const phone = await browser.newContext({
@@ -158,7 +164,7 @@ async function waitFor(page, fn, arg, timeout = 8000) {
     p.on("pageerror", e => problems.push("phone pageerror: " + e.message));
     p.on("console", m => { if (m.type() === "error") problems.push("phone console: " + m.text()); });
     await p.goto(PAGE, { waitUntil: "load" });
-    await p.waitForSelector("#btnNew", { state: "visible" });
+    await p.waitForSelector("#btnNew", { state: "visible", timeout: 30000 });
     await p.waitForTimeout(400);
     ov = await overflowOf(p);
     assert.ok(ov.sw <= ov.cw, "no horizontal scroll on the phone title");
@@ -183,10 +189,6 @@ async function waitFor(page, fn, arg, timeout = 8000) {
     await p.screenshot({ path: path.join(SHOT_DIR, "play-390x844-touch.png") });
     await phone.close();
     log("phone ok");
-
-    // Subtitle and prompt text exist in the DOM for screen readers and are not empty mid-run.
-    const promptText = await desk.locator("#prompt").innerText();
-    log("prompt text:", JSON.stringify(promptText));
 
     assert.deepEqual(problems, [], "no console errors or uncaught exceptions");
     log("OK: all browser checks passed");
