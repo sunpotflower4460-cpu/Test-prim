@@ -887,6 +887,49 @@
     }
     ctx.restore();
   }
+  function landmarks() {
+    // Slow world-anchored patterns give each realm its own landscape signature.
+    const cell = 610, stage = game.stage;
+    const left = Math.floor(camX / cell) - 1, top = Math.floor(camY / cell) - 1;
+    const right = Math.ceil((camX + W) / cell), bottom = Math.ceil((camY + H) / cell);
+    for (let gx = left; gx <= right; gx++) for (let gy = top; gy <= bottom; gy++) {
+      const seed = hash(gx + 82, gy - 39);
+      const x = gx * cell + (seed - .5) * 290, y = gy * cell + (hash(gx - 52, gy + 17) - .5) * 260;
+      ctx.save(); ctx.translate(x, y);
+      const radius = 66 + seed * 48, spin = Math.sin(clock * .16 + seed * TWO) * .12;
+      ctx.rotate(spin);
+      ctx.globalAlpha = .18;
+      ctx.strokeStyle = themes[stage].accent; ctx.lineWidth = 1.25;
+      if (stage === 0) {
+        for (let i = 0; i < 5; i++) {
+          const a = i * TWO / 5;
+          ctx.beginPath(); ctx.ellipse(Math.cos(a) * radius * .38, Math.sin(a) * radius * .38,
+            radius * .74, radius * .27, a, 0, TWO); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(0, 0, radius * .52, 0, TWO); ctx.stroke();
+      } else if (stage === 1) {
+        for (let i = 0; i < 4; i++) {
+          ctx.beginPath(); ctx.ellipse(0, i * 7, radius * (1 + i * .21), radius * (.3 + i * .09),
+            -.12, Math.PI * .07, Math.PI * 1.93); ctx.stroke();
+        }
+      } else {
+        for (let k = 0; k < 8; k++) {
+          const a = TWO * k / 8;
+          ctx.beginPath(); ctx.moveTo(Math.cos(a) * radius * .35, Math.sin(a) * radius * .35);
+          ctx.lineTo(Math.cos(a + .22) * radius, Math.sin(a + .22) * radius);
+          ctx.lineTo(Math.cos(a + .45) * radius * .35, Math.sin(a + .45) * radius * .35); ctx.stroke();
+        }
+        ctx.beginPath(); ctx.arc(0, 0, radius * .74, 0, TWO); ctx.stroke();
+      }
+      ctx.globalAlpha = .22 + .08 * Math.sin(clock + seed * 11);
+      for (let i = 0; i < 8; i++) {
+        const a = i * TWO / 8 + clock * .07;
+        ctx.fillStyle = themes[stage].orb;
+        ctx.beginPath(); ctx.arc(Math.cos(a) * radius * 1.24, Math.sin(a) * radius * 1.02, 1.5, 0, TWO); ctx.fill();
+      }
+      ctx.restore();
+    }
+  }
   function orbShape(x, y, r, color, spin = 0) {
     ctx.save(); ctx.translate(x, y); ctx.rotate(spin);
     ctx.shadowColor = color; ctx.shadowBlur = 18;
@@ -905,6 +948,11 @@
       ctx.strokeStyle = "rgba(179,255,236,.36)"; ctx.lineWidth = 14; ctx.lineCap = "round";
       ctx.beginPath(); ctx.moveTo(-p.dashX * 52, -p.dashY * 52); ctx.lineTo(0, 0); ctx.stroke();
     }
+    // A pair of layered translucent wings catches the ambient light.
+    ctx.shadowColor = "#d5ffe6"; ctx.shadowBlur = 18;
+    ctx.fillStyle = "rgba(208,255,238,.23)";
+    ctx.beginPath(); ctx.ellipse(-21, -5, 20, 11, -.65 + Math.sin(clock * 9) * .07, 0, TWO); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(21, -5, 20, 11, .65 - Math.sin(clock * 9) * .07, 0, TWO); ctx.fill();
     ctx.shadowColor = "#a9ffe0"; ctx.shadowBlur = 27;
     ctx.fillStyle = "#8af4dd";
     ctx.beginPath(); ctx.ellipse(-15, 1, 16, 7, -Math.PI / 5 + Math.sin(clock * 7) * .12, 0, TWO); ctx.fill();
@@ -924,6 +972,10 @@
     ctx.beginPath(); ctx.ellipse(0, -17, 12, 4, 0, 0, TWO); ctx.stroke();
     ctx.shadowBlur = 0;
     ctx.restore();
+    if (!reducedMotion && Math.hypot(p.facingX, p.facingY) > .5 && Math.sin(p.walk) > .68 && p.dashTime <= 0) {
+      orbShape(p.x - p.facingX * 21 + rand(-3, 3), p.y - p.facingY * 21 + rand(-3, 3), 1.9,
+        "#93e3cd", clock);
+    }
     if (p.orbit) for (let i = 0; i < p.orbit; i++) {
       const a = clock * 2.25 + i / p.orbit * TWO;
       const x = p.x + Math.cos(a) * 64, y = p.y + Math.sin(a) * 64;
@@ -993,7 +1045,7 @@
     ctx.save();
     const wobbleX = shake > .1 ? rand(-shake, shake) : 0, wobbleY = shake > .1 ? rand(-shake, shake) : 0;
     ctx.translate(-camX + wobbleX, -camY + wobbleY);
-    terrain();
+    terrain(); landmarks();
     for (const o of g.orbs) {
       const color = o.value < 0 ? "#ffa2bd" : theme.orb;
       orbShape(o.x, o.y + Math.sin(o.phase) * 3, o.r + 1, color, Math.sin(o.phase) * .15);
@@ -1017,6 +1069,9 @@
       ctx.shadowBlur = 0; ctx.fillStyle = "#fff1f1";
       ctx.beginPath(); ctx.arc(s.x - 1, s.y - 1, 1.8, 0, TWO); ctx.fill();
     }
+    // A grounded glow keeps the tiny traveller legible during crowded fights.
+    ctx.save(); ctx.globalAlpha = .28; ctx.fillStyle = "#87ebce";
+    ctx.beginPath(); ctx.ellipse(p.x, p.y + 24, 24, 6, 0, 0, TWO); ctx.fill(); ctx.restore();
     drawPlayer(p);
     for (const a of particles) {
       ctx.globalAlpha = Math.max(0, a.ttl / a.max);
@@ -1031,6 +1086,23 @@
       ctx.fillText(a.text, a.x, a.y);
     }
     ctx.globalAlpha = 1; ctx.shadowBlur = 0; ctx.restore();
+    if (!g.bossSpawned && g.stageTime < 20) {
+      // Subtle direction hints ensure newly spawned enemies never feel absent.
+      const candidates = g.enemies.filter(e => e.hp > 0).sort((a, b) =>
+        (a.x - p.x) ** 2 + (a.y - p.y) ** 2 - ((b.x - p.x) ** 2 + (b.y - p.y) ** 2)).slice(0, 2);
+      for (const e of candidates) {
+        const x = e.x - camX, y = e.y - camY;
+        const border = 45, topSafe = Math.min(156, H * .2), bottomSafe = H - Math.min(145, H * .19);
+        if (x > border && x < W - border && y > topSafe && y < bottomSafe) continue;
+        const edgeX = clamp(x, border, W - border), edgeY = clamp(y, topSafe, bottomSafe);
+        ctx.save(); ctx.translate(edgeX, edgeY);
+        ctx.rotate(Math.atan2(y - H * .5, x - W * .5));
+        ctx.globalAlpha = .55 + .16 * Math.sin(clock * 4);
+        ctx.fillStyle = "#b3e9d7";
+        ctx.beginPath(); ctx.moveTo(9, 0); ctx.lineTo(-6, -4); ctx.lineTo(-3, 0); ctx.lineTo(-6, 4); ctx.closePath(); ctx.fill();
+        ctx.restore();
+      }
+    }
     if (g.bossSpawned) {
       ctx.fillStyle = "rgba(226,128,164," + (.045 + .03 * Math.sin(clock * 2)) + ")";
       ctx.fillRect(0, 0, W, H);
