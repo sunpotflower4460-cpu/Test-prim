@@ -73,6 +73,14 @@ jobs:
           node --check tests/assets.test.cjs
           node --check tests/sw.test.cjs
           node --check tests/mizuho.test.cjs
+      - name: Haiku 5.5 syntax checks
+        run: |
+          for f in haiku/horror/*.js haiku/kitchen/*.js haiku/ku/*.js; do
+            if grep -q -E "^(import|export) " "$f"; then node --input-type=module --check < "$f"; else node --check "$f"; fi
+          done
+          node --check tests/haiku-horror-browser.cjs
+          node --check tests/haiku-kitchen-browser.cjs
+          node --check tests/haiku-ku-browser.cjs
       - name: Game smoke tests
         run: node --test tests/*.test.cjs
       - name: Chart and level integrity

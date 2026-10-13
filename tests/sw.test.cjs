@@ -25,7 +25,7 @@ test('every required game asset is installed for offline use',async()=>{
   assert.equal(assets.size,declared.length,'the installed count matches the declared precache list');
   for(const p of declared)assert.ok(urls.some(u=>u.endsWith('/'+p)),'asset is precached: '+p);
   // 作品の入口。作品的取りこぼしは、この一覧に現れない。
-  for(const p of ['index.html','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','luna/index.html','sol/index.html','sol/skyward/index.html','sol/works.html','gpt6-sol/index.html','opus/index.html'])assert.ok(urls.some(u=>u.endsWith('/'+p)),'work entry is precached: '+p);
+  for(const p of ['index.html','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','luna/index.html','sol/index.html','sol/skyward/index.html','sol/works.html','gpt6-sol/index.html','opus/index.html','haiku/index.html','haiku/horror/index.html','haiku/kitchen/index.html','haiku/ku/index.html'])assert.ok(urls.some(u=>u.endsWith('/'+p)),'work entry is precached: '+p);
 });
 test('offline directory URLs resolve to the installed gallery and game',async()=>{
   const h=setup();await h.event('install');

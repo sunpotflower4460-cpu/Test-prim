@@ -12,7 +12,7 @@ concurrency:
 jobs:
   chromium:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -28,3 +28,10 @@ jobs:
           echo $! > /tmp/test-prim-http.pid
       - name: Verify mobile and desktop interactions
         run: node tests/browser-smoke.cjs
+      - name: Verify Haiku 5.5 works in a browser
+        env:
+          BASE: http://127.0.0.1:8000
+        run: |
+          node tests/haiku-horror-browser.cjs
+          node tests/haiku-kitchen-browser.cjs
+          node tests/haiku-ku-browser.cjs

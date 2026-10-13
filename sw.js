@@ -1,6 +1,6 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v20";
+const CACHE = "test-prim-gallery-v21";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
@@ -26,6 +26,14 @@ const ASSETS = [
   "./haiku/index.html", "./haiku/works.css", "./haiku/vendor/three.module.js",
   "./haiku/ku/index.html", "./haiku/ku/ku.css", "./haiku/ku/words.js", "./haiku/ku/sim.js",
   "./haiku/ku/paint.js", "./haiku/ku/scene.js", "./haiku/ku/audio.js", "./haiku/ku/game.js",
+  "./haiku/horror/audio.js", "./haiku/horror/entity.js", "./haiku/horror/house.js", "./haiku/horror/index.html",
+  "./haiku/horror/input.js", "./haiku/horror/levels.js", "./haiku/horror/main.js", "./haiku/horror/props.js",
+  "./haiku/horror/render.js", "./haiku/horror/sim.js", "./haiku/horror/story.js", "./haiku/horror/style.css",
+  "./haiku/horror/textures.js", "./haiku/horror/ui.js", "./haiku/horror/viewmodel.js", "./haiku/kitchen/app.js",
+  "./haiku/kitchen/audio.js", "./haiku/kitchen/characters.js", "./haiku/kitchen/fx.js", "./haiku/kitchen/index.html",
+  "./haiku/kitchen/lines.js", "./haiku/kitchen/props.js", "./haiku/kitchen/recipes.js", "./haiku/kitchen/sim.js",
+  "./haiku/kitchen/style.css", "./haiku/kitchen/textures.js", "./haiku/kitchen/ui.js", "./haiku/kitchen/world.js",
+
   "./icon.svg", "./manifest.webmanifest"
 ];
 self.addEventListener("install", event => {
