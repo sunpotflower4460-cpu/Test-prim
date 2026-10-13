@@ -41,8 +41,28 @@
     { id: "frost", icon: "❄", name: "月の結晶", desc: "星の矢に鈍化の力を宿す", max: 2, apply: p => { p.frost += 1; } },
     { id: "pulse", icon: "◈", name: "暁の衝撃", desc: "ダッシュが周囲に衝撃波を放つ", max: 3, apply: p => { p.pulse += 1; } },
     { id: "nova", icon: "☼", name: "小さな太陽", desc: "周期的に広がる光の波を放つ", max: 3, apply: p => { p.nova += 1; } },
-    { id: "luck", icon: "✿", name: "星のめぐみ", desc: "集める経験値が20%増加する", max: 3, apply: p => { p.luck += .2; } }
+    { id: "luck", icon: "✿", name: "星のめぐみ", desc: "集める経験値が20%増加する", max: 3, apply: p => { p.luck += .2; } },
+    { id: "pierce", icon: "➶", name: "貫く彗星", desc: "星の矢が敵をさらに1体貫通する", max: 3, apply: p => { p.pierce++; } },
+    { id: "crit", icon: "✶", name: "星読みの眼", desc: "会心の一撃の確率が9%上昇する", max: 4, apply: p => { p.crit += .09; } },
+    { id: "ward", icon: "♢", name: "薄明の結界", desc: "受けるダメージを11%軽減する", max: 4, apply: p => { p.ward = Math.min(.5, p.ward + .11); } },
+    { id: "flow", icon: "↝", name: "流れる羽衣", desc: "ダッシュの再使用までを0.27秒短縮", max: 3, apply: p => { p.dashCooldown = Math.max(1.04, p.dashCooldown - .27); } },
+    { id: "echo", icon: "❖", name: "余光の連鎖", desc: "影の浄化で近くの敵へ光を伝える", max: 3, apply: p => { p.echo++; } },
+    { id: "focus", icon: "⟡", name: "光の導き", desc: "星の矢の速さと射程が17%上昇", max: 3, apply: p => { p.projectileSpeed *= 1.17; } }
   ];
+  const perkRoles = {
+    bolts: "attack", tempo: "attack", power: "attack", orbit: "attack", frost: "attack",
+    pulse: "attack", nova: "attack", pierce: "attack", crit: "attack", echo: "attack", focus: "attack",
+    speed: "mobility", flow: "mobility", vitality: "defense", regen: "defense",
+    ward: "defense", magnet: "support", luck: "support"
+  };
+  const perkFamilies = {
+    bolts: ["pierce", "crit", "focus"], tempo: ["crit", "frost"], power: ["echo", "nova"],
+    orbit: ["pulse", "nova"], frost: ["pierce", "tempo"], pulse: ["flow", "orbit"],
+    nova: ["echo", "power"], pierce: ["bolts", "focus"], crit: ["tempo", "bolts"],
+    echo: ["nova", "power"], focus: ["pierce", "bolts"], speed: ["flow", "pulse"],
+    flow: ["speed", "pulse"], vitality: ["regen", "ward"], regen: ["vitality", "ward"],
+    ward: ["vitality", "regen"], magnet: ["luck"], luck: ["magnet"]
+  };
   const keys = new Set();
   const stick = { x: 0, y: 0, id: null, centerX: 0, centerY: 0 };
   const particles = [];
@@ -252,34 +272,96 @@
       levelUp();
     }
   }
+  function weightedOffers() {
+    const owned = game.player.perkLevels;
+    const pool = perks.filter(item => (owned[item.id] || 0) < item.max);
+    const picked = [];
+    // First two upgrades always include one immediately useful attack path.
+    if (game.level <= 3) {
+      const starters = pool.filter(item => ["bolts", "tempo", "power", "orbit", "crit"].includes(item.id));
+      if (starters.length) picked.push(starters[Math.floor(Math.random() * starters.length)]);
+    }
+    while (picked.length < 3 && pool.some(item => !picked.includes(item))) {
+      const remaining = pool.filter(item => !picked.includes(item));
+      const weights = remaining.map(item => {
+        const familiar = owned[item.id] || 0;
+        const harmony = (perkFamilies[item.id] || []).reduce((sum, id) => sum + (owned[id] ? 1 : 0), 0);
+        const recent = game.previousOffers.includes(item.id) ? .45 : 1;
+        const rescue = perkRoles[item.id] === "defense" && game.player.hp < game.player.maxHp * .55 ? 1.7 : 1;
+        return (1 + familiar * 1.5 + harmony * .7) * recent * rescue;
+      });
+      let draw = Math.random() * weights.reduce((sum, w) => sum + w, 0);
+      let index = weights.length - 1;
+      for (let i = 0; i < weights.length; i++) if ((draw -= weights[i]) <= 0) { index = i; break; }
+      picked.push(remaining[index]);
+    }
+    game.previousOffers = picked.map(item => item.id);
+    return picked;
+  }
+  function finishUpgrade(item) {
+    if (scene !== "upgrade") return;
+    const p = game.player, n = p.perkLevels[item.id] || 0;
+    if (n >= item.max) return;
+    item.apply(p); p.perkLevels[item.id] = n + 1;
+    setScene("playing");
+    showToast(item.name + "  " + (n + 1) + "/" + item.max);
+    haptic(20); updateHud();
+    if (game.xp >= expNeed()) {
+      game.xp -= expNeed(); game.level++; levelUp();
+    }
+  }
+  function renderUpgrade() {
+    if (scene !== "upgrade") return;
+    const p = game.player, list = $("upgradeList");
+    if (!list) return;
+    list.replaceChildren();
+    const options = weightedOffers();
+    if (!options.length) {
+      p.maxHp += 10; p.hp = Math.min(p.maxHp, p.hp + 30);
+      setScene("playing"); showToast("すべての祝福があなたのものに");
+      updateHud(); return;
+    }
+    options.forEach((item, i) => {
+      const n = p.perkLevels[item.id] || 0, harmony = (perkFamilies[item.id] || []).filter(id => p.perkLevels[id]);
+      const role = perkRoles[item.id] || "support";
+      const button = document.createElement("button");
+      button.type = "button"; button.className = "upgrade upgrade-" + role;
+      const roleNames = { attack: "攻撃", defense: "防御", mobility: "機動", support: "収集" };
+      button.innerHTML = '<div class="upgrade-icon">' + item.icon + '</div>' +
+        '<div class="upgrade-body"><div class="upgrade-meta"><span>' + roleNames[role] + '</span><span>OPTION ' + (i + 1) + '</span></div>' +
+        '<div class="upgrade-title">' + item.name + '</div><div class="upgrade-desc">' + item.desc + '</div>' +
+        '<span class="upgrade-rank">RANK ' + n + ' → ' + (n + 1) + ' / ' + item.max + '</span>' +
+        (harmony.length ? '<span class="upgrade-harmony">✦ 所持の祝福と共鳴 · ' + harmony.length + '</span>' : '') + '</div>';
+      button.addEventListener("click", () => finishUpgrade(item));
+      list.appendChild(button);
+    });
+    const reroll = $("rerollUpgrade");
+    if (reroll) {
+      reroll.disabled = game.rerolls <= 0;
+      reroll.textContent = game.rerolls ? "↻ 星を巡り直す · 残り " + game.rerolls + " 回 [R]" : "↻ 巡り直しは使い切りました";
+      reroll.onclick = () => {
+        if (scene !== "upgrade" || game.rerolls <= 0) return;
+        game.rerolls--; sound("pick"); renderUpgrade();
+      };
+    }
+    const current = $("upgradeBuild");
+    if (current) {
+      const built = perks.filter(item => p.perkLevels[item.id]);
+      current.textContent = built.length
+        ? "旅の祝福 · " + built.slice(-5).map(item => item.icon + " " + p.perkLevels[item.id]).join("  ")
+        : "最初の祝福が、旅のかたちを決める";
+    }
+  }
   function levelUp() {
     if (scene !== "playing") return;
     setScene("upgrade");
     sound("level"); flash(.18); haptic(25);
-    overlayCard("A GIFT FROM THE STARS", "星の祝福を選んで", "新しい光が、あなたに宿ろうとしている。", '<div class="upgrade-list" id="upgradeList"></div>');
-    const available = perks.filter(item => (game.player.perkLevels[item.id] || 0) < item.max);
-    available.sort(() => Math.random() - .5);
-    const options = available.slice(0, 3);
-    if (!options.length) { setScene("playing"); return; }
-    const list = $("upgradeList");
-    for (const item of options) {
-      const n = game.player.perkLevels[item.id] || 0;
-      const button = document.createElement("button");
-      button.className = "upgrade";
-      button.innerHTML = '<div class="upgrade-icon">' + item.icon + '</div><div><div class="upgrade-title">' + item.name + '</div><div class="upgrade-desc">' + item.desc + '</div><span class="upgrade-rank">現在 ' + n + ' / ' + item.max + ' · 次の強化 ' + (n + 1) + '</span></div>';
-      button.addEventListener("click", () => {
-        item.apply(game.player);
-        game.player.perkLevels[item.id] = n + 1;
-        setScene("playing");
-        showToast(item.name);
-        haptic(20);
-        updateHud();
-        if (game.xp >= expNeed()) {
-          game.xp -= expNeed(); game.level++; levelUp();
-        }
-      });
-      list.appendChild(button);
-    }
+    overlayCard("STARLIGHT ASCENSION · LV " + game.level, "星の祝福を選んで",
+      "重ねるほどに力が育つ。組み合わせると光が共鳴する。",
+      '<div id="upgradeBuild" class="upgrade-build"></div><div class="upgrade-list" id="upgradeList"></div>' +
+      '<button type="button" id="rerollUpgrade" class="upgrade-reroll"></button>' +
+      '<p class="upgrade-help">タップして選択 · キーボード 1 / 2 / 3</p>');
+    renderUpgrade();
   }
 
   function burst(x, y, count, color, power = 1) {
@@ -338,7 +420,7 @@
     sound("boss"); haptic([40, 80, 65]);
     ring(game.player.x, game.player.y, 170, "#e4a4b8", 1.2);
   }
-  function hurtEnemy(e, dmg, x = e.x, y = e.y) {
+  function hurtEnemy(e, dmg, x = e.x, y = e.y, fromEcho = false) {
     if (e.hp <= 0) return;
     e.hp -= dmg;
     e.hitFx = .13;
@@ -359,6 +441,15 @@
         chapterClear();
         return;
       }
+      // A direct kill can spark one ripple; echo kills never recursively echo.
+      if (game.player.echo && !fromEcho) {
+        const range = 94 + game.player.echo * 23;
+        const neighbors = game.enemies.filter(other => other !== e && other.hp > 0 && distance(other, e) < range).slice(0, 4);
+        if (neighbors.length) {
+          ring(e.x, e.y, range, "#fce7b6", .45);
+          neighbors.forEach(other => hurtEnemy(other, 8 + game.player.echo * 9, other.x, other.y, true));
+        }
+      }
       const drop = e.type === "brute" ? 9 : e.type === "archer" ? 7 : 5;
       game.orbs.push({ x: e.x, y: e.y, value: drop, r: e.type === "brute" ? 6 : 4, phase: rand(0, TWO), age: 0 });
       if (Math.random() < .012 && game.player.hp < game.player.maxHp * .7) game.orbs.push({ x: e.x + 14, y: e.y, value: -20, r: 7, phase: 0, age: 0 });
@@ -367,7 +458,7 @@
   function hurtPlayer(dmg, x, y) {
     const p = game.player;
     if (p.invuln > 0 || p.dashTime > 0 || scene !== "playing") return;
-    p.hp = Math.max(0, p.hp - dmg);
+    p.hp = Math.max(0, p.hp - Math.max(1, Math.round(dmg * (1 - p.ward))));
     p.invuln = .82; shake = Math.max(shake, 10);
     ring(p.x, p.y, 42, "#ff9aaa", .24);
     burst(p.x, p.y, 13, "#ffb6bc", .85);
@@ -480,10 +571,12 @@
     const angle = Math.atan2(target.y - p.y, target.x - p.x);
     for (let i = 0; i < p.bolts; i++) {
       const spread = (i - (p.bolts - 1) / 2) * .17;
-      const a = angle + spread;
+      const a = angle + spread, speed = 530 * p.projectileSpeed;
+      const critical = Math.random() < p.crit;
       game.shots.push({ x: p.x + Math.cos(a) * 17, y: p.y + Math.sin(a) * 17,
-        vx: Math.cos(a) * 510, vy: Math.sin(a) * 510, r: 5, life: 1.5,
-        damage: p.damage, slow: p.frost, trail: [] });
+        vx: Math.cos(a) * speed, vy: Math.sin(a) * speed, r: critical ? 6.4 : 5,
+        life: 1.35 * p.projectileSpeed, damage: p.damage * (critical ? 1.85 : 1),
+        critical, pierce: p.pierce, hits: new Set(), slow: p.frost, trail: [] });
     }
     burst(p.x + Math.cos(angle) * 16, p.y + Math.sin(angle) * 16, 2, "#f3ffe8", .18);
     sound("shoot");
@@ -595,12 +688,15 @@
       s.x += s.vx * dt; s.y += s.vy * dt; s.life -= dt;
       let hit = false;
       for (const e of g.enemies) {
-        if (e.hp <= 0) continue;
+        if (e.hp <= 0 || s.hits.has(e.id)) continue;
         if ((e.x - s.x) ** 2 + (e.y - s.y) ** 2 < (e.radius + s.r) ** 2) {
+          s.hits.add(e.id);
+          if (s.critical) rise(e.x, e.y - 32, "✦ CRIT", "#ffe4a5");
           hurtEnemy(e, s.damage, s.x, s.y);
           if (scene !== "playing") return;
           if (s.slow) e.slow = 1.2 + .65 * s.slow;
-          hit = true; break;
+          hit = s.hits.size > s.pierce;
+          if (hit) break;
         }
       }
       if (hit || s.life <= 0) g.shots.splice(i, 1);
@@ -875,7 +971,7 @@
     for (const s of g.shots) {
       ctx.strokeStyle = "rgba(138,241,212,.47)"; ctx.lineWidth = 3;
       ctx.beginPath(); ctx.moveTo(s.x - s.vx * .036, s.y - s.vy * .036); ctx.lineTo(s.x, s.y); ctx.stroke();
-      orbShape(s.x, s.y, s.r, "#edffe2", Math.atan2(s.vy, s.vx));
+      orbShape(s.x, s.y, s.r, s.critical ? "#ffe2a3" : "#edffe2", Math.atan2(s.vy, s.vx));
     }
     for (const s of g.hostile) {
       ctx.shadowColor = "#ff96d1"; ctx.shadowBlur = 14;
