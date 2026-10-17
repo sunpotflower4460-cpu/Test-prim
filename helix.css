@@ -305,6 +305,7 @@ body.helix-active #helixPlay {
 }
 
 .helix-icon:hover { border-color: #c9ff3d; color: #c9ff3d; }
+.helix-zoom { width: 48px; font-size: 11px; letter-spacing: 0; }
 
 .helix-meta {
   position: absolute;

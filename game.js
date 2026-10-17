@@ -966,7 +966,7 @@
     ui.dashProgress.style.transform = "scaleY(" + dashRatio + ")";
     ui.dash.classList.toggle("recharging", p.dashCd > 0);
     const dashText = ui.dash.querySelector(".dash-text");
-    if (dashText) dashText.textContent = p.dashCd > 0 ? p.dashCd.toFixed(1) + "s" : "DASH";
+    if (dashText) dashText.textContent = p.dashCd > 0 ? p.dashCd.toFixed(1) + "s" : "ダッシュ";
     ui.dash.setAttribute("aria-label", p.dashCd > 0 ? "ダッシュ再使用まで " + p.dashCd.toFixed(1) + "秒" : "ダッシュ");
   }
 

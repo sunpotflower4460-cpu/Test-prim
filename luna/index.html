@@ -29,7 +29,7 @@
     <section id="play" class="view play" hidden aria-label="航行画面">
       <header class="play-head"><button class="back" data-action="map">‹ <span>航路図</span></button><div class="mission"><span id="sector" class="eyebrow"></span><strong id="missionName"></strong></div><button class="icon" data-action="pause" aria-label="一時停止">Ⅱ</button></header>
       <div class="hud"><div class="hud-cell"><span>星屑</span><b id="shardCount">0 / 3</b></div><div class="hud-center"><span id="missionNo">ROUTE 01</span><small id="status">船をドラッグして、噴射。</small></div><div class="hud-cell fuel-cell"><span>推進剤</span><b id="fuelCount">3</b></div></div>
-      <div class="field-wrap"><canvas id="field" aria-label="星図。船をドラッグして噴射し、星屑を集めて灯台へ向かいます。"></canvas><div class="field-caption"><span id="fieldHint">DRAG FROM SHIP · RELEASE TO BURN</span><button data-action="reset">↺ やりなおす</button></div></div>
+      <div class="field-wrap"><canvas id="field" aria-label="星図。船をドラッグして噴射し、星屑を集めて灯台へ向かいます。"></canvas><div class="field-caption"><span id="fieldHint">船を引っぱって、はなすと進む</span><button data-action="reset">↺ やりなおす</button></div></div>
       <div class="control-row"><button class="tool" data-action="undo"><span>↶</span><small>噴射を戻す</small></button><button class="tool" data-action="predict"><span>⌁</span><small id="predictLabel">軌道予測 ON</small></button><button class="tool" data-action="help"><span>?</span><small>あそびかた</small></button></div>
     </section>
     <div id="modal" class="modal" hidden><section id="dialog" class="dialog" role="dialog" aria-modal="true" aria-labelledby="dialogTitle" tabindex="-1"></section></div>

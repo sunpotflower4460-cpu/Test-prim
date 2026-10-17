@@ -275,6 +275,7 @@
   let shake = 0;
   let flash = 0;
   let camX = 0;
+  let zoomed = !!(window.matchMedia && window.matchMedia("(pointer: coarse)").matches);
   let lastBeatDrawn = -1;
 
   const input = {
@@ -295,38 +296,42 @@
     canvas.height = Math.round(view.h * dpr);
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     layoutCamera();
+    if (state) camX = cameraTarget();
   }
 
-  /* The whole stage height is always on screen; wide stages scroll sideways.
-   * Reading the layout is the point of this camera. */
-  /* Fit the whole stage on screen. A scrolling camera is the wrong trade for a
-   precision platformer: the player has to read the next three gaps before
-   committing to a jump, and a stage that does not fit is a stage they jump
-   into blind. The floor has to go low enough to honour that on a 390px phone,
-   where a 34-tile stage needs about 0.6 and a 0.9 floor would have forced a
-   scroll — which is what the phone screenshot showed. */
-function layoutCamera() {
+  /* Fit the whole stage for survey; on touch screens magnify it so the actor
+   and gaps remain legible. The HUD switch lets a player survey at any time. */
+  function layoutCamera() {
     if (!state) return;
     const map = state.map;
     const usableH = view.h * (view.h < 560 ? 0.78 : 0.86);
     const usableW = view.w - 8;
-    view.scale = clamp(Math.min(usableH / map.pixelH, usableW / map.pixelW), 0.5, 3.4);
+    view.scale = clamp(Math.min(usableH / map.pixelH, usableW / map.pixelW) * (zoomed ? 1.5 : 1), 0.5, 3.4);
     view.cy = view.h * 0.52;
   }
 
   function worldToScreen(x, y) {
-    return { x: x * view.scale - camX * view.scale + view.w * 0.5, y: y * view.scale + view.cy - state.map.pixelH * view.scale * 0.5 };
+    const o = origin();
+    return { x: o.x + x * view.scale, y: o.y + y * view.scale };
+  }
+
+  function cameraTarget() {
+    if (!state) return 0;
+    const halfTravel = Math.max(0, (state.map.pixelW - view.w / view.scale) * 0.5);
+    return clamp(state.player.x - state.map.pixelW * 0.5, -halfTravel, halfTravel);
   }
 
   function updateCamera() {
     if (!state) return;
-    const map = state.map;
-    const viewW = map.pixelW * view.scale;
-    const target = viewW <= view.w
-      ? (map.pixelW * view.scale) * 0.5 - view.w * 0.5
-      : clamp(state.player.x * view.scale, viewW * 0.5, viewW - view.w * 0.5);
-    const desired = target;
-    camX += (desired - camX) * 0.12;
+    camX += (cameraTarget() - camX) * 0.12;
+  }
+
+  function toggleZoom() {
+    zoomed = !zoomed;
+    layoutCamera();
+    camX = cameraTarget();
+    $("helixZoomBtn").textContent = zoomed ? "全体" : "拡大";
+    $("helixZoomBtn").setAttribute("aria-label", zoomed ? "ステージ全体を見る" : "ステージを拡大する");
   }
 
   /* -------------------------------------------------------------- stages -- */
@@ -343,7 +348,9 @@ function layoutCamera() {
     releaseAll();
     lastActTap = 0;   // a tap clock from the last life must not dash the first
     layoutCamera();
-    camX = state.map.pixelW * view.scale * 0.5 - view.w * 0.5;
+    camX = cameraTarget();
+    $("helixZoomBtn").textContent = zoomed ? "全体" : "拡大";
+    $("helixZoomBtn").setAttribute("aria-label", zoomed ? "ステージ全体を見る" : "ステージを拡大する");
     hideCard();
     $("helixTitle").classList.add("off");
     $("helixPlay").classList.remove("off");
@@ -522,7 +529,7 @@ function layoutCamera() {
   function updateHud() {
     if (!state) return;
     $("helixTime").textContent = state.time.toFixed(2) + "s";
-    $("helixDeaths").innerHTML = "FALLS <b>" + state.deaths + "</b>";
+    $("helixDeaths").innerHTML = "落下 <b>" + state.deaths + "</b>";
     $("helixPearls").textContent = state.pearlsTaken + " / " + totalPearls();
   }
 
@@ -1111,6 +1118,7 @@ function layoutCamera() {
   bind("helixReturnBtn", () => { SFX.ui(); exitHelix(); });
   bind("helixStartBtn", () => { SFX.ui(); audio.context(); startStage(0); });
   bind("helixStagesBtn", () => { SFX.ui(); showStageSelect(); });
+  bind("helixZoomBtn", () => { SFX.ui(); toggleZoom(); });
   bind("helixPauseBtn", () => { SFX.ui(); pause(); });
   bind("helixSoundBtn", () => {
     soundOn = !soundOn;

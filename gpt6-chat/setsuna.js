@@ -129,7 +129,7 @@
     const boss=enemies.find(e=>e.type==="boss"&&e.hp>0);
     ui.hint.textContent=boss?"守り手を超えろ":scene==="playing"?"残る影 "+enemies.filter(e=>e.hp>0).length:"攻撃を見切れ";
     ui.dash.classList.toggle("cooling",!!p&&p.dashCd>0);
-    ui.dashLabel.textContent=p&&p.dashCd>0?p.dashCd.toFixed(1)+"s":"DASH";
+    ui.dashLabel.textContent=p&&p.dashCd>0?p.dashCd.toFixed(1)+"s":"よける";
     ui.skill.classList.toggle("ready",!!p&&p.energy>=100);
     ui.skill.disabled=scene!=="playing"||!p||p.energy<100;
     ui.mute.setAttribute("aria-pressed",String(!saved.sound));

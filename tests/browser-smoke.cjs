@@ -453,6 +453,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.locator("#start").click();
       await page.locator("#play").waitFor({ state: "visible" });
       assert.equal(await page.locator("#floorName").innerText(), "第1階 · めざめ");
+      assert.equal(await page.evaluate(() => getComputedStyle(document.body).color), "rgb(233, 237, 255)",
+        "ECHO の明るい文字色が CSS で適用され、説明文を読める");
       for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");
       for (let i = 0; i < 2; i++) await page.keyboard.press("ArrowDown");
       await page.locator("#modal:not([hidden])").waitFor({ state: "visible", timeout: 8000 });

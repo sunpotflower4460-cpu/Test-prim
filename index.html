@@ -46,11 +46,11 @@
   <div id="mobileControls" class="mobile-controls hidden" aria-label="タッチ操作">
     <div class="joystick-zone" id="joystick" aria-label="移動用スティック">
       <div class="joystick-base"><div id="stickKnob" class="joystick-knob"><span>✦</span></div></div>
-      <div class="joystick-label">MOVE</div>
+      <div class="joystick-label">うごく</div>
     </div>
     <button id="dashBtn" class="dash-btn" aria-label="ダッシュ">
       <span class="dash-glyph">➤</span>
-      <span class="dash-text">DASH</span><span class="dash-progress" id="dashProgress"></span>
+      <span class="dash-text">ダッシュ</span><span class="dash-progress" id="dashProgress"></span>
     </button>
   </div>
 
@@ -260,17 +260,17 @@
     <div id="sumifu-controls" class="sumifu-controls hidden" aria-label="タッチ操作">
       <div id="sumifuJoy" class="sumifu-joy" aria-label="移動用スティック">
         <div class="sumifu-joybase"><div id="sumifuKnob" class="sumifu-knob">筆</div></div>
-        <div class="sumifu-joylabel">MOVE</div>
+        <div class="sumifu-joylabel">うごく</div>
       </div>
       <div class="sumifu-actions">
         <button id="sumifuSeal" class="sumifu-seal" type="button" aria-label="封ずる">
-          <span>封</span><small>SEAL</small><i id="sumifuSealFill"></i>
+          <span>封</span><small>ふうじる</small><i id="sumifuSealFill"></i>
         </button>
         <button id="sumifuDash" class="sumifu-dash" type="button" aria-label="ダッシュ">
-          <span>閃</span><small>DASH</small><i id="sumifuDashFill"></i>
+          <span>閃</span><small>よける</small><i id="sumifuDashFill"></i>
         </button>
         <button id="sumifuSlash" class="sumifu-slash" type="button" aria-label="斬る">
-          <span>斬</span><small>SLASH</small><i id="sumifuSlashFill"></i>
+          <span>斬</span><small>きる</small><i id="sumifuSlashFill"></i>
         </button>
       </div>
     </div>
@@ -375,6 +375,7 @@
         <b id="helixStageName">足場</b>
       </div>
       <div class="helix-tools">
+        <button type="button" id="helixZoomBtn" class="helix-icon helix-zoom" aria-label="ステージを拡大する" title="表示切り替え">拡大</button>
         <button type="button" id="helixPauseBtn" class="helix-icon" aria-label="一時停止" title="一時停止">Ⅱ</button>
       </div>
     </div>
@@ -385,7 +386,7 @@
     <div class="helix-meta">
       <span id="helixTime">0.00s</span>
       <span id="helixPearls" class="helix-pearls">0 / 0</span>
-      <span id="helixDeaths">FALLS <b>0</b></span>
+      <span id="helixDeaths">落下 <b>0</b></span>
     </div>
     <div class="helix-flash" aria-hidden="true"></div>
   </section>
