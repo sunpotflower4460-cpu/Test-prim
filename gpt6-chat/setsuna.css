@@ -99,12 +99,12 @@ footer{text-align:center;color:#85949b;font:9px Arial,sans-serif;letter-spacing:
   .header{height:30px}
   .intro,.aside{display:none}
   .play-area{display:block;margin:4px auto}
-  .panel{width:235px;padding:4px;margin:auto;border:0;background:transparent;box-shadow:none}
+  .panel{width:233px;padding:4px;margin:auto;border:0;background:transparent;box-shadow:none}
   .panel-top{position:fixed;top:43px;left:10px;z-index:5;display:block;width:170px}
   .run-stats{margin-top:12px;display:grid;gap:4px}
   .meters{position:fixed;top:43px;right:10px;z-index:5;display:block;width:170px}
   .meter-stack{margin-bottom:10px}
-  .frame{width:225px}
+  .frame{width:223px}
   .controls{position:fixed;left:10px;right:10px;bottom:8px}
   .pad{height:96px;width:96px;flex-basis:96px}
   .pad-knob{left:24px;top:24px}

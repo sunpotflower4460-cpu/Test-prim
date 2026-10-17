@@ -64,7 +64,7 @@ const targets = [
       assert.ok(await page.locator("#arena").evaluate(el => el.width > 0), "SETSUNA canvas is ready");
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "SETSUNA fits the viewport");
       if (target.name === "small-phone" || target.name === "landscape") {
-        const controls = await page.evaluate(() => ["attack", "parry", "dash", "skill", "pad"].map(id => {
+        const controls = await page.evaluate(() => ["arena", "attack", "parry", "dash", "skill", "pad"].map(id => {
           const box = document.getElementById(id).getBoundingClientRect();
           return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
         }));
