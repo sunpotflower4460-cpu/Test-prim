@@ -1,6 +1,6 @@
 const test=require('node:test'),assert=require('node:assert/strict'),fs=require('node:fs'),path=require('node:path');
 const root=path.resolve(__dirname,'..');
-const pages=['index.html','sol/works.html','sol/index.html','sol/skyward/index.html','luna/index.html','gpt6-sol/index.html','opus/index.html'];
+const pages=['index.html','gpt6-chat/index.html','gpt6-chat/sen.html','gpt6-chat/setsuna.html','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','sol/works.html','sol/index.html','sol/skyward/index.html','luna/index.html','gpt6-sol/index.html','opus/index.html'];
 function local(file,url){if(/^(?:[a-z]+:|\/\/|#)/i.test(url))return;const target=path.resolve(path.dirname(path.join(root,file)),decodeURIComponent(url.split(/[?#]/)[0]));assert.ok(target.startsWith(root+path.sep));assert.ok(fs.statSync(target).isFile(),file+' links to '+url);}
 test('every game page and author list has working local links and assets and unique ids',()=>{
  for(const page of pages){const html=fs.readFileSync(path.join(root,page),'utf8'),ids=new Set();

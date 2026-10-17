@@ -62,7 +62,7 @@ footer{margin:24px 0 4px;text-align:center;font:9px Arial,sans-serif;color:#729f
 .level-tile small{font:10px Arial,sans-serif;color:#dfcfa9}.level-tile.current{border-color:#ffeab4;box-shadow:0 0 14px #d9e6b524}.level-tile:not(:disabled):hover{background:#527f786a}
 .level-tile:disabled{opacity:.3}.dialog .new-best{color:#ffe0a1;font-size:11px}
 @media(min-width:950px){.play-panel{width:100%;max-width:510px;justify-self:center}}
-@media(max-width:850px){.main-layout{grid-template-columns:1fr;gap:14px;max-width:535px;margin:10px auto}.side-panel{padding:12px 0 0}.work-mark{font-size:9px}h1{font-size:70px;margin-top:5px}.jp-title{margin:2px 0 13px}.intro{font-size:12px}.ornament{display:none}.chapter-info{margin:16px 0}.journey{margin:16px 0;max-width:none}.instructions{display:none}.text-button{margin:0 0 12px}.play-panel{width:100%}.site-header{min-height:48px}.stage-title{padding-bottom:9px}}
+@media(max-width:850px){.main-layout{grid-template-columns:minmax(0,1fr);gap:14px;max-width:535px;margin:10px auto}.side-panel{padding:12px 0 0}.work-mark{font-size:9px}h1{font-size:70px;margin-top:5px}.jp-title{margin:2px 0 13px}.intro{font-size:12px}.ornament{display:none}.chapter-info{margin:16px 0}.journey{margin:16px 0;max-width:none}.instructions{display:none}.text-button{margin:0 0 12px}.play-panel{width:100%}.site-header{min-height:48px}.stage-title{padding-bottom:9px}}
 @media(max-width:480px){.app{padding:8px 11px 18px}.main-layout{margin-top:2px}.side-panel{padding:7px 4px 0}.work-mark{font-size:8px}h1{font-size:59px;line-height:.95;margin:5px 0 0}.title-sigil{font-size:19px}.jp-title{font-size:12px;letter-spacing:.25em;margin:1px 0 8px}.intro{font-size:10px;line-height:1.7;letter-spacing:.1em}.chapter-info{margin:10px 0;gap:5px;padding-left:12px}.chapter-info strong{font-size:13px}.chapter-info span{font-size:8px}.chapter-info p{font-size:9px}.journey{margin:10px 0 8px}.journey-top{font-size:8px;margin-bottom:6px}.chapter-dots{margin-top:7px}.dot{font-size:7px}.text-button{font-size:10px;padding:6px 0;margin-bottom:9px}.stage-prefix{font-size:8px}.stage-title strong{font-size:13px}.stage-stars{font-size:15px}.canvas-frame{border-radius:14px}.toolbar{gap:5px;margin-top:8px}.tool-button{min-height:51px;font-size:9px}.tool-button span{font-size:20px}.bottom-hint{font-size:9px;padding-top:7px}footer{font-size:7px;margin:13px 0 0}}
 @media(max-height:680px) and (max-width:850px){.intro{display:none}.chapter-info p{display:none}.journey{margin:5px 0}.text-button{margin:3px 0 7px}footer{margin-top:6px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
@@ -85,7 +85,7 @@ footer{margin:24px 0 4px;text-align:center;font:9px Arial,sans-serif;color:#729f
   .main-layout{margin-top:8px}
   .play-panel .stage-title{padding:0 2px 9px}
   .side-panel{padding-top:24px}
-  .side-panel h1{font-size:62px}
+  .side-panel h1{font-size:56px}
   .side-panel .intro{font-size:12px;line-height:2}
   .side-panel .chapter-info p{font-size:10px}
   .side-panel .journey{margin:18px 0}

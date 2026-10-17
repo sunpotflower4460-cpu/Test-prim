@@ -142,7 +142,7 @@ if(typeof require==="function" && typeof module!=="undefined" && require.main===
   const {runSetsunaAudit}=require("./setsuna-audit.js");
   const results=previous.concat(runSetsunaAudit(read("gpt6-chat/setsuna.js"),
     read("gpt6-chat/setsuna.html"),read("gpt6-chat/index.html")));
-  for(const r of results)console.log((r.pass?"PASS":"FAIL")+"  "+r.label+(r.error?"\n    "+r.error:""));
+  for(const r of results)console.log((r.pass?"PASS":"FAIL")+"  "+(r.label??r.name)+(r.error?"\n    "+r.error:""));
   const count=results.filter(r=>r.pass).length;
   console.log("\n"+count+" / "+results.length+" checks passed");
   if(count!==results.length)process.exitCode=1;

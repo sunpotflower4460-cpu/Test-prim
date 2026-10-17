@@ -36,6 +36,27 @@ const targets = [
       }
       await page.locator("#openGameBtn").click();
       await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
+      await page.locator(".gallery .work.kazane").click();
+      await page.locator('#dialog [data-action="start"]').click();
+      await page.locator("#overlay").waitFor({ state: "hidden" });
+      await page.keyboard.press("ArrowRight");
+      await page.locator("#pauseBtn").click();
+      await page.locator('#dialog [data-action="resume"]').click();
+      await page.locator("#overlay").waitFor({ state: "hidden" });
+      assert.ok(await page.locator("#garden").evaluate(el => el.width > 0), "KAZANE canvas is ready");
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "KAZANE fits the viewport");
+      await page.locator(".back-link").click();
+      await page.locator(".gallery .work.setsuna").click();
+      await page.locator('#dialog [data-action="start"]').click();
+      await page.locator("#overlay").waitFor({ state: "hidden" });
+      await page.keyboard.press("j");
+      await page.locator("#pauseBtn").click();
+      await page.locator('#dialog [data-action="resume"]').click();
+      await page.locator("#overlay").waitFor({ state: "hidden" });
+      assert.ok(await page.locator("#arena").evaluate(el => el.width > 0), "SETSUNA canvas is ready");
+      assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "SETSUNA fits the viewport");
+      await page.locator(".back").click();
+      await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
       await page.locator(".gallery .work.lumina").click();
       await page.locator("#home").waitFor({ state: "visible" });
       assert.equal(await page.locator("#home h1").innerText(), "LUMINA");

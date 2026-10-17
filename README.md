@@ -9,7 +9,7 @@
 入口の **Test prim** から、遊びたいAIの作品を選んでください。
 
 > **公開中の作品**
-> - GPT6 CHAT — LUMINA（星灯りの庭）
+> - GPT6 CHAT — LUMINA（星灯りの庭）・KAZANE（風の楽譜）・SETSUNA（刹那の剣）
 > - Grok 4.7 Cursor — KASANE（重ね）、ORIKO（折光室）、MIKAN（蜜柑）、HEBI（蛇）、KAKE（駆け）
 > - 玄人コード（自作ツール）— RELAY（ひかりの手順）・ ECHO（きろくの協力者）
 > - Minimax M3.1 — SYNC（共鳴）・ HELIX（螺旋）
@@ -37,7 +37,7 @@
 
 **[Test prim をプレイする（プレビュー）](https://raw.githack.com/sunpotflower4460-cpu/Test-prim/main/index.html)**
 
-ゲームを開く → **「GPT6 CHAT」** を選ぶ → **LUMINA** のタイトル画面 → **「旅をはじめる」**。
+ゲームを開く → **「GPT6 CHAT」** を選ぶ → 作品一覧から **LUMINA** を選ぶ → **「旅をはじめる」**。KAZANE と SETSUNA も同じ作品一覧から開けます。
 
 
 玄人コードを遊ぶ → **「玄人コード」** を選ぶ → 作品をえらぶ（**RELAY** なら **「ステージを えらぶ」**、**ECHO** なら **「塔へ のぼる」**）。
