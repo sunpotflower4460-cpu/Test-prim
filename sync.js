@@ -1473,10 +1473,9 @@
     if (mode !== "play") return;
     pause();
     card("HOW TO PLAY", "あそびかた",
-      "<p>ノイズは拍に合わせて迫ってくる。<b>拍の、その一瞬</b>にレーンを叩けば砕ける。</p>" +
-      "<p>Determination: PERFECT ±48ms / GREAT ±92ms / GOOD ±136ms。</p>" +
-      "<p>長音符は<b>押しっぱなし</b>。赤い輪が縮む静寂の区間は、叩いてはならない。</p>" +
-      '<p class="sync-sub">タップ / クリック — 画面上の扇形 / キー — ' +
+      "<p>外から来る光が内側の輪に重なったら、<b>同じ場所をタップ</b>。ぴったりなら高得点です。</p>" +
+      "<p>長い光は<b>押しっぱなし</b>。赤い輪のあいだは、何も押しません。</p>" +
+      '<p class="sync-sub">スマホは光のある扇形をタップ。PC のキーは ' +
       sim.LANE_KEYS.map(k => k.replace("Key", "")).join(" ") + "</p>",
       '<button class="sync-primary" data-action="resume">つづける</button>');
   });

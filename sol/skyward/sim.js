@@ -12,7 +12,7 @@ const BASE={x:0,y:26,z:-4900};
 function terrain(x,z){let h=-18;for(const a of ISLANDS){const d=Math.hypot((x-a.x)/a.rx,(z-a.z)/a.rz);if(d<1){const ridge=.62+.22*Math.sin(x*.0013+z*.0007)+.16*Math.cos(z*.0018-x*.0006);h=Math.max(h,Math.pow(1-d,1.55)*a.h*ridge-18);}}if(Math.abs(x)<580&&z>-7100&&z<-2700)h=26;return h;}
 const GATES=[vec(0,1500,3800),vec(600,1600,6200),vec(1800,1800,8600),vec(1800,1800,11300),vec(600,1600,13800),vec(-1700,1500,15000),vec(-3600,1400,13300),vec(-4300,1300,10800)];
 const MISSIONS=[
-{id:'school',name:'翼を知る',tag:'01 / FLIGHT SCHOOL',desc:'8つの航法リングを巡り、旋回とエネルギー管理を身につける。',radio:'オーロラ管制より。青いリングが次の航路だ。焦らず、翼を傾けて旋回しよう。',kind:'gates',enemies:0,missiles:0,time:0,goal:'航法リング 8個 → 帰投',weather:'morning'},
+{id:'school',name:'翼を知る',tag:'01 / FLIGHT SCHOOL',desc:'青い輪を8つくぐって、基地へ帰ろう。',radio:'オーロラ管制より。青い輪が次の目印だ。翼を少し傾けて曲がろう。',kind:'gates',enemies:0,missiles:0,time:0,goal:'航法リング 8個 → 帰投',weather:'morning'},
 {id:'tracer',name:'白い航跡',tag:'02 / GUNNERY',desc:'無人標的3機を追い、機関砲の見越し射撃を学ぶ。',radio:'訓練空域へようこそ。黄色い見越し点を照準へ。距離1.8km以内で機関砲が届く。',kind:'drone',enemies:3,missiles:0,time:0,goal:'標的 3機 → 帰投',weather:'morning'},
 {id:'intercept',name:'海峡の影',tag:'03 / INTERCEPT',desc:'海峡を南下する3機を迎撃。島の基地を守り、帰投する。',radio:'北の海峡に侵入機3機。基地へ向かっている。射程6.2km以内で捕捉し、ミサイルで迎撃せよ。',kind:'bomber',enemies:3,missiles:8,time:320,goal:'侵入機 3機 → 帰投',weather:'noon'},
 {id:'escort',name:'灯を守る',tag:'04 / ESCORT',desc:'補給船団を襲う戦闘機を排除し、船団の航行を守る。',radio:'船団は岬へ向かっている。敵戦闘機3機が接近。敵の照準から逃れ、船団を守ってくれ。',kind:'fighter',enemies:3,missiles:8,time:0,goal:'敵戦闘機 3機・船団防衛 → 帰投',weather:'noon'},

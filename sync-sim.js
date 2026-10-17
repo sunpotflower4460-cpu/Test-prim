@@ -64,7 +64,7 @@ const RESONANCES = [
 const CHAPTERS = [
   {
     id: 1, jp: "第零拍", en: "PRELUDE", bpm: 84, boss: false,
-    lead: "拍ちょうどでレーンを叩けば、ノイズは砕ける。",
+    lead: "光が内側の輪に重なったら、その場所をタップ。",
     tip: "タップ / A S D F J K",
     root: 57, scale: [0, 3, 5, 7, 10], chords: [0, -4, 3, -2],
     mood: { bg: "#04070f", deep: "#0a1526", glow: "#6ef0d0", warm: "#ffd98a", ink: "#e9fbff" },
@@ -83,7 +83,7 @@ const CHAPTERS = [
   },
   {
     id: 2, jp: "加速", en: "ACCELERANDO", bpm: 104, boss: false,
-    lead: "長音符は押しっぱなし。離せば拍が切れる。",
+    lead: "長い光は、消えるまで押しつづける。",
     tip: "長音符は押しっぱなし",
     root: 62, scale: [0, 2, 3, 5, 7, 9, 10], chords: [0, 5, -2, -4],
     mood: { bg: "#06060f", deep: "#111026", glow: "#b39cff", warm: "#8fd8ff", ink: "#f1ecff" },
@@ -125,7 +125,7 @@ const CHAPTERS = [
   },
   {
     id: 4, jp: "静寂", en: "SILENCE", bpm: 130, boss: false,
-    lead: "赤い輪が縮む間は、叩いてはならない。息を止める。",
+    lead: "赤い輪のあいだは、何も押さない。",
     tip: "赤い区間では無効",
     root: 60, scale: [0, 1, 3, 5, 7, 8, 10], chords: [0, -4, 3, -2],
     mood: { bg: "#0b0407", deep: "#230812", glow: "#ff7f9e", warm: "#ffc59a", ink: "#fff0f2" },

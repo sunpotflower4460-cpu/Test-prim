@@ -306,7 +306,7 @@
     const map = state.map;
     const usableH = view.h * (view.h < 560 ? 0.78 : 0.86);
     const usableW = view.w - 8;
-    view.scale = clamp(Math.min(usableH / map.pixelH, usableW / map.pixelW) * (zoomed ? 1.5 : 1), 0.5, 3.4);
+    view.scale = clamp(Math.min(usableH / map.pixelH, usableW / map.pixelW) * (zoomed ? 1.5 : 1), 0.35, 3.4);
     view.cy = view.h * 0.52;
   }
 

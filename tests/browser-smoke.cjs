@@ -612,6 +612,10 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       assert.ok(painted.samples > 0, "キャンバスが実寸である");
       assert.ok(painted.lime > 50,
         "ステージの足場（ライム）が描かれている: " + JSON.stringify(painted));
+      assert.equal(await page.locator("#helixZoomBtn").innerText(), target.hasTouch ? "全体" : "拡大");
+      await page.locator("#helixZoomBtn").click();
+      assert.equal(await page.locator("#helixZoomBtn").innerText(), target.hasTouch ? "拡大" : "全体");
+      await page.locator("#helixZoomBtn").click();
 
       // タッチ端末では、右半分の一回のタップが跳躍、連打がダッシュになる。
       // これが崩れると序盤の梯子が一切登れなくなるので、実タッチで確認する。
