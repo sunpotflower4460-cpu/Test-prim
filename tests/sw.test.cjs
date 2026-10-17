@@ -25,11 +25,11 @@ test('every required game asset is installed for offline use',async()=>{
   assert.equal(assets.size,declared.length,'the installed count matches the declared precache list');
   for(const p of declared)assert.ok(urls.some(u=>u.endsWith('/'+p)),'asset is precached: '+p);
   // 作品の入口。作品的取りこぼしは、この一覧に現れない。
-  for(const p of ['index.html','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','luna/index.html','sol/index.html','sol/skyward/index.html','sol/works.html','gpt6-sol/index.html','opus/index.html'])assert.ok(urls.some(u=>u.endsWith('/'+p)),'work entry is precached: '+p);
+  for(const p of ['index.html','gpt6-chat/index.html','gpt6-chat/sen.html','gpt6-chat/setsuna.html','gpt6-chat/sen.css','gpt6-chat/sen.js','gpt6-chat/setsuna.css','gpt6-chat/setsuna.js','grok/index.html','oriko/index.html','mikan/index.html','hebi/index.html','kake/index.html','echo/index.html','luna/index.html','sol/index.html','sol/skyward/index.html','sol/works.html','gpt6-sol/index.html','opus/index.html'])assert.ok(urls.some(u=>u.endsWith('/'+p)),'work entry or runtime is precached: '+p);
 });
 test('offline directory URLs resolve to the installed gallery and game',async()=>{
   const h=setup();await h.event('install');
-  for(const [url,text] of [['','./index.html'],['sol/','./sol/index.html'],['sol/skyward/','./sol/skyward/index.html'],['sol/works.html','./sol/works.html'],['gpt6-sol/','./gpt6-sol/index.html'],['opus/','./opus/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['mikan/','./mikan/index.html'],['hebi/','./hebi/index.html'],['kake/','./kake/index.html'],['echo/','./echo/index.html'],['luna/','./luna/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
+  for(const [url,text] of [['','./index.html'],['gpt6-chat/','./gpt6-chat/index.html'],['gpt6-chat/sen.html','./gpt6-chat/sen.html'],['gpt6-chat/setsuna.html','./gpt6-chat/setsuna.html'],['sol/','./sol/index.html'],['sol/skyward/','./sol/skyward/index.html'],['sol/works.html','./sol/works.html'],['gpt6-sol/','./gpt6-sol/index.html'],['opus/','./opus/index.html'],['grok/','./grok/index.html'],['oriko/','./oriko/index.html'],['mikan/','./mikan/index.html'],['hebi/','./hebi/index.html'],['kake/','./kake/index.html'],['echo/','./echo/index.html'],['luna/','./luna/index.html'],['game.js?v=new','./game.js']])assert.equal(await (await h.event('fetch',h.request(url))).text(),text);
   assert.equal((await h.event('fetch',h.request('missing.html'))).type,'error');
 });
 test('worker activation removes previous gallery caches and preserves unrelated apps',async()=>{

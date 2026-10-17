@@ -1,9 +1,11 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v19";
+const CACHE = "test-prim-gallery-v20";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
+  "./gpt6-chat/index.html", "./gpt6-chat/sen.html", "./gpt6-chat/sen.css", "./gpt6-chat/sen.js",
+  "./gpt6-chat/setsuna.html", "./gpt6-chat/setsuna.css", "./gpt6-chat/setsuna.js",
   "./helix-sim.js", "./helix.js",
   "./sol/index.html", "./sol/tide.css", "./sol/sim.js", "./sol/levels.js",
   "./sol/sea.js", "./sol/audio.js", "./sol/game.js", "./sol/entry.js",

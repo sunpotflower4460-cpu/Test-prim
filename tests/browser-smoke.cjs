@@ -8,7 +8,7 @@ const targets = [
   { name: "desktop", viewport: { width: 1280, height: 800 }, deviceScaleFactor: 1, isMobile: false, hasTouch: false }
 ];
 (async () => {
-  const browser = await chromium.launch({ headless: true, args: ["--no-sandbox", "--enable-unsafe-swiftshader"] });
+  const browser = await chromium.launch({ headless: true, executablePath: process.env.TEST_PRIM_CHROME || undefined, args: ["--no-sandbox", "--enable-unsafe-swiftshader"] });
   try {
     for (const target of targets) {
       const context = await browser.newContext({
@@ -35,11 +35,16 @@ const targets = [
         await page.locator("#launcher").waitFor({state:"visible"});
       }
       await page.locator("#openGameBtn").click();
+      await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
+      await page.locator(".gallery .work.lumina").click();
       await page.locator("#home").waitFor({ state: "visible" });
       assert.equal(await page.locator("#home h1").innerText(), "LUMINA");
       await page.locator("#returnPortalBtn").click();
+      await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
+      await page.locator(".back").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       await page.locator("#openGameBtn").click();
+      await page.locator(".gallery .work.lumina").click();
       await page.locator("#startBtn").click();
       await page.locator("#mobileControls").waitFor({ state: "visible" });
       const joy = await page.locator("#joystick").boundingBox();
@@ -71,6 +76,8 @@ const targets = [
       await page.locator("#quit").click();
       await page.locator("#home").waitFor({ state: "visible" });
       await page.locator("#returnPortalBtn").click();
+      await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
+      await page.locator(".back").click();
       await page.locator("#launcher").waitFor({ state: "visible" });
       const entryLabels = await page.locator("#launcher .launcher-entries .launcher-button-label strong").allInnerTexts();
       assert.deepEqual(
@@ -434,6 +441,7 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
 
       // RELAY を出たあとも LUMINA の操作（ポーズ）がつづけられる。
       await page.locator("#openGameBtn").click();
+      await page.locator(".gallery .work.lumina").click();
       await page.locator("#startBtn").click();
       await page.locator("#mobileControls").waitFor({ state: "visible" });
       await page.locator("#pauseBtn").click();

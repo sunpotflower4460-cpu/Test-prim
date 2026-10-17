@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
 
-function setup() {
+function setup(hash = "") {
   const elements = new Map();
   const events = {};
   let nextId = 0;
@@ -16,6 +16,9 @@ function setup() {
         classList: { add() {}, remove() {}, toggle() {} },
         addEventListener(type, handler) { listeners[type] = handler; },
         appendChild(item) { this.children.push(item); },
+        replaceChildren(...items) { this.children = items; },
+        querySelector() { return null; },
+        querySelectorAll() { return this.children; },
         setAttribute() {}, setPointerCapture() {},
         getBoundingClientRect() { return { left: 0, top: 620, width: 150, height: 150 }; },
         click() { if (listeners.click) listeners.click({ preventDefault() {} }); },
@@ -39,6 +42,7 @@ function setup() {
   };
   const window = {
     innerWidth: 390, innerHeight: 844, devicePixelRatio: 2,
+    location: { href: "http://localhost/index.html", hash },
     matchMedia: () => ({ matches: false }),
     addEventListener(type, callback) { events[type] = callback; }
   };
@@ -72,13 +76,11 @@ function setup() {
       callbacks.forEach(callback => callback(now));
     }
   }
-  return { element, events, state, tick, localData };
+  return { element, events, state, tick, localData, location: window.location };
 }
 
 test("menu, keyboard, dash, pause and upgrading are interactive", () => {
-  const { element: el, events, state, tick } = setup();
-  assert.equal(state.getScene(), "launcher");
-  el("openGameBtn").click();
+  const { element: el, events, state, tick } = setup("#lumina");
   assert.equal(state.getScene(), "home");
   el("startBtn").click();
   assert.equal(state.getScene(), "playing");
@@ -103,9 +105,7 @@ test("menu, keyboard, dash, pause and upgrading are interactive", () => {
 });
 
 test("all three bosses can be defeated and the ending is reachable", () => {
-  const { element: el, state, tick, localData } = setup();
-  assert.equal(state.getScene(), "launcher");
-  el("openGameBtn").click();
+  const { element: el, state, tick, localData } = setup("#lumina");
   el("startBtn").click();
   const player = state.getGame().player;
   player.maxHp = 999999; player.hp = 999999;
@@ -126,6 +126,10 @@ test("all three bosses can be defeated and the ending is reachable", () => {
     assert.equal(state.getScene(), stage === 2 ? "won" : "chapter");
     if (stage !== 2) {
       el("nextChapter").click();
+      while (state.getScene() === "upgrade") {
+        const choices = el("upgradeList").children;
+        choices[choices.length - 1].click();
+      }
       assert.equal(state.getScene(), "playing");
       assert.equal(state.getGame().stage, stage + 1);
     }
@@ -139,17 +143,15 @@ test("all three bosses can be defeated and the ending is reachable", () => {
   assert.equal(state.getScene(), "over");
 });
 
-test("launcher return button allows leaving and reentering the game title", () => {
-  const { element: el, state } = setup();
+test("the GPT6 CHAT door opens the shelf and LUMINA returns there", () => {
+  const { element: el, state, location } = setup();
   assert.equal(state.getScene(), "launcher");
   el("openGameBtn").click();
-  assert.equal(state.getScene(), "home");
-  el("returnPortalBtn").click();
-  assert.equal(state.getScene(), "launcher");
-  el("openGameBtn").click();
-  assert.equal(state.getScene(), "home");
-  el("startBtn").click();
-  assert.equal(state.getScene(), "playing");
+  assert.equal(location.href, "gpt6-chat/index.html");
+  const lumina = setup("#lumina");
+  lumina.element("returnPortalBtn").click();
+  assert.equal(lumina.location.href, "gpt6-chat/index.html");
+  assert.equal(lumina.state.getScene(), "home");
 });
 
 test("focused gallery and title buttons own Enter and key repeats cannot restart", () => {
@@ -158,17 +160,17 @@ test("focused gallery and title buttons own Enter and key repeats cannot restart
   for(const id of ['openSumifuBtn','openCodeBtn','openSyncBtn','openSolBtn']){
     press(id);assert.equal(state.getScene(),'launcher');
   }
-  el('openGameBtn').click();press('returnPortalBtn');assert.equal(state.getScene(),'home');
-  events.keydown({key:'Enter',repeat:true,preventDefault(){}});assert.equal(state.getScene(),'home');
+  press('openGameBtn');assert.equal(state.getScene(),'launcher');
+  events.keydown({key:'Enter',repeat:true,preventDefault(){}});assert.equal(state.getScene(),'launcher');
 });
 
 test("a keyboard-activated dash button works without a pointer event",()=>{
-  const {element:el,state}=setup();el('openGameBtn').click();el('startBtn').click();
+  const {element:el,state}=setup('#lumina');el('startBtn').click();
   el('dashBtn').trigger('click',{detail:0});assert.ok(state.getGame().player.dashCd>0);
 });
 
 test("pausing clears movement even if keyup is lost while the menu is open",()=>{
-  const {element:el,events,state,tick}=setup();el('openGameBtn').click();el('startBtn').click();
+  const {element:el,events,state,tick}=setup('#lumina');el('startBtn').click();
   events.keydown({key:'ArrowRight',repeat:false,preventDefault(){}});tick(3);
   el('pauseBtn').click();el('resume').click();const x=state.getGame().player.x;tick(3);
   assert.equal(state.getGame().player.x,x);
