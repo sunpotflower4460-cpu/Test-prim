@@ -4,7 +4,7 @@ const fs = require("node:fs");
 const vm = require("node:vm");
 const path = require("node:path");
 
-function setup(hash = "") {
+function setup(hash = "", initialStorage = {}) {
   const elements = new Map();
   const events = {};
   let nextId = 0;
@@ -46,7 +46,7 @@ function setup(hash = "") {
     matchMedia: () => ({ matches: false }),
     addEventListener(type, callback) { events[type] = callback; }
   };
-  const localData = {};
+  const localData = { ...initialStorage };
   const localStorage = {
     getItem(key) { return localData[key] || null; },
     setItem(key, value) { localData[key] = String(value); }
@@ -174,4 +174,15 @@ test("pausing clears movement even if keyup is lost while the menu is open",()=>
   events.keydown({key:'ArrowRight',repeat:false,preventDefault(){}});tick(3);
   el('pauseBtn').click();el('resume').click();const x=state.getGame().player.x;tick(3);
   assert.equal(state.getGame().player.x,x);
+});
+
+test("invalid saved records cannot corrupt the LUMINA menu or future saves", () => {
+  const bad = JSON.stringify({ best: "3", wins: "many", bestKills: -1, bestLevel: 0, music: "false" });
+  const { element: el, localData, state } = setup("#lumina", { "lumina-garden-v1": bad });
+  assert.equal(state.getScene(), "home");
+  assert.equal(el("bestRecord").textContent, "あなたの物語は、ここから。");
+  el("soundBtn").click();
+  assert.deepEqual(JSON.parse(localData["lumina-garden-v1"]), {
+    best: 0, wins: 0, music: false, bestKills: 0, bestLevel: 1
+  });
 });

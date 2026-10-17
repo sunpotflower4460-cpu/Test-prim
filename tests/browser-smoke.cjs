@@ -45,6 +45,14 @@ const targets = [
       await page.locator("#overlay").waitFor({ state: "hidden" });
       assert.ok(await page.locator("#garden").evaluate(el => el.width > 0), "KAZANE canvas is ready");
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "KAZANE fits the viewport");
+      if (target.name === "small-phone" || target.name === "landscape") {
+        const fit = await page.evaluate(() => {
+          const canvas = document.getElementById("garden").getBoundingClientRect();
+          const toolbar = document.querySelector(".toolbar").getBoundingClientRect();
+          return canvas.top >= 0 && canvas.bottom <= innerHeight && toolbar.top >= 0 && toolbar.bottom <= innerHeight;
+        });
+        assert.ok(fit, "KAZANE canvas and controls fit together");
+      }
       await page.locator(".back-link").click();
       await page.locator(".gallery .work.setsuna").click();
       await page.locator('#dialog [data-action="start"]').click();
@@ -55,6 +63,13 @@ const targets = [
       await page.locator("#overlay").waitFor({ state: "hidden" });
       assert.ok(await page.locator("#arena").evaluate(el => el.width > 0), "SETSUNA canvas is ready");
       assert.ok(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth + 1), "SETSUNA fits the viewport");
+      if (target.name === "small-phone" || target.name === "landscape") {
+        const controls = await page.evaluate(() => ["attack", "parry", "dash", "skill", "pad"].map(id => {
+          const box = document.getElementById(id).getBoundingClientRect();
+          return { id, left: box.left, right: box.right, top: box.top, bottom: box.bottom };
+        }));
+        for (const box of controls) assert.ok(box.left >= 0 && box.right <= target.viewport.width && box.top >= 0 && box.bottom <= target.viewport.height, "SETSUNA control is visible: " + box.id);
+      }
       await page.locator(".back").click();
       await page.locator(".gallery .work.lumina").waitFor({ state: "visible" });
       await page.locator(".gallery .work.lumina").click();

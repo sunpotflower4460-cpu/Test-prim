@@ -27,7 +27,15 @@
   ];
   const storageKey = "lumina-garden-v1";
   let saved = { best: 0, wins: 0, music: true, bestKills: 0, bestLevel: 1 };
-  try { saved = Object.assign(saved, JSON.parse(localStorage.getItem(storageKey) || "{}")); } catch (_) {}
+  try {
+    const data = JSON.parse(localStorage.getItem(storageKey) || "{}");
+    if (data && typeof data === "object" && !Array.isArray(data)) {
+      for (const [key, max] of [["best", 3], ["wins", Number.MAX_SAFE_INTEGER], ["bestKills", Number.MAX_SAFE_INTEGER], ["bestLevel", Number.MAX_SAFE_INTEGER]]) {
+        if (Number.isSafeInteger(data[key]) && data[key] >= (key === "bestLevel" ? 1 : 0)) saved[key] = Math.min(data[key], max);
+      }
+      if (typeof data.music === "boolean") saved.music = data.music;
+    }
+  } catch (_) {}
   const persist = () => { try { localStorage.setItem(storageKey, JSON.stringify(saved)); } catch (_) {} };
   const perks = [
     { id: "bolts", icon: "✧", name: "双子星の矢", desc: "同時に放つ星の矢が１本増える", max: 4, apply: p => { p.bolts++; } },

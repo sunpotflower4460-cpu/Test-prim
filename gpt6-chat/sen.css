@@ -91,3 +91,26 @@ footer{margin:24px 0 4px;text-align:center;font:9px Arial,sans-serif;color:#729f
   .side-panel .journey{margin:18px 0}
   .side-panel .instructions{padding:14px 16px}
 }
+@media(min-width:551px) and (max-width:850px) and (max-height:450px){
+  .app{padding:5px 10px}
+  .site-header{height:38px;min-height:38px;padding-bottom:5px}
+  .main-layout{margin:3px auto;max-width:none}
+  .play-panel{width:205px;margin:auto}
+  .canvas-frame{width:205px}
+  .stage-title{position:fixed;left:10px;top:50px;z-index:5;display:block;width:180px}
+  .stage-stars{display:block;margin-top:8px}
+  .side-panel{position:fixed;left:10px;bottom:10px;z-index:5;width:175px;border:0;padding:0}
+  .side-panel>*:not(.text-button){display:none}
+  .side-panel .text-button{display:block;margin:0}
+  .toolbar{position:fixed;right:10px;bottom:10px;z-index:5;width:150px;grid-template-columns:repeat(2,1fr)}
+  .tool-button{min-height:45px}
+  .bottom-hint,footer{display:none}
+}
+@media(min-width:551px) and (max-width:850px) and (max-height:350px){
+  .play-panel,.canvas-frame{width:185px}
+}
+@media(max-width:360px) and (max-height:680px){
+  .play-panel{max-width:270px;margin-inline:auto}
+  .stage-title strong{font-size:12px}
+  .stage-stars{font-size:13px}
+}
