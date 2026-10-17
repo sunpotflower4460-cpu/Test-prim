@@ -322,6 +322,36 @@ body.helix-active #helixPlay {
 
 .helix-meta b { color: #ff3d7f; font-weight: 600; }
 
+/* The canvas receives touches across the entire screen. These labels show the
+   three active regions without stealing pointer events from the game. */
+.helix-touch-guide {
+  display: none;
+  position: absolute;
+  z-index: 2;
+  left: 8px;
+  right: 8px;
+  bottom: calc(45px + env(safe-area-inset-bottom));
+  grid-template-columns: 1fr 1fr 2fr;
+  gap: 5px;
+  pointer-events: none;
+}
+
+.helix-touch-guide span {
+  display: grid;
+  place-items: center;
+  min-height: 46px;
+  border: 1px solid rgba(201, 255, 61, .3);
+  background: rgba(5, 6, 10, .65);
+  color: #eef2f6;
+  font-size: 11px;
+  line-height: 1.35;
+  text-align: center;
+}
+
+@media (pointer: coarse) {
+  .helix-touch-guide { display: grid; }
+}
+
 /* Stage flavour text. It appears once when the stage opens and fades, so it
    never sits in the player's eyeline while they are reading terrain. */
 .helix-lead-hint {

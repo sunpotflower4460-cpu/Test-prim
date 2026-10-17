@@ -45,7 +45,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 .round.small { width: 40px; height: 40px; font-size: 17px; }
 .round:active { transform: scale(.94); }
 .round.muted .sound-glyph { opacity: .35; text-decoration: line-through; }
-.back-link { display: inline-flex; align-items: center; gap: 4px; padding: 10px 10px 10px 2px; font-size: 13px; letter-spacing: .08em; color: var(--paper); text-shadow: 0 1px 8px rgba(0, 0, 0, .45); }
+.back-link { display: inline-flex; align-items: center; gap: 4px; padding: 10px 10px 10px 2px; font-size: 13px; letter-spacing: .08em; white-space: nowrap; color: var(--paper); text-shadow: 0 1px 8px rgba(0, 0, 0, .45); }
 .back-link span { opacity: .9; }
 
 /* ---- title ---- */
@@ -228,7 +228,7 @@ button:focus-visible, a:focus-visible { outline: 2px solid var(--gold-soft); out
 @media (max-width: 440px) and (orientation: portrait) {
   .title-kanji { right: -6px; top: -34px; font-size: 15px; padding: 5px 4px; }
 }
-@media (max-width: 380px) {
+@media (max-width: 440px) {
   .title-top .byline { display: none; }
   .title-top { grid-template-columns: 1fr auto; }
   .title-foot span:last-child { display: none; }

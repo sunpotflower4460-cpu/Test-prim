@@ -575,6 +575,7 @@ function layoutCamera() {
 
   function releaseAll() {
     input.left = input.right = input.jump = input.dash = false;
+    touches.clear();
   }
 
   /* Touch: the left thumb walks, the right thumb acts. One thumb carries two
@@ -597,27 +598,40 @@ function layoutCamera() {
      * considers active, makes this throw. Uncaught, that aborts the handler
      * before the touch is recorded and the controls go dead for good. */
     try { canvas.setPointerCapture(e.pointerId); } catch (_) { /* keep playing */ }
-    touches.set(e.pointerId, { side: pointerLane(e.clientX), x: e.clientX });
-    if (touches.size === 1) {
-      const side = pointerLane(e.clientX);
-      if (side === "move") { input.left = e.clientX < view.w * 0.25; input.right = e.clientX >= view.w * 0.25; }
-      else if (performance.now() - lastActTap < DOUBLE_TAP_MS) { input.dash = true; lastActTap = 0; }
-      else { input.jump = true; lastActTap = performance.now(); }
+    const side = pointerLane(e.clientX);
+    const action = side === "act" && performance.now() - lastActTap < DOUBLE_TAP_MS ? "dash" : "jump";
+    touches.set(e.pointerId, { side, x: e.clientX, action });
+    if (side === "act") lastActTap = action === "dash" ? 0 : performance.now();
+    syncTouches();
+  }
+
+  function syncTouches() {
+    let move = null;
+    let jump = false;
+    let dash = false;
+    for (const touch of touches.values()) {
+      if (touch.side === "move") move = touch;
+      else if (touch.action === "dash") dash = true;
+      else jump = true;
     }
+    input.left = !!move && move.x < view.w * 0.25;
+    input.right = !!move && move.x >= view.w * 0.25;
+    input.jump = jump;
+    input.dash = dash;
   }
 
   function onPointerMove(e) {
     const t = touches.get(e.pointerId);
     if (!t || t.side !== "move") return;
     e.preventDefault();
-    input.left = e.clientX < view.w * 0.25;
-    input.right = e.clientX >= view.w * 0.25;
+    t.x = e.clientX;
+    syncTouches();
   }
 
   function onPointerUp(e) {
     if (!touches.has(e.pointerId)) return;
     touches.delete(e.pointerId);
-    if (touches.size === 0) releaseAll();
+    syncTouches();
   }
 
   function pause() {

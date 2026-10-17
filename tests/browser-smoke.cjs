@@ -659,6 +659,27 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
         const afterDouble = await page.evaluate(() => window.__helix.getState().player.dashes);
         assert.equal(afterDouble, afterSlow + 1, "右半分の連打でダッシュする");
         assert.ok(peakVx > 300, "ダッシュ中は最高速度を超える: " + Math.round(peakVx));
+
+        // A platformer must allow both thumbs at once: keep walking with the
+        // left thumb while the right one jumps, then lift only the right.
+        await page.evaluate(() => { window.__helix.start(0); for (let i = 0; i < 70; i++) window.__helix.tick(); });
+        const left = { x: box.x + box.width * 0.4, y: box.y + box.height * 0.7, id: 2 };
+        const right = { x: box.x + box.width * 0.78, y: box.y + box.height * 0.7, id: 3 };
+        const beforeBoth = await page.evaluate(() => ({ x: window.__helix.getState().player.x, y: window.__helix.getState().player.y }));
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left, right] });
+        let highBoth = beforeBoth.y;
+        for (let i = 0; i < 20; i++) {
+          await page.evaluate(() => window.__helix.tick());
+          highBoth = Math.min(highBoth, await page.evaluate(() => window.__helix.getState().player.y));
+        }
+        const movingX = await page.evaluate(() => window.__helix.getState().player.x);
+        assert.ok(movingX > beforeBoth.x + 8, "左指で移動しながら右指を使える");
+        assert.ok(highBoth < beforeBoth.y - 8, "二本指でも右指で跳べる");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+        for (let i = 0; i < 8; i++) await page.evaluate(() => window.__helix.tick());
+        assert.ok(await page.evaluate(x => window.__helix.getState().player.x > x, movingX), "右指を離しても左指の移動は続く");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
       }
 
       // 一時停止 → 再開
