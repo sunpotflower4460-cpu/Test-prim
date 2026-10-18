@@ -54,6 +54,31 @@ test('SYNC saves perfect totals even when a repeated run does not improve the be
   c.start(0,[]);g=c.getGame();g.stats.perfect=3;g.stats.score=50;g.over=true;g.running=false;h.frame();
   assert.equal(JSON.parse(h.data['sync-record-v1']).perfects,7);
 });
+test('SYNC clears chapter hints when leaving the game',()=>{
+  const h=sync(),c=h.window.__sync;c.enter();
+  assert.equal(c.getMode(),'title');
+  c.start(1,[]);assert.ok(h.timers.size>0);
+  c.goTitle();assert.equal(h.timers.size,0);
+  c.start(1,[]);assert.ok(h.timers.size>0);
+  c.exit();assert.equal(h.timers.size,0);
+});
+test('HELIX keeps real fall records and cancels a result after leaving',()=>{
+  const helix=require('../helix-sim.js');
+  const h=host('helix.js',{globals:{HelixSim:helix},instrument:s=>s.replace('  function bind(id, fn) {',
+    '  window.audit={startStage,onClear,toTitle,mode:()=>mode,state:()=>state};\n  function bind(id, fn) {')});
+  const c=h.window.audit;
+  c.startStage(0);c.state().deaths=2;c.state().time=10;c.onClear();
+  assert.equal(c.mode(),'result');
+  assert.equal(JSON.parse(h.data['helix-record-v1']).stages[0].deaths,2);
+  c.toTitle();h.flushTimers();
+  assert.equal(c.mode(),'title');
+  assert.equal(h.el('helixOverlay').classList.contains('on'),false,'old result does not cover the title');
+  c.startStage(0);c.state().deaths=3;c.state().time=12;c.onClear();
+  assert.equal(JSON.parse(h.data['helix-record-v1']).stages[0].deaths,2);
+  c.startStage(0);c.state().deaths=1;c.state().time=9;c.onClear();
+  const rec=JSON.parse(h.data['helix-record-v1']).stages[0];
+  assert.equal(rec.deaths,1);assert.equal(rec.best,9);
+});
 test('all fifteen RELAY programs pass through the controller and save their stars',()=>{
   const code=require('../code-sim.js');
   const h=host('code.js',{globals:{CodeSim:code},instrument:s=>s.replace('  /* ---------- 起動 ---------- */','  window.audit = {startLevel,onPalette,onRowTap,runProgramUI,updateAnim}; /* ---------- 起動 ---------- */')});

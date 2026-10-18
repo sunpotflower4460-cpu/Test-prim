@@ -771,10 +771,10 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
         await page.waitForTimeout(500);
       }
       // the last stage ends on the epilogue, not on stage select
-      assert.match(await page.locator("#helixOverlay h2").innerText(), /SUMMIT|峰/);
+      assert.match(await page.locator("#helixOverlay h2").innerText(), /てっぺんに到着/);
       await page.locator("#helixOverlay .helix-ghost").click();
       await page.locator("#helixTitle").waitFor({ state: "visible" });
-      assert.match(await page.locator("#helixRecord").innerText(), /SUMMIT REACHED/);
+      assert.match(await page.locator("#helixRecord").innerText(), /全段クリア/);
 
       await page.locator("#helixReturnBtn").click();
       await page.locator("#launcher").waitFor({ state: "visible" });

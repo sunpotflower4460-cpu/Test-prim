@@ -219,14 +219,14 @@ body.helix-active #launcher {
   margin: 0;
   font-size: 11px;
   letter-spacing: .18em;
-  color: rgba(238, 242, 246, .42);
+  color: rgba(238, 242, 246, .74);
 }
 
 .helix-keys {
   margin: 4px 0 0;
   font-size: 11px;
   line-height: 2;
-  color: rgba(238, 242, 246, .4);
+  color: rgba(238, 242, 246, .7);
 }
 
 .helix-keys kbd {
@@ -469,7 +469,7 @@ body:not(.helix-active) .helix-toast { display: none; }
   margin: 0;
   font-size: 11px;
   letter-spacing: .18em;
-  color: rgba(238, 242, 246, .5);
+  color: rgba(238, 242, 246, .75);
 }
 
 .helix-stats {
@@ -487,9 +487,9 @@ body:not(.helix-active) .helix-toast { display: none; }
 }
 
 .helix-stats span {
-  font-size: 9.5px;
+  font-size: 10.5px;
   letter-spacing: .16em;
-  color: rgba(238, 242, 246, .42);
+  color: rgba(238, 242, 246, .75);
 }
 
 .helix-stages {

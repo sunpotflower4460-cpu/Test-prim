@@ -398,8 +398,8 @@
     const cleared = Object.keys(record.stages).length;
     const total = sim.LEVELS.length;
     $("helixRecord").textContent = cleared
-      ? "CLEARED " + cleared + " / " + total + (record.ending ? " · SUMMIT REACHED" : "")
-      : "STAGE 0 / " + total + " CLEARED";
+      ? "クリア " + cleared + " / " + total + " 段" + (record.ending ? " · 全段クリア！" : "")
+      : "クリア 0 / " + total + " 段";
     const btn = $("helixSoundBtn");
     if (btn) {
       btn.textContent = soundOn ? "\u266B" : "\u266A\u0338";
@@ -419,16 +419,17 @@
   /* ---------------------------------------------------------------- flow -- */
 
   function onClear() {
+    mode = "result";
     stopMusic();
     SFX.clear();
     const level = sim.LEVELS[levelIndex];
-    const prev = record.stages[levelIndex] || { best: Infinity, deaths: 0 };
-    const isBest = state.time < prev.best;
+    const prev = record.stages[levelIndex];
+    const isBest = !prev || state.time < prev.best;
     record.stages[levelIndex] = {
       cleared: true,
       best: isBest ? state.time : prev.best,
-      deaths: Math.min(prev.deaths || 0, state.deaths),
-      pearls: Math.max(prev.pearls || 0, state.pearlsTaken)
+      deaths: prev ? Math.min(prev.deaths, state.deaths) : state.deaths,
+      pearls: Math.max(prev ? prev.pearls || 0 : 0, state.pearlsTaken)
     };
     const last = levelIndex >= sim.LEVELS.length - 1;
     if (last) {
@@ -439,10 +440,12 @@
     save();
 
     const lastIdx = levelIndex >= sim.LEVELS.length - 1;
+    const completedState = state;
     setTimeout(() => {
+      if (mode !== "result" || state !== completedState) return;
       if (lastIdx) { showEnding(); return; }
-      card("STAGE " + String(level.id).padStart(2, "0") + " CLEAR", level.name + " を越えた",
-        gradeBlock() + (isBest ? '<p class="helix-sub">BEST TIME</p>' : ""),
+      card("STAGE " + String(level.id).padStart(2, "0") + " CLEAR", level.name + "をクリア！",
+        gradeBlock() + (isBest ? '<p class="helix-sub">最速記録！</p>' : ""),
         '<div class="helix-actions">' +
         '<button class="helix-primary" data-act="next">次の段へ <b>\u2197</b></button>' +
         '<button class="helix-ghost" data-act="stages">段を選ぶ</button>' +
@@ -455,11 +458,11 @@
     const grade = state.deaths === 0 && state.pearlsTaken === totalPearls() ? "S"
       : state.deaths === 0 ? "A" : state.deaths <= 3 ? "B" : "C";
     return '<p class="helix-grade">' + grade + "</p>" +
-      '<p class="helix-sub">TIME ' + t.toFixed(2) + "s \u00b7 DEATHS " + state.deaths + "</p>" +
+      '<p class="helix-sub">タイム ' + t.toFixed(2) + "秒 \u00b7 落下 " + state.deaths + "回</p>" +
       '<div class="helix-stats">' +
-      "<div><strong>" + state.pearlsTaken + "</strong><span>PEARLS</span></div>" +
-      "<div><strong>" + state.player.jumps + "</strong><span>JUMPS</span></div>" +
-      "<div><strong>" + state.player.wallJumps + "</strong><span>WALL JUMPS</span></div>" +
+      "<div><strong>" + state.pearlsTaken + "</strong><span>光</span></div>" +
+      "<div><strong>" + state.player.jumps + "</strong><span>ジャンプ</span></div>" +
+      "<div><strong>" + state.player.wallJumps + "</strong><span>壁ジャンプ</span></div>" +
       "</div>";
   }
 
@@ -470,20 +473,15 @@
   function showEnding() {
     mode = "ending";
     const sum = Object.keys(record.stages).reduce((acc, k) => acc + (record.stages[k].best || 0), 0);
-    card("SUMMIT", "\u5cf0\u306b\u3064\u3044\u305f",
-      '<p class="helix-grade">\u9053\u5f8c</p>' +
-      '<p class="helix-sub">TOTAL ' + sum.toFixed(2) + "s \u00b7 " + Object.keys(record.stages).length + " / " + sim.LEVELS.length + "</p>" +
-      "<p>\u4e94\u3064\u306e\u6bb5\u3092\u3001\u6b6a\u306e\u9014\u3067\u6e08\u307f\u8de8\u3057\u305f\u3002\n" +
-      "\u4ed6\u306f\u4eca\u5ea6\u3001\u3053\u3053\u304b\u3089\u3082\u6c17\u3092\u6240\u3059\u306e\u3067\u3001\u5f1f\u306e\u9055\u306b\u9055\u3055\u308c\u3066\u3044\u305f\u3002</p>",
+    card("SUMMIT", "てっぺんに到着！",
+      '<p class="helix-grade">CLEAR</p>' +
+      '<p class="helix-sub">合計 ' + sum.toFixed(2) + "秒 \u00b7 " + Object.keys(record.stages).length + " / " + sim.LEVELS.length + " 段</p>" +
+      "<p>五つの段を登りきった！ もう一度挑戦して、もっと速くゴールしてみよう。</p>",
       '<div class="helix-actions">' +
       '<button class="helix-primary" data-act="stages">段を選び直す <b>\u2197</b></button>' +
       '<button class="helix-ghost" data-act="title">\u30bf\u30a4\u30c8\u30eb\u3078</button>' +
       "</div>");
     SFX.clear();
-  }
-
-  function onDeath() {
-    if (state.deaths === 3) SFX.over();
   }
 
   function showStageSelect() {
@@ -496,8 +494,8 @@
       return '<button class="helix-stage-btn" data-stage="' + i + '"' + (open ? "" : " disabled") + ">" +
         String(lv.id).padStart(2, "0") + "<br><small>" + sub + "</small></button>";
     }).join("");
-    card("STAGES", "\u6bb5\u3092\u9078\u3076",
-      '<p class="helix-sub">\u6e05\u3051\u305f\u6bb5\u304b\u3089\u30d5\u30a9\u30fc\u30ab\u30b9\u306f\u89e3\u304d\u307e\u3059\u3002</p>' +
+    card("STAGES", "段を選ぶ",
+      '<p class="helix-sub">クリアした段の次の段を選べます。</p>' +
       '<div class="helix-stages">' + cells + "</div>",
       '<div class="helix-actions"><button class="helix-ghost" data-act="title">\u30bf\u30a4\u30c8\u30eb\u3078</button></div>');
   }
@@ -646,8 +644,8 @@
     mode = "paused";
     stopMusic();
     releaseAll();
-    card("PAUSED", "\u4e00\u62cd\u3001\u6b62\u3081\u308b",
-      "<p>\u62cd\u306f\u3061\u3083\u3063\u3068\u6d88\u3048\u305f\u3002\u306b\u304d\u3081\u3066\u3044\u308b\u3002</p>",
+    card("PAUSED", "ひと休み",
+      "<p>左右に動いて足場を登ろう。壁にふれているときに跳ぶと、壁からジャンプできるよ。</p>",
       '<div class="helix-actions">' +
       '<button class="helix-primary" data-act="resume">\u3064\u305a\u3051\u308b</button>' +
       '<button class="helix-ghost" data-act="title">\u30bf\u30a4\u30c8\u30eb\u3078</button>' +
@@ -674,9 +672,10 @@
       else if (ev.type === "death") {
         SFX.death(); haptic(30); shake = 9; flash = 1;
         spawnDeathBurst(ev.x, ev.y);
+        if (state.deaths === 3) SFX.over();
       }
-      else if (ev.type === "checkpoint") { SFX.checkpoint(); toast("\u706f\u3092\u8a18\u3057\u305f"); }
-      else if (ev.type === "pearl") { SFX.pearl(); toast("\u706f " + (totalPearls() - ev.left) + " / " + totalPearls()); }
+      else if (ev.type === "checkpoint") { SFX.checkpoint(); toast("ここから再開できるよ"); }
+      else if (ev.type === "pearl") { SFX.pearl(); toast("光 " + (totalPearls() - ev.left) + " / " + totalPearls()); }
       else if (ev.type === "goal") { onClear(); }
     }
   }
@@ -689,7 +688,6 @@
     prevDash = input.dash;
     const events = sim.update(state, DT, input);
     handleEvents(events);
-    if (state.deaths > 0 && !state.player.dead && state.status === "running") onDeath();
   }
 
   /* --------------------------------------------------------------- effects -- */

@@ -1213,6 +1213,7 @@
   function exitSync() {
     stopScheduler();
     forgetInput();
+    if (hintTimer !== null) { clearTimeout(hintTimer); hintTimer = null; }
     mode = "off";
     hideCard();
     for (const key of Object.keys(screens)) if (screens[key]) screens[key].classList.add("hidden");
@@ -1241,6 +1242,7 @@
 
   function goTitle() {
     stopScheduler();
+    if (hintTimer !== null) { clearTimeout(hintTimer); hintTimer = null; }
     mode = "title";
     hideCard();
     game = null;
