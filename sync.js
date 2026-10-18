@@ -1189,6 +1189,7 @@
         else if (fn === "retry") startChapter(chapterIndex, upgrades);
         else if (fn === "title") goTitle();
         else if (fn === "resume") resume();
+        else if (fn === "close") hideCard();
       });
     });
   }
@@ -1199,6 +1200,7 @@
   }
 
   function enterSync() {
+    mode = "title";
     document.body.classList.add("sync-active");
     canvas.classList.remove("hidden");
     canvas.setAttribute("aria-hidden", "false");
@@ -1473,17 +1475,21 @@
     }
     if (soundOn) SFX.ui();
   });
-  bind("syncHowBtn", () => {
-    SFX.ui();
-    if (mode !== "play") return;
-    pause();
+  function showHow() {
+    if (mode !== "play" && mode !== "title") return;
+    const fromTitle = mode === "title";
+    if (!fromTitle) pause();
     card("HOW TO PLAY", "あそびかた",
       "<p>外から来る光が内側の輪に重なったら、<b>同じ場所をタップ</b>。ぴったりなら高得点です。</p>" +
       "<p>長い光は<b>押しっぱなし</b>。赤い輪のあいだは、何も押しません。</p>" +
       '<p class="sync-sub">スマホは光のある扇形をタップ。PC のキーは ' +
       sim.LANE_KEYS.map(k => k.replace("Key", "")).join(" ") + "</p>",
-      '<button class="sync-primary" data-action="resume">つづける</button>');
-  });
+      fromTitle
+        ? '<button class="sync-primary" data-action="close">わかった</button>'
+        : '<button class="sync-primary" data-action="resume">つづける</button>');
+  }
+  bind("syncTitleHowBtn", () => { SFX.ui(); showHow(); });
+  bind("syncHowBtn", () => { SFX.ui(); showHow(); });
 
   canvas.addEventListener("pointerdown", onPointerDown);
   canvas.addEventListener("pointermove", onPointerMove);

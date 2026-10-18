@@ -1,6 +1,6 @@
 // Network-first updates keep the latest title and controls visible after a deploy.
 // Successful responses are saved for offline use when the network becomes unavailable.
-const CACHE = "test-prim-gallery-v27";
+const CACHE = "test-prim-gallery-v28";
 const ASSETS = [
   "./index.html", "./style.css", "./sumifu.css", "./code.css", "./sync.css", "./helix.css",
   "./game.js", "./sumifu.js", "./code-sim.js", "./code.js", "./sync-sim.js", "./sync.js",
