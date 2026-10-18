@@ -1645,13 +1645,13 @@
     return { x: (event.clientX - rect.left) * sx, y: (event.clientY - rect.top) * sy };
   }
   $("sumifuJoy").addEventListener("pointerdown", event => {
-    if (scene !== "playing") return;
+    if (scene !== "playing" || stick.id !== null) return;
     if (event.preventDefault) event.preventDefault();
     stick.id = event.pointerId;
     const rect = $("sumifuJoy").getBoundingClientRect();
     stick.cx = rect.left + rect.width / 2;
     stick.cy = rect.top + rect.height / 2;
-    if ($("sumifuJoy").setPointerCapture) $("sumifuJoy").setPointerCapture(event.pointerId);
+    try { $("sumifuJoy").setPointerCapture(event.pointerId); } catch (_) { /* keep this touch active */ }
     moveStick(event);
   });
   $("sumifuJoy").addEventListener("pointermove", event => {

@@ -147,6 +147,25 @@ const targets = [
       await page.mouse.up();
       const centered2 = await page.locator("#sumifuKnob").evaluate(el => el.style.transform);
       assert.equal(centered2, "translate(0px, 0px)", "kasane knob recenters");
+      if (target.hasTouch) {
+        const cdp = await context.newCDPSession(page);
+        const slash = await page.locator("#sumifuSlash").boundingBox();
+        const left = { x: joy2.x + joy2.width / 2, y: joy2.y + joy2.height / 2, id: 11 };
+        const right = { x: slash.x + slash.width / 2, y: slash.y + slash.height / 2, id: 12 };
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left, right] });
+        left.x += 22;
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [left, right] });
+        await page.waitForFunction(() => document.querySelector("#sumifuSlashFill").style.transform !== "scaleY(0)");
+        assert.notEqual(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
+          "左指で移動しながら右指で攻撃できる");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+        assert.notEqual(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
+          "攻撃の指を離しても移動は続く");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        assert.equal(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
+          "移動の指を離すと止まる");
+      }
       await page.locator("#sumifuPause").click();
       await page.locator("#sumifu-overlay").waitFor({ state: "visible" });
       await page.locator("#sumifuResume").press("Space");
@@ -248,6 +267,11 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.waitForFunction(() => window.__mikan && window.__mikan.getNight() === "first");
       const kotatsu = await page.locator("#kotatsu").boundingBox();
       assert.ok(kotatsu && kotatsu.height > 80, "the kotatsu has room for a mikan");
+      await page.mouse.click(kotatsu.x + 5, kotatsu.y + kotatsu.height * 0.55);
+      await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
+      assert.match(await page.locator("#dialog").innerText(), /真ん中に近いところへ置いてみよう/,
+        "失敗した子にも、次に試す置き方が伝わる");
+      await page.locator("#retryBtn").click();
       await page.mouse.click(kotatsu.x + kotatsu.width / 2, kotatsu.y + kotatsu.height * 0.55);
       await page.locator("#dialogTitle").waitFor({ state: "visible", timeout: 5000 });
       assert.equal(await page.locator("#dialogTitle").innerText(), "最初の晩", "the first mikan stays on the kotatsu");
@@ -453,6 +477,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       await page.locator("#start").click();
       await page.locator("#play").waitFor({ state: "visible" });
       assert.equal(await page.locator("#floorName").innerText(), "第1階 · めざめ");
+      assert.match(await page.locator("#floorNote").innerText(), /ゴール.*めざそう/,
+        "ECHO は各階の目的をプレイ画面に残す");
       assert.equal(await page.evaluate(() => getComputedStyle(document.body).color), "rgb(233, 237, 255)",
         "ECHO の明るい文字色が CSS で適用され、説明文を読める");
       for (let i = 0; i < 4; i++) await page.keyboard.press("ArrowRight");

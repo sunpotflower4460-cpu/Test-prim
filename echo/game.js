@@ -304,7 +304,7 @@
     $("boardCaption").textContent = level.en;
     $("loopName").textContent = "第" + session.loop + "周";
     $("loopRule").textContent = plan.length + " / " + level.loop + " ターン";
-    $("floorNote").textContent = level.note;
+    $("floorNote").textContent = level.hint;
     const left = level.loop - plan.length;
     $("loopNext").textContent = !running ? "時間は とじた"
       : session.loop >= level.maxLoops ? "これが 最後の周"

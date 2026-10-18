@@ -141,7 +141,7 @@ const STAGES = [
     id: 1,
     name: "足場",
     en: "FOOTING",
-    lead: "走る。跳ぶ。\n崖の前を読む。",
+    lead: "緑の輪へ進もう。\n足場を跳んで、落ちずにたどり着こう。",
     w: 34, h: 18,
     walls: [
       rect(1, 16, 32, 16),
