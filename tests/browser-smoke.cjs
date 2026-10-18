@@ -57,6 +57,29 @@ const targets = [
       await page.locator(".gallery .work.setsuna").click();
       await page.locator('#dialog [data-action="start"]').click();
       await page.locator("#overlay").waitFor({ state: "hidden" });
+      if (target.hasTouch) {
+        const cdp = await context.newCDPSession(page);
+        const padBox = await page.locator("#pad").boundingBox();
+        const attackBox = await page.locator("#attack").boundingBox();
+        const left = { x: padBox.x + padBox.width / 2, y: padBox.y + padBox.height / 2, id: 21 };
+        const right = { x: attackBox.x + attackBox.width / 2, y: attackBox.y + attackBox.height / 2, id: 22 };
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left, right] });
+        left.x += 25;
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [left, right] });
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#knob").style.transform;
+          return t && !/^translate\(0px,\s*0px\)$/.test(t);
+        });
+        assert.ok(await page.locator("#attack").evaluate(el => el.classList.contains("pressed")),
+          "SETSUNA は移動中に右指で斬れる");
+        assert.notEqual(await page.locator("#knob").evaluate(el => el.style.transform), "translate(0px,0px)",
+          "SETSUNA の左スティックが二本指で動く");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [right] });
+        assert.notEqual(await page.locator("#knob").evaluate(el => el.style.transform), "translate(0px,0px)",
+          "SETSUNA の攻撃指を離しても移動は続く");
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+      }
       await page.keyboard.press("j");
       await page.locator("#pauseBtn").click();
       await page.locator('#dialog [data-action="resume"]').click();
@@ -156,13 +179,17 @@ const targets = [
         await cdp.send("Input.dispatchTouchEvent", { type: "touchStart", touchPoints: [left, right] });
         left.x += 22;
         await cdp.send("Input.dispatchTouchEvent", { type: "touchMove", touchPoints: [left, right] });
+        await page.waitForFunction(() => {
+          const t = document.querySelector("#sumifuKnob").style.transform;
+          return t && !/^translate\(0px,\s*0px\)$/.test(t);
+        });
         await page.waitForFunction(() => document.querySelector("#sumifuSlashFill").style.transform !== "scaleY(0)");
         assert.notEqual(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
           "左指で移動しながら右指で攻撃できる");
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [right] });
         assert.notEqual(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
           "攻撃の指を離しても移動は続く");
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
         assert.equal(await page.locator("#sumifuKnob").evaluate(el => el.style.transform), "translate(0px, 0px)",
           "移動の指を離すと止まる");
       }
@@ -712,10 +739,14 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
         const movingX = await page.evaluate(() => window.__helix.getState().player.x);
         assert.ok(movingX > beforeBoth.x + 8, "左指で移動しながら右指を使える");
         assert.ok(highBoth < beforeBoth.y - 8, "二本指でも右指で跳べる");
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [right] });
+        assert.equal(await page.evaluate(() => window.__helix.getInput().right), true,
+          "右指を離しても左指の移動入力は残る");
         for (let i = 0; i < 8; i++) await page.evaluate(() => window.__helix.tick());
         assert.ok(await page.evaluate(x => window.__helix.getState().player.x > x, movingX), "右指を離しても左指の移動は続く");
-        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await cdp.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [left] });
+        assert.equal(await page.evaluate(() => window.__helix.getInput().right), false,
+          "左指を離すと移動入力が消える");
       }
 
       // 一時停止 → 再開

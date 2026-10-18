@@ -1175,6 +1175,7 @@
     start: startStage,
     getMode: () => mode,
     getState: () => state,
+    getInput: () => ({ left: input.left, right: input.right, jump: input.jump, dash: input.dash }),
     getRecord: () => JSON.parse(JSON.stringify(record)),
     press(key, down) { applyKey(key, down); },
     setIntent(str) {
