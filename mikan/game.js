@@ -318,9 +318,15 @@
     if (kept >= level.goal) finish(kept);
     else {
       tone(180, 0.2, "sine", 0.04);
+      const singed = bodies.some(body => body.singed);
+      const fallen = bodies.some(body => body.lost);
+      const title = singed && !fallen ? "灯りに、触れた。" : fallen ? "畳まで、転がった。" : "天板には、残らなかった。";
+      const advice = singed
+        ? "灯りに触れた蜜柑は残らない。高く積まず、横に置いてみよう。"
+        : "天板の真ん中に近いところへ置いてみよう。";
       openDialog(
-        '<p class="eyebrow">STILL ON THE FLOOR</p><h2 id="dialogTitle">畳まで、転がった。</h2>' +
-        "<p>残ったのは " + kept + " 個。この晩は " + level.goal + " 個、欲しい。</p>" +
+        '<p class="eyebrow">もういちど</p><h2 id="dialogTitle">' + title + "</h2>" +
+        "<p>残ったのは " + kept + " 個。目標は " + level.goal + " 個。" + advice + "</p>" +
         '<button class="primary" id="retryBtn" type="button"><span>この晩をやりなおす</span></button>' +
         '<button class="text" id="failUndo" type="button">一つ戻す</button>'
       );

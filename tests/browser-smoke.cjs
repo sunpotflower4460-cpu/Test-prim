@@ -524,6 +524,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       assert.ok(unique.size >= 2, "the arena background is textured rather than a flat fill: " + JSON.stringify(arena.points));
       assert.ok(arena.points.every(p => p[0] < 200 && p[1] < 220), "the arena background stays dark: " + JSON.stringify(arena.points));
       assert.ok(arena.flash < 0.5, "the hit flash decays instead of running away");
+      assert.ok(!(await page.locator("#syncHint").evaluate(el => el.classList.contains("fade"))),
+        "最初の章の操作説明は、最初の成功まで残る");
 
       // 譜面どおりに叩いて2章目まで進める（実際の play と同じ道を通す）
       const played = await page.evaluate(() => window.__sync.autoPlay());
@@ -538,6 +540,8 @@ assert.ok(layout.lastBeforeFooter, "the last entry appears above the footer");
       assert.ok(offers >= 2, "at least two resonances are offered");
       await page.locator("#syncOverlay .sync-offer").first().click();
       await page.waitForFunction(() => window.__sync.getChapter() === 1, null, { timeout: 5000 });
+      assert.ok(!(await page.locator("#syncHint").evaluate(el => el.classList.contains("fade"))),
+        "次の章では新しい説明が表示される");
       // どれが出たかは抽選なので、増えた数と既に持っているものでないことだけを見る。
       const chosen = await page.evaluate(() => window.__sync.getUpgrades());
       assert.equal(chosen.length, 1, "共鳴をちょうど一つ持ち歩く");

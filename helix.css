@@ -292,8 +292,8 @@ body.helix-active #helixPlay {
 .helix-tools { display: flex; gap: 6px; pointer-events: auto; }
 
 .helix-icon {
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   display: grid;
   place-items: center;
   border: 1px solid rgba(238, 242, 246, .18);
@@ -305,7 +305,7 @@ body.helix-active #helixPlay {
 }
 
 .helix-icon:hover { border-color: #c9ff3d; color: #c9ff3d; }
-.helix-zoom { width: 48px; font-size: 11px; letter-spacing: 0; }
+.helix-zoom { width: 54px; font-size: 11px; letter-spacing: 0; }
 
 .helix-meta {
   position: absolute;

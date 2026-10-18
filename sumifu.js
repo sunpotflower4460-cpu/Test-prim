@@ -247,9 +247,9 @@
     if (next !== "playing") { keys.clear(); resetStick(); }
   }
   function hintText() {
-    if (!game.didSlash) return "J / 斬 で筆を振る";
-    if (!game.didBind) return "筆跡を交差させると結ぶ";
-    if (!game.didParry) return "金の輪の瞬間を斬ると受ける";
+    if (!game.didSlash) return "「斬」を押して、敵を攻撃しよう";
+    if (!game.didBind) return "残った筆の線を、別の線で横切ろう";
+    if (!game.didParry) return "敵に金の輪が出たら「斬」で受けよう";
     return T().line;
   }
   function updateHud() {

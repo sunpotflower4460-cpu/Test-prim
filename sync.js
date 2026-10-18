@@ -390,6 +390,7 @@
   let mode = "off";          // off / title / play / paused / result / upgrade / over / ending
   let game = null;           // sim の状態
   let chapterIndex = 0;
+  let hintTimer = null;
   let upgrades = [];         // 選んだ共鳴の ID
   let songStart = 0;         // 拍0の時刻（音の時計）
   let pausedAt = 0;
@@ -704,6 +705,7 @@
   function handleEvent(ev) {
     switch (ev.type) {
       case "judge": {
+        if (chapterIndex === 0) $("syncHint").classList.add("fade");
         const color = ev.grade === "perfect" ? "#ffffff"
           : ev.grade === "great" ? mood.glow : mood.warm;
         laneFlash[ev.lane] = 1;
@@ -1276,8 +1278,11 @@
     resize();
     $("syncChapter").textContent = "第" + CHAPTER_NUMERAL[chapterIndex] + "章 · " + chapter.jp;
     $("syncHint").textContent = chapter.lead;
-    setTimeout(() => {
+    $("syncHint").classList.remove("fade");
+    if (hintTimer !== null) clearTimeout(hintTimer);
+    hintTimer = chapterIndex === 0 ? null : setTimeout(() => {
       if (mode === "play") $("syncHint").classList.add("fade");
+      hintTimer = null;
     }, 4200);
   }
 

@@ -91,7 +91,7 @@ body:not(.sync-active) .sync-screen{display:none}
 .sync-chapter{font-size:11px;letter-spacing:.14em;color:#cfe9f6;text-shadow:0 0 14px rgba(142,240,255,.4)}
 .sync-tools{display:flex;gap:7px;pointer-events:auto}
 .sync-icon{
-  width:34px;height:32px;border:1px solid var(--sync-line);border-radius:7px;
+  width:44px;height:44px;border:1px solid var(--sync-line);border-radius:7px;
   background:rgba(4,12,22,.6);color:#cfe8f6;font-size:14px;display:grid;place-items:center;
 }
 .sync-bar{height:6px;border-radius:999px;background:rgba(2,9,18,.8);box-shadow:inset 0 0 0 1px rgba(160,220,255,.16);overflow:hidden}
